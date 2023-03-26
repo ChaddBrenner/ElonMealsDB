@@ -46,13 +46,10 @@ module.exports = app => {
     router.delete('/api/user/meal/:meal_id', users.removeMeal)
 
     // Append a food to a user's meal given a meal id and a food id
-    // router.post('/api/user/meal/:meal_id/food/:food_id', users.appendFood)
+    router.post('/api/user/meal/:meal_id/food/:food_id', users.addFood)
 
     // Remove a food from a user's meal given a meal id and a food id
-    // router.delete('/api/user/meal/:meal_id/food/:food_id', users.removeFood)
-
-    // Get the number of calories in a user's meal given a meal id
-    // router.get('/api/user/meal/:meal_id/calories', requiresAuth(), users.getMealCalories)
+    router.delete('/api/user/meal/:meal_id/food/:food_id', users.removeFood)
 
     app.use('/', router);
 };

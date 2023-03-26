@@ -282,7 +282,7 @@ exports.removeMeal = (req, res) => {
     }
 }
 
-exports.updateMeal = (req, res) => {
+exports.addFood = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
             if (err) {
@@ -291,11 +291,39 @@ exports.updateMeal = (req, res) => {
                     message: "Error retrieving User"
                 });
             } else {
-                User.updateMeal(req.oidc.user.sub, req.body.meal, (err, data) => {
+                User.addFood(req.oidc.user.sub, req.body.food_id, req.body.meal_id, (err, data) => {
                     if (err) {
                         console.log("error: ", err);
                         res.status(500).send({
-                            message: "Error updating Meal"
+                            message: "Error adding Food"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
+            }
+        });
+    } else {
+        res.status(401).send({
+            message: "User not authenticated"
+        });
+    }
+}
+
+exports.removeFood = (req, res) => {
+    if (req.oidc.isAuthenticated()) {
+        User.checkLogin(req.oidc.user, (err) => {
+            if (err) {
+                console.log("error: ", err);
+                res.status(500).send({
+                    message: "Error retrieving User"
+                });
+            } else {
+                User.removeFood(req.oidc.user.sub, req.body.food_id, req.body.meal_id, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error removing Food"
                         });
                     } else {
                         res.send(data);
