@@ -1,6 +1,6 @@
 const Station = require("../models/station.model.js");
 
-// Find a single Station with a id
+// Retrieve a single Station with a id
 exports.findById = (req, res) => {
   Station.findById(req.params.id, (err, data) => {
         if (err) {
@@ -17,6 +17,7 @@ exports.findById = (req, res) => {
       });
 };
 
+// Retrieve all stations from a meal with a meal id
 exports.findByMealId = (req, res) => {
   Station.findByMealId(req.params.id, (err, data) => {
         if (err) {

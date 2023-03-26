@@ -43,7 +43,7 @@ User.getUser = (id, result) => {
   // Sanitize the id to prevent SQL injection
   id = sql.escape(id);
 
-  sql.query(`SELECT name, daily_calories_goal FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT name, daily_calories_goal FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -60,7 +60,7 @@ User.updateCalorieGoal = (id, calories_goal, result) => {
   id = sql.escape(id);
   calories_goal = sql.escape(calories_goal);
         
-  sql.query(`UPDATE user SET daily_calories_goal = ${calories_goal} WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`UPDATE user SET daily_calories_goal = ${calories_goal} WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -77,7 +77,7 @@ User.getCalories = (id, date, result) => {
   id = sql.escape(id);
   date = sql.escape(date);
 
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -89,7 +89,7 @@ User.getCalories = (id, date, result) => {
                     ON umhf.user_meal_id = um.id AND umhf.user_meal_user_id = um.user_id
                   INNER JOIN food f
                     ON f.id = umhf.food_id
-                  WHERE um.user_id = ${user_id} AND DATE(time_period) = DATE('${date}');`, (err, res) => {
+                  WHERE um.user_id = ${user_id} AND DATE(time_period) = DATE(${date});`, (err, res) => {
         if (err) {
           console.log("error: ", err);
           result(err, null);
@@ -107,7 +107,7 @@ User.addFavorite = (id, food_id, result) => {
   id = sql.escape(id);
   food_id = sql.escape(food_id);
 
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -132,7 +132,7 @@ User.removeFavorite = (id, food_id, result) => {
   id = sql.escape(id);
   food_id = sql.escape(food_id);
 
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -156,7 +156,7 @@ User.getFavorites = (id, result) => {
   // Sanitize the id to prevent SQL injection
   id = sql.escape(id);
 
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -184,7 +184,7 @@ User.getMeals = (id, date, result) => {
   id = sql.escape(id);
   date = sql.escape(date);
     
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -196,7 +196,7 @@ User.getMeals = (id, date, result) => {
                     ON umhf.user_meal_id = um.id AND umhf.user_meal_user_id = um.user_id
                   INNER JOIN food f
                     ON f.id = umhf.food_id
-                  WHERE um.user_id = ${user_id} AND DATE(time_period) = DATE('${date}')
+                  WHERE um.user_id = ${user_id} AND DATE(time_period) = DATE(${date})
                   GROUP BY um.id`, (err, res) => {
         if (err) {
           console.log("error: ", err);
@@ -215,7 +215,7 @@ User.getMeal = (id, meal_id, result) => {
   id = sql.escape(id);
   meal_id = sql.escape(meal_id);
   
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -246,14 +246,14 @@ User.addMeal = (id, name, time_period, result) => {
   name = sql.escape(name);
   time_period = sql.escape(time_period);
 
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
       return;
     } else {
       const user_id = res[0].id;
-      sql.query(`INSERT INTO user_meal (user_id, name, time_period) VALUES (${user_id}, '${name}', '${time_period}')`, (err, res) => {
+      sql.query(`INSERT INTO user_meal (user_id, name, time_period) VALUES (${user_id}, ${name}, ${time_period})`, (err, res) => {
         if (err) {
           console.log("error: ", err);
           result(err, null);
@@ -271,7 +271,7 @@ User.removeMeal = (id, meal_id, result) => {
   id = sql.escape(id);
   meal_id = sql.escape(meal_id);
 
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -297,7 +297,7 @@ User.addFood = (id, meal_id, food_id, result) => {
   meal_id = sql.escape(meal_id);
   food_id = sql.escape(food_id);
 
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -323,7 +323,7 @@ User.removeFood = (id, meal_id, food_id, result) => {
   meal_id = sql.escape(meal_id);
   food_id = sql.escape(food_id);
   
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
