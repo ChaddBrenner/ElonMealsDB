@@ -9,142 +9,315 @@ const User = function(user) {
   this.database_id = user.database_id;
 };
 
-// User.getUser = (user_id, result) => {
-//   sql.query("INSERT INTO tutorials SET ?", newTutorial, (err, res) => {
-//     if (err) {
-//       console.log("error: ", err);
-//       result(err, null);
-//       return;
-//     }
-
-//     console.log("created tutorial: ", { id: res.insertId, ...newTutorial });
-//     result(null, { id: res.insertId, ...newTutorial });
-//   });
-// };
+User.checkLogin = (user, error) => {
+  // Get whether the user is in the database
+  sql.query(`SELECT COUNT(id) FROM user WHERE auth0_id = '${user.sub}'`, (err, data) => {
+    // If there is an error, log it
+    if (err) {
+        console.log("error: ", err);
+        error(err);
+        return;
+    } else {
+      // If they are not in the database, add them
+      if (data[0]['COUNT(id)'] == 0) {
+          sql.query(`INSERT INTO user (name, email, auth0_id) VALUES ('${user.name}', '${user.email}', '${user.sub}')`, (err, data) => {
+            // If there is an error, log it
+            if (err) {
+                console.log("error: ", err);
+                error(err);
+                return;
+            } else {
+                console.log("User added to database");
+                error(null);
+            }
+        });
+      }
+      else {
+        console.log("User already in database");
+        error(null);
+      }
+    }
+  });
+}
 
 User.getUser = (user_id, result) => {
-  sql.query(`SELECT name, daily_calories_goal FROM user WHERE auth0_id = ${user_id}`, (err, res) => {
+  sql.query(`SELECT name, daily_calories_goal FROM user WHERE auth0_id = '${user_id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
       return;
     }
 
-    if (res.length) {
-      console.log("found user: ", res);
-      result(null, res);
-      return;
-    }
-
-    // not found User with the id
-    result({ kind: "not_found" }, null);
+    console.log("found user: ", res);
+    result(null, res);
   });
 };
 
-Tutorial.findById = (id, result) => {
-  sql.query(`SELECT * FROM tutorials WHERE id = ${id}`, (err, res) => {
+User.updateCalorieGoal = (user_id, calories_goal, result) => {
+  sql.query(`UPDATE user SET daily_calories_goal = ${calories_goal} WHERE auth0_id = '${user_id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
       return;
     }
 
-    if (res.length) {
-      console.log("found tutorial: ", res[0]);
-      result(null, res[0]);
-      return;
-    }
-
-    // not found Tutorial with the id
-    result({ kind: "not_found" }, null);
-  });
-};
-
-Tutorial.getAll = (title, result) => {
-  let query = "SELECT * FROM tutorials";
-
-  if (title) {
-    query += ` WHERE title LIKE '%${title}%'`;
-  }
-
-  sql.query(query, (err, res) => {
-    if (err) {
-      console.log("error: ", err);
-      result(null, err);
-      return;
-    }
-
-    console.log("tutorials: ", res);
+    console.log("updated user: ", res);
     result(null, res);
   });
 };
 
-Tutorial.getAllPublished = result => {
-  sql.query("SELECT * FROM tutorials WHERE published=true", (err, res) => {
+User.getCalories = (auth0_id, date, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
-      result(null, err);
+      result(err, null);
       return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`SELECT SUM(f.calories) FROM user_meal um
+                  INNER JOIN user_meal_has_food umhf
+                    ON umhf.user_meal_id = um.id AND umhf.user_meal_user_id = um.user_id
+                  INNER JOIN food f
+                    ON f.id = umhf.food_id
+                  WHERE um.user_id = ${user_id} AND DATE(time_period) = DATE('${date}');`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("found calories: ", res);
+        result(null, res);
+      });
     }
-
-    console.log("tutorials: ", res);
-    result(null, res);
   });
 };
 
-Tutorial.updateById = (id, tutorial, result) => {
-  sql.query(
-    "UPDATE tutorials SET title = ?, description = ?, published = ? WHERE id = ?",
-    [tutorial.title, tutorial.description, tutorial.published, id],
-    (err, res) => {
-      if (err) {
-        console.log("error: ", err);
-        result(null, err);
-        return;
-      }
-
-      if (res.affectedRows == 0) {
-        // not found Tutorial with the id
-        result({ kind: "not_found" }, null);
-        return;
-      }
-
-      console.log("updated tutorial: ", { id: id, ...tutorial });
-      result(null, { id: id, ...tutorial });
-    }
-  );
-};
-
-Tutorial.remove = (id, result) => {
-  sql.query("DELETE FROM tutorials WHERE id = ?", id, (err, res) => {
+User.addFavorite = (auth0_id, food_id, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
-      result(null, err);
+      result(err, null);
       return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`INSERT INTO user_favorite_food (user_id, food_id) VALUES (${user_id}, ${food_id})`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("added favorite: ", res);
+        result(null, res);
+      });
     }
-
-    if (res.affectedRows == 0) {
-      // not found Tutorial with the id
-      result({ kind: "not_found" }, null);
-      return;
-    }
-
-    console.log("deleted tutorial with id: ", id);
-    result(null, res);
   });
 };
 
-Tutorial.removeAll = result => {
-  sql.query("DELETE FROM tutorials", (err, res) => {
+User.removeFavorite = (auth0_id, food_id, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
-      result(null, err);
+      result(err, null);
       return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`DELETE FROM user_favorite_food WHERE user_id = ${user_id} AND food_id = ${food_id}`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("removed favorite: ", res);
+        result(null, res);
+      });
     }
-
-    console.log(`deleted ${res.affectedRows} tutorials`);
-    result(null, res);
   });
 };
 
-module.exports = Tutorial;
+User.getFavorites = (auth0_id, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`SELECT f.id, f.short_name FROM user_favorite_food uff
+                  INNER JOIN food f
+                    ON f.id = uff.food_id
+                  WHERE uff.user_id = ${user_id}`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("found favorites: ", res);
+        result(null, res);
+      });
+    }
+  });
+};
+
+User.getMeals = (auth0_id, date, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`SELECT um.id, um.name, um.time_period, SUM(f.calories) AS calories FROM user_meal um
+                  INNER JOIN user_meal_has_food umhf
+                    ON umhf.user_meal_id = um.id AND umhf.user_meal_user_id = um.user_id
+                  INNER JOIN food f
+                    ON f.id = umhf.food_id
+                  WHERE um.user_id = ${user_id} AND DATE(time_period) = DATE('${date}')
+                  GROUP BY um.id`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("found meals: ", res);
+        result(null, res);
+      });
+    }
+  });
+};
+
+User.getMeal = (auth0_id, meal_id, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`SELECT f.id, f.short_name, f.calories FROM user_meal um
+                  INNER JOIN user_meal_has_food umhf
+                    ON umhf.user_meal_id = um.id AND umhf.user_meal_user_id = um.user_id
+                  INNER JOIN food f
+                    ON f.id = umhf.food_id
+                  WHERE um.user_id = ${user_id} AND um.id = ${meal_id}`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("found meal: ", res);
+        result(null, res);
+      });
+    }
+  });
+};
+
+User.addMeal = (auth0_id, name, time_period, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`INSERT INTO user_meal (user_id, name, time_period) VALUES (${user_id}, '${name}', '${time_period}')`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("added meal: ", res);
+        result(null, res);
+      });
+    }
+  });
+};
+
+User.removeMeal = (auth0_id, meal_id, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`DELETE FROM user_meal WHERE user_id = ${user_id} AND id = ${meal_id}`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("removed meal: ", res);
+        result(null, res);
+      });
+    }
+  });
+};
+
+User.addFoodToMeal = (auth0_id, meal_id, food_id, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`INSERT INTO user_meal_has_food (user_meal_id, user_meal_user_id, food_id) VALUES (${meal_id}, ${user_id}, ${food_id})`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("added food to meal: ", res);
+        result(null, res);
+      });
+    }
+  });
+};
+
+User.removeFoodFromMeal = (auth0_id, meal_id, food_id, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`DELETE FROM user_meal_has_food WHERE user_meal_id = ${meal_id} AND user_meal_user_id = ${user_id} AND food_id = ${food_id}`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("removed food from meal: ", res);
+        result(null, res);
+      });
+    }
+  });
+};
+
+User.getFood = (auth0_id, result) => {
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+
+      result(err, null);
+      return;
+    } else {
+      const user_id = res[0].id;
+      sql.query(`SELECT f.id, f.short_name, f.calories FROM user_food uf
+                  INNER JOIN food f
+                    ON f.id = uf.food_id
+                  WHERE uf.user_id = ${user_id}`, (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
+        console.log("found food: ", res);
+        result(null, res);
+      });
+    }
+  });
+};
+
+module.exports = User;

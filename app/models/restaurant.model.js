@@ -8,7 +8,6 @@ const Restaurant = function(restaurant) {
 };
 
 Restaurant.findById = (id, result) => {
-  console.log(id)
   sql.query(`SELECT * FROM restaurant WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);

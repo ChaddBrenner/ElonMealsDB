@@ -20,7 +20,6 @@ exports.findByDate = (req, res) => {
 
 // Find a single Restaurant with a id
 exports.findById = (req, res) => {
-  console.log(req.oidc.user)
   Restaurant.findById(req.params.id, (err, data) => {
         if (err) {
           if (err.kind === "not_found") {

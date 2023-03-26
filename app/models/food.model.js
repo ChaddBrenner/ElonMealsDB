@@ -33,7 +33,7 @@ const Food = function(food) {
 };
 
 Food.findById = (id, result) => {
-  sql.query(`SELECT * FROM food WHERE id = ${id}`, (err, res) => {
+  sql.query(`SELECT * FROM food f WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -79,8 +79,8 @@ Food.findNumberOfFavorites = (id, result) => {
     }
 
     if (res.length) {
-      console.log("found number of foods: ", res);
-      result(null, res);
+      console.log("found number of foods: ", res[0]['COUNT(*)']);
+      result(null, {'count': res[0]['COUNT(*)']});
       return;
     }
 
