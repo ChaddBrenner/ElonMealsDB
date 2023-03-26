@@ -2,10 +2,7 @@ module.exports = app => {
     const users = require("../controllers/user.controller.js");
   
     var router = require("express").Router();
-
-    // Handle user login to add them to the DB if they are not already there
-    router.get('/login', users.login);
-
+    
     /////////////////////////
     // User Information    //
     /////////////////////////

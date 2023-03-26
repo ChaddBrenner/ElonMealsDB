@@ -8,6 +8,9 @@ const Meal = function(meal) {
 };
 
 Meal.findById = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+    
   sql.query(`SELECT * FROM meal WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
@@ -27,6 +30,9 @@ Meal.findById = (id, result) => {
 };
 
 Meal.findByDate = (date, result) => {
+  // Sanitize the id to prevent SQL injection
+  date = sql.escape(date);
+
   sql.query(`SELECT * FROM meal WHERE restaurant_date = '${date}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
@@ -46,6 +52,9 @@ Meal.findByDate = (date, result) => {
 };
 
 Meal.findByRestaurantId = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+
   sql.query(`SELECT * FROM meal WHERE restaurant_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);

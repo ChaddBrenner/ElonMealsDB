@@ -1,5 +1,4 @@
 const sql = require("./db.js");
-const { requiresAuth } = require('express-openid-connect');
 
 // constructor
 const User = function(user) {
@@ -40,8 +39,11 @@ User.checkLogin = (user, error) => {
   });
 }
 
-User.getUser = (user_id, result) => {
-  sql.query(`SELECT name, daily_calories_goal FROM user WHERE auth0_id = '${user_id}'`, (err, res) => {
+User.getUser = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+
+  sql.query(`SELECT name, daily_calories_goal FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -53,8 +55,12 @@ User.getUser = (user_id, result) => {
   });
 };
 
-User.updateCalorieGoal = (user_id, calories_goal, result) => {
-  sql.query(`UPDATE user SET daily_calories_goal = ${calories_goal} WHERE auth0_id = '${user_id}'`, (err, res) => {
+User.updateCalorieGoal = (id, calories_goal, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+  calories_goal = sql.escape(calories_goal);
+        
+  sql.query(`UPDATE user SET daily_calories_goal = ${calories_goal} WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -66,8 +72,12 @@ User.updateCalorieGoal = (user_id, calories_goal, result) => {
   });
 };
 
-User.getCalories = (auth0_id, date, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+User.getCalories = (id, date, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+  date = sql.escape(date);
+
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -92,8 +102,12 @@ User.getCalories = (auth0_id, date, result) => {
   });
 };
 
-User.addFavorite = (auth0_id, food_id, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+User.addFavorite = (id, food_id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+  food_id = sql.escape(food_id);
+
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -113,8 +127,12 @@ User.addFavorite = (auth0_id, food_id, result) => {
   });
 };
 
-User.removeFavorite = (auth0_id, food_id, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+User.removeFavorite = (id, food_id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+  food_id = sql.escape(food_id);
+
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -134,8 +152,11 @@ User.removeFavorite = (auth0_id, food_id, result) => {
   });
 };
 
-User.getFavorites = (auth0_id, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+User.getFavorites = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -158,8 +179,12 @@ User.getFavorites = (auth0_id, result) => {
   });
 };
 
-User.getMeals = (auth0_id, date, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+User.getMeals = (id, date, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+  date = sql.escape(date);
+    
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -185,8 +210,12 @@ User.getMeals = (auth0_id, date, result) => {
   });
 };
 
-User.getMeal = (auth0_id, meal_id, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+User.getMeal = (id, meal_id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+  meal_id = sql.escape(meal_id);
+  
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -211,8 +240,13 @@ User.getMeal = (auth0_id, meal_id, result) => {
   });
 };
 
-User.addMeal = (auth0_id, name, time_period, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+User.addMeal = (id, name, time_period, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+  name = sql.escape(name);
+  time_period = sql.escape(time_period);
+
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -233,7 +267,11 @@ User.addMeal = (auth0_id, name, time_period, result) => {
 };
 
 User.removeMeal = (auth0_id, meal_id, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+  meal_id = sql.escape(meal_id);
+
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -253,8 +291,13 @@ User.removeMeal = (auth0_id, meal_id, result) => {
   });
 };
 
-User.addFoodToMeal = (auth0_id, meal_id, food_id, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+User.addFoodToMeal = (id, meal_id, food_id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+  meal_id = sql.escape(meal_id);
+  food_id = sql.escape(food_id);
+
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -274,8 +317,13 @@ User.addFoodToMeal = (auth0_id, meal_id, food_id, result) => {
   });
 };
 
-User.removeFoodFromMeal = (auth0_id, meal_id, food_id, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+User.removeFoodFromMeal = (id, meal_id, food_id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+  meal_id = sql.escape(meal_id);
+  food_id = sql.escape(food_id);
+  
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -295,8 +343,11 @@ User.removeFoodFromMeal = (auth0_id, meal_id, food_id, result) => {
   });
 };
 
-User.getFood = (auth0_id, result) => {
-  sql.query(`SELECT id FROM user WHERE auth0_id = '${auth0_id}'`, (err, res) => {
+User.getFood = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+
+  sql.query(`SELECT id FROM user WHERE auth0_id = '${id}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);
 
