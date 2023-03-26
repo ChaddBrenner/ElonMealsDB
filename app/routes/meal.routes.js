@@ -2,6 +2,7 @@ module.exports = app => {
     const meals = require("../controllers/meal.controller.js");
   
     var router = require("express").Router();
+    
     // Find a single Meal with a id
     router.get('/:id', meals.findById)
 
