@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { auth } = require('express-openid-connect');
 const { requiresAuth } = require('express-openid-connect');
-const sql = require("./app/models/db.js");
+require('dotenv').config()
 
 
 const app = express();
@@ -14,13 +14,10 @@ var corsOptions = {
 const config = {
   authRequired: false,
   auth0Logout: true,
-  secret: 'gb5PkM5M-zwre7zf6sYRPQTyBiCW4RFLA7swdt9IBtshwiiR9tIL7y_fluPZ1jdq',
-  baseURL: 'http://localhost:3000',
-  clientID: 'Q5vXLbd5NoMtXFAiPjjXHuC0POe4Cqdf',
-  issuerBaseURL: 'https://dev-ilbuu4john1p274i.us.auth0.com',
-  routes: {
-    login: false
-  }
+  secret: process.env.AUTH0_SECRET,
+  baseURL: process.env.AUTH0_BASE_URL,
+  clientID: process.env.AUTH0_CLIENT_ID,
+  issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
 };
 
 app.use(cors(corsOptions));

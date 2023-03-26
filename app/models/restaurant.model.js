@@ -8,6 +8,15 @@ const Restaurant = function(restaurant) {
 };
 
 Restaurant.findById = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+
+  // Make sure the id is a number
+  if (isNaN(id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+      
   sql.query(`SELECT * FROM restaurant WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
@@ -27,6 +36,9 @@ Restaurant.findById = (id, result) => {
 };
 
 Restaurant.findByDate = (date, result) => {
+  // Sanitize the id to prevent SQL injection
+  date = sql.escape(date);
+
   sql.query(`SELECT * FROM restaurant WHERE date = '${date}'`, (err, res) => {
     if (err) {
       console.log("error: ", err);

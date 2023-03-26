@@ -6,6 +6,9 @@ const Station = function(station) {
 };
 
 Station.findById = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+
   sql.query(`SELECT * FROM station WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
@@ -25,6 +28,9 @@ Station.findById = (id, result) => {
 };
 
 Station.findByMealId = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+
   sql.query(`SELECT * FROM station WHERE meal_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);

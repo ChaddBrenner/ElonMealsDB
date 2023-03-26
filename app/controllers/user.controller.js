@@ -1,21 +1,8 @@
 const User = require("../models/user.model.js");
 
-// Login the user
-// Check to see if their auth0 id is in the database
-// If it is not in the database, add it
-// If it is in the database, do nothing
-exports.login = async (req, res) => {
-    await res.oidc.login({
-        returnTo: '/profile',
-        authorizationParams: {
-        redirect_uri: 'http://localhost:3000/callback',
-        },
-    });
 
-    // const userInfo = await req.oidc.fetchUserInfo();
-    // console.log("userInfo: ", userInfo)
-    // If they authenticate, check to see if they are in the database
-    console.log("req.oidc.isAuthenticated(): ", req.oidc.isAuthenticated());
+// Get the user's information
+exports.getUser = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
             if (err) {
@@ -24,26 +11,16 @@ exports.login = async (req, res) => {
                     message: "Error retrieving User"
                 });
             } else {
-            }
-        });
-    } else {
-        res.status(401).send({
-            message: "User not authenticated"
-        });
-    }
-};
-
-// Get the user's information
-exports.getUser = (req, res) => {
-    if (req.oidc.isAuthenticated()) {
-        User.getUser(req.oidc.user.sub, (err, data) => {
-            if (err) {
-                console.log("error: ", err);
-                res.status(500).send({
-                    message: "Error retrieving User"
+                User.getUser(req.oidc.user.sub, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error retrieving User"
+                        });
+                    } else {
+                        res.send(data);
+                    }
                 });
-            } else {
-                res.send(data);
             }
         });
     } else {
@@ -55,14 +32,23 @@ exports.getUser = (req, res) => {
 
 exports.updateCalorieGoal = (req, res) => {
     if (req.oidc.isAuthenticated()) {
-        User.updateCalorieGoal(req.oidc.user.sub, req.body.calories_goal, (err, data) => {
+        User.checkLogin(req.oidc.user, (err) => {
             if (err) {
                 console.log("error: ", err);
                 res.status(500).send({
-                    message: "Error updating User"
+                    message: "Error retrieving User"
                 });
             } else {
-                res.send(data);
+                User.updateCalorieGoal(req.oidc.user.sub, req.body.calories_goal, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error updating User"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
             }
         });
     } else {
@@ -74,14 +60,23 @@ exports.updateCalorieGoal = (req, res) => {
 
 exports.getCalories = (req, res) => {
     if (req.oidc.isAuthenticated()) {
-        User.getCalories(req.oidc.user.sub, req.params.date, (err, data) => {
+        User.checkLogin(req.oidc.user, (err) => {
             if (err) {
                 console.log("error: ", err);
                 res.status(500).send({
-                    message: "Error retrieving Calories"
+                    message: "Error retrieving User"
                 });
             } else {
-                res.send(data);
+                User.getCalories(req.oidc.user.sub, req.params.date, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error retrieving Calories"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
             }
         });
     } else {
@@ -93,14 +88,23 @@ exports.getCalories = (req, res) => {
 
 exports.addFavorite = (req, res) => {
     if (req.oidc.isAuthenticated()) {
-        User.addFavorite(req.oidc.user.sub, req.body.food_id, (err, data) => {
+        User.checkLogin(req.oidc.user, (err) => {
             if (err) {
                 console.log("error: ", err);
                 res.status(500).send({
-                    message: "Error adding Favorite"
+                    message: "Error retrieving User"
                 });
             } else {
-                res.send(data);
+                User.addFavorite(req.oidc.user.sub, req.body.food_id, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error adding Favorite"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
             }
         });
     } else {
@@ -112,14 +116,23 @@ exports.addFavorite = (req, res) => {
 
 exports.removeFavorite = (req, res) => {
     if (req.oidc.isAuthenticated()) {
-        User.removeFavorite(req.oidc.user.sub, req.body.food_id, (err, data) => {
+        User.checkLogin(req.oidc.user, (err) => {
             if (err) {
                 console.log("error: ", err);
                 res.status(500).send({
-                    message: "Error removing Favorite"
+                    message: "Error retrieving User"
                 });
             } else {
-                res.send(data);
+                User.removeFavorite(req.oidc.user.sub, req.body.food_id, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error removing Favorite"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
             }
         });
     } else {
@@ -131,14 +144,23 @@ exports.removeFavorite = (req, res) => {
 
 exports.getFavorites = (req, res) => {
     if (req.oidc.isAuthenticated()) {
-        User.getFavorites(req.oidc.user.sub, (err, data) => {
+        User.checkLogin(req.oidc.user, (err) => {
             if (err) {
                 console.log("error: ", err);
                 res.status(500).send({
-                    message: "Error retrieving Favorites"
+                    message: "Error retrieving User"
                 });
             } else {
-                res.send(data);
+                User.getFavorites(req.oidc.user.sub, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error retrieving Favorites"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
             }
         });
     } else {
@@ -150,14 +172,23 @@ exports.getFavorites = (req, res) => {
 
 exports.getMeals = (req, res) => {
     if (req.oidc.isAuthenticated()) {
-        User.getMeals(req.oidc.user.sub, req.params.date, (err, data) => {
+        User.checkLogin(req.oidc.user, (err) => {
             if (err) {
                 console.log("error: ", err);
                 res.status(500).send({
-                    message: "Error retrieving Meals"
+                    message: "Error retrieving User"
                 });
             } else {
-                res.send(data);
+                User.getMeals(req.oidc.user.sub, req.params.date, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error retrieving Meals"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
             }
         });
     } else {
@@ -169,14 +200,23 @@ exports.getMeals = (req, res) => {
 
 exports.getMeal = (req, res) => {
     if (req.oidc.isAuthenticated()) {
-        User.getMeal(req.oidc.user.sub, req.params.meal_id, (err, data) => {
+        User.checkLogin(req.oidc.user, (err) => {
             if (err) {
                 console.log("error: ", err);
                 res.status(500).send({
-                    message: "Error retrieving Meal"
+                    message: "Error retrieving User"
                 });
             } else {
-                res.send(data);
+                User.getMeal(req.oidc.user.sub, req.params.meal_id, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error retrieving Meal"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
             }
         });
     } else {
@@ -188,14 +228,23 @@ exports.getMeal = (req, res) => {
 
 exports.addMeal = (req, res) => {
     if (req.oidc.isAuthenticated()) {
-        User.addMeal(req.oidc.user.sub, req.body.meal, (err, data) => {
+        User.checkLogin(req.oidc.user, (err) => {
             if (err) {
                 console.log("error: ", err);
                 res.status(500).send({
-                    message: "Error adding Meal"
+                    message: "Error retrieving User"
                 });
             } else {
-                res.send(data);
+                User.addMeal(req.oidc.user.sub, req.body.meal, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error adding Meal"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
             }
         });
     } else {
@@ -207,14 +256,23 @@ exports.addMeal = (req, res) => {
 
 exports.removeMeal = (req, res) => {
     if (req.oidc.isAuthenticated()) {
-        User.removeMeal(req.oidc.user.sub, req.body.meal_id, (err, data) => {
+        User.checkLogin(req.oidc.user, (err) => {
             if (err) {
                 console.log("error: ", err);
                 res.status(500).send({
-                    message: "Error removing Meal"
+                    message: "Error retrieving User"
                 });
             } else {
-                res.send(data);
+                User.removeMeal(req.oidc.user.sub, req.body.meal_id, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error removing Meal"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
             }
         });
     } else {
@@ -226,14 +284,23 @@ exports.removeMeal = (req, res) => {
 
 exports.updateMeal = (req, res) => {
     if (req.oidc.isAuthenticated()) {
-        User.updateMeal(req.oidc.user.sub, req.body.meal, (err, data) => {
+        User.checkLogin(req.oidc.user, (err) => {
             if (err) {
                 console.log("error: ", err);
                 res.status(500).send({
-                    message: "Error updating Meal"
+                    message: "Error retrieving User"
                 });
             } else {
-                res.send(data);
+                User.updateMeal(req.oidc.user.sub, req.body.meal, (err, data) => {
+                    if (err) {
+                        console.log("error: ", err);
+                        res.status(500).send({
+                            message: "Error updating Meal"
+                        });
+                    } else {
+                        res.send(data);
+                    }
+                });
             }
         });
     } else {

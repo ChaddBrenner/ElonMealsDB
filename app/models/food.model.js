@@ -33,6 +33,9 @@ const Food = function(food) {
 };
 
 Food.findById = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+
   sql.query(`SELECT * FROM food f WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
@@ -52,6 +55,9 @@ Food.findById = (id, result) => {
 };
 
 Food.findByStationId = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+
   sql.query(`SELECT f.id, f.short_name, f.full_name, f.amount_per_serving, f.type_per_serving, f.calories, f.calories_from_fat, f.total_fat, f.saturated_fat, f.trans_fat, f.cholesterol, f.sodium, f.total_carbohydrates, f.dietary_fiber, f.sugars, f.protein, f.vegetarian, f.vegetarian, f.gluten_free, f.allergy_egg, f.allergy_shellfish, f.allergy_soy, f.allergy_peanut, f.allergy_wheat, f.allergy_tree_nut, f.allergy_milk, f.allergy_sesame, f.allergy_fish FROM station_food sf INNER JOIN food f ON sf.food_id = f.id WHERE sf.station_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
@@ -71,6 +77,9 @@ Food.findByStationId = (id, result) => {
 };
 
 Food.findNumberOfFavorites = (id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = sql.escape(id);
+
   sql.query(`SELECT COUNT(*) FROM user_favorite_food WHERE food_id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
