@@ -39,7 +39,7 @@ Restaurant.findByDate = (date, result) => {
   // Sanitize the id to prevent SQL injection
   date = sql.escape(date);
 
-  sql.query(`SELECT * FROM restaurant WHERE date = '${date}'`, (err, res) => {
+  sql.query(`SELECT * FROM restaurant WHERE date = ${date}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);

@@ -1,7 +1,7 @@
 const User = require("../models/user.model.js");
 
 
-// Get the user's information
+// Retrieve a single User
 exports.getUser = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -30,6 +30,7 @@ exports.getUser = (req, res) => {
     }
 }
 
+// Update the user's calorie goal
 exports.updateCalorieGoal = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -58,6 +59,7 @@ exports.updateCalorieGoal = (req, res) => {
     }
 }
 
+// Get the number of calories consumed on a date
 exports.getCalories = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -86,6 +88,7 @@ exports.getCalories = (req, res) => {
     }
 }
 
+// Add a food to the user's favorites
 exports.addFavorite = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -114,6 +117,7 @@ exports.addFavorite = (req, res) => {
     }
 }
 
+// Remove a food from the user's favorites
 exports.removeFavorite = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -142,6 +146,7 @@ exports.removeFavorite = (req, res) => {
     }
 }
 
+// Get the user's favorites
 exports.getFavorites = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -170,6 +175,7 @@ exports.getFavorites = (req, res) => {
     }
 }
 
+// Get the user's meals on a date
 exports.getMeals = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -198,6 +204,7 @@ exports.getMeals = (req, res) => {
     }
 }
 
+// Retrieve a meal by id
 exports.getMeal = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -226,6 +233,7 @@ exports.getMeal = (req, res) => {
     }
 }
 
+// Add a meal to the user's meals
 exports.addMeal = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -254,6 +262,7 @@ exports.addMeal = (req, res) => {
     }
 }
 
+// Remove a meal from the user's meals
 exports.removeMeal = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -282,6 +291,7 @@ exports.removeMeal = (req, res) => {
     }
 }
 
+// Add a food to a meal
 exports.addFood = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {
@@ -310,6 +320,7 @@ exports.addFood = (req, res) => {
     }
 }
 
+// Remove a food from a meal
 exports.removeFood = (req, res) => {
     if (req.oidc.isAuthenticated()) {
         User.checkLogin(req.oidc.user, (err) => {

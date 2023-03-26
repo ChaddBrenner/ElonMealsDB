@@ -1,6 +1,6 @@
 const Restaurant = require("../models/restaurant.model.js");
 
-// Retrieve all Tutorials from the database (with condition).
+// Retrieve all restaurants on a date
 exports.findByDate = (req, res) => {
   Restaurant.findByDate(req.params.date, (err, data) => {
     if (err) {

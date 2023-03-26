@@ -1,6 +1,6 @@
 const Meal = require("../models/meal.model.js");
 
-// Retrieve all Tutorials from the database (with condition).
+// Retrieve all meals happening on a date
 exports.findByDate = (req, res) => {
   Meal.findByDate(req.params.date, (err, data) => {
     if (err) {
@@ -18,7 +18,7 @@ exports.findByDate = (req, res) => {
 };
 
 
-// Find a single Restaurant with a id
+// Retrieve meal information with a id
 exports.findById = (req, res) => {
   Meal.findById(req.params.id, (err, data) => {
         if (err) {
@@ -35,6 +35,7 @@ exports.findById = (req, res) => {
       });
 };
 
+// Retrieve all meals from a restaurant with a restaurant id
 exports.findByRestaurantId = (req, res) => {
   Meal.findByRestaurantId(req.params.id, (err, data) => {
         if (err) {
