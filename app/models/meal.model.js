@@ -1,4 +1,5 @@
 const sql = require("./db.js");
+const clense = require('../misc/clense.js')
 
 // constructor
 const Meal = function(meal) {
@@ -9,7 +10,12 @@ const Meal = function(meal) {
 
 Meal.findById = (id, result) => {
   // Sanitize the id to prevent SQL injection
-  id = sql.escape(id);
+  if (!clense.isNumber(id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  id = clense.escape(id);
     
   sql.query(`SELECT * FROM meal WHERE id = ${id}`, (err, res) => {
     if (err) {
@@ -31,7 +37,12 @@ Meal.findById = (id, result) => {
 
 Meal.findByDate = (date, result) => {
   // Sanitize the id to prevent SQL injection
-  date = sql.escape(date);
+  if (!clense.isDate(date)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  date = clense.escape(date);
 
   sql.query(`SELECT * FROM meal WHERE restaurant_date = ${date}`, (err, res) => {
     if (err) {
@@ -53,7 +64,12 @@ Meal.findByDate = (date, result) => {
 
 Meal.findByRestaurantId = (id, result) => {
   // Sanitize the id to prevent SQL injection
-  id = sql.escape(id);
+  if (!clense.isNumber(id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  id = clense.escape(id);
 
   sql.query(`SELECT * FROM meal WHERE restaurant_id = ${id}`, (err, res) => {
     if (err) {
