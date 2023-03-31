@@ -11,12 +11,12 @@ const User = function(user) {
 
 User.checkLogin = (user, error) => {
   // Somebody would need to be very sneaky to try SQL injection here, but, I make sure it is good
-  let id = clense.escape(user.sub);
-  let name = clense.escape(user.name);
-  let email = clense.escape(user.email);
+  // let id = clense.escape(user.sub);
+  // let name = clense.escape(user.name);
+  // let email = clense.escape(user.email);
 
   // Get whether the user is in the database
-  sql.query(`SELECT COUNT(id) FROM user WHERE auth0_id = '${id}'`, (err, data) => {
+  sql.query(`SELECT COUNT(id) FROM user WHERE auth0_id = '${user.sub}'`, (err, data) => {
     // If there is an error, log it
     if (err) {
         console.log("error: ", err);
@@ -25,7 +25,7 @@ User.checkLogin = (user, error) => {
     } else {
       // If they are not in the database, add them
       if (data[0]['COUNT(id)'] == 0) {
-          sql.query(`INSERT INTO user (name, email, auth0_id) VALUES ('${name}', '${email}', '${id}')`, (err, data) => {
+          sql.query(`INSERT INTO user (name, email, auth0_id) VALUES ('${user.name}', '${user.email}', '${user.sub}')`, (err, data) => {
             // If there is an error, log it
             if (err) {
                 console.log("error: ", err);
@@ -47,11 +47,6 @@ User.checkLogin = (user, error) => {
 
 User.getUser = (id, result) => {
   // Sanitize the id to prevent SQL injection
-  if (!clense.isNumber(id)) {
-    result({ kind: "not_found" }, null);
-    return;
-  }
-
   id = clense.escape(id);
 
   sql.query(`SELECT name, daily_calories_goal FROM user WHERE auth0_id = ${id}`, (err, res) => {
