@@ -6,20 +6,22 @@ class Daily extends Component {
         this.state = { apiResponse: "" };
     }
     callAPI() {
-        fetch("/api/user/calorie_goal")
-            .then(res => res.text())
+        fetch("http://localhost:9000/login")
+            .then(res => res.json())
             .then(res => this.setState({ apiResponse: res }));
     }
     componentWillMount() {
         this.callAPI();
     }
+    
     render() {
+        console.log(this.state.apiResponse);
   return (
     <div className="flex  justify-evenly m-6 gap-2 flex-wrap">
         <div className="w-[439px] rounded-2xl bg-white flex justify-between px-16 py-4">
             <div>
                 <h1>Daily Calories</h1>
-                <p>{this.apiResponse}</p>
+                <p>{this.state?.apiResponse.name}</p>
             </div>
             <div>
                 <svg width="130" height="130" viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg">
