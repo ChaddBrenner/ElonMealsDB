@@ -10,7 +10,7 @@ const User = function(user) {
 };
 
 User.checkLogin = (user, error) => {
-  // Somebody would need to be very sneaky to try SQL injection here, but, I make sure it is good
+  // Sanitize the user to prevent SQL injection
   // let id = clense.escape(user.sub);
   // let name = clense.escape(user.name);
   // let email = clense.escape(user.email);
