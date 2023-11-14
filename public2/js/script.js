@@ -30,6 +30,7 @@ auth0.createAuth0Client({
     authorizationParams: {
         redirect_uri: window.location.origin,
         audience: 'http://localhost:3000', 
+        scope: 'openid profile email',
     }
   }).then(async (auth0Client) => {
     // Assumes a button with id "login" in the DOM
@@ -74,10 +75,14 @@ auth0.createAuth0Client({
 
     //with async/await
     document.getElementById('call-api').addEventListener('click', async () => {
+
+        // const isAuthenticated = await auth0Client.isAuthenticated();
+        // if (!isAuthenticated) {
+        //     return alert('User is not authenticated');
+        // }
         console.log('clicked');
         const accessToken = await auth0Client.getTokenSilently();
-        console.log(accessToken);
-        const result = await fetch('http://localhost:3000/test', {
+        const result = await fetch('http://localhost:3000/api/user', {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -85,7 +90,6 @@ auth0.createAuth0Client({
         }
         });
         const data = await result.json();
-        console.log(data);
     });
 });
 
@@ -131,7 +135,7 @@ auth0.createAuth0Client({
 async function getRestaurants() {
     let outputObjs = [];
 
-    let restaurantResponse = await fetch('http://localhost:3000/api/restaurants/date/2023-11-09');
+    let restaurantResponse = await fetch('http://localhost:3000/api/restaurants/date/2023-11-14');
     restaurantResponse = await restaurantResponse.json();
 
     let currentTime = new Date();
