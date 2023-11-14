@@ -48,7 +48,7 @@ Station.findByMealId = (id, result) => {
       result(err, null);
       return;
     }
-
+    
     if (res.length) {
       console.log("found stations: ", res);
       result(null, res);
