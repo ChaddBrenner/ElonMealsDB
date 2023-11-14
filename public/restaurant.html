@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Selector</title>
+    <style>
+        * {
+            scroll-behavior: smooth;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+
+        .food-list {
+            /* justify-content: center; */
+            flex-wrap: wrap;
+            /* display: flex; */
+            display: block;
+            -type: none;
+            padding-left: 0;
+            -webkit-column-count: 3;
+            -moz-column-count: 3;
+            column-count: 3;
+
+            /* justify-content: space-evenly; */
+        }
+
+        .food-item {
+            text-align: left;
+            padding-left: 20px;
+            padding-bottom: 10px;
+            list-style-type: none;
+            display: list-item;
+            text-align: -webkit-match-parent;
+            /* width: 500;
+            height: 10px; */
+        }
+
+        /* Make each station inside of it's own "box" */
+        .station {
+            background-color: white;
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2px;
+            /* width: 30vw; */
+
+        }
+
+        body {
+            background: linear-gradient(#FF5F6D, #FFC371);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            margin: 0px;
+            padding: 0px;
+        }
+
+        .gluten-free {
+            width: 15px;
+            height: 15px;
+            margin-left: 5px;
+        }
+
+        .vegan {
+            width: 15px;
+            height: 15px;
+            margin-left: 5px;
+        }
+
+        .vegetarian {
+            width: 15px;
+            height: 15px;
+            margin-left: 5px;
+        }
+
+        .meal-selector {
+            display: flex;
+            justify-content: center;
+            margin-top: 100px;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            width: 20%;
+            height: 100px;
+            background-color: white;
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2px;
+            font-size: 20px;
+            border: 1px solid #FFFFFF;
+        }
+
+        /* Active button */
+        .active {
+            /* background-color: #CCCCCC; */
+            border-color: #CCCCCC;
+            scale: 1.1;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        nav {
+            position: fixed;
+            z-index: 500;
+            top: 0px;
+            background-color: #FFFFFF;
+            width: 100%;
+            height: 50px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+            align-items: center;
+            display: flex;
+            padding-left: 20px;
+            padding-right: 20px;
+            justify-content: space-between;
+        }
+
+        @media screen and (max-width: 600px) {
+            .tab-button {
+                width: 100%;
+                height: 50px;
+            }
+
+            .meal-selector {
+                gap: 0px;
+                margin-bottom: 0px;
+            }
+
+            .active {
+                scale: 1.05;
+            }
+        }
+
+        .home-redirect {
+            text-decoration: none;
+            color: black;
+            font-size: 20px;
+        }
+
+        .login-redirect {
+            text-decoration: none;
+            color: black;
+            font-size: 20px;
+            margin-right: 40px;
+        }
+
+        .food-description-panel {
+            position: fixed;
+            width: 40%;
+            transition: all 300ms ease 0s;
+            height: 100%;
+            top: 0px;
+            right: 0px;
+            z-index: 1049;
+            background-color: #FFFFFF;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <a href="index.html" class="home-redirect">Home</a>
+        <!-- <a href="http://localhost:3000/login" class="login-redirect">Login</a> -->
+        <!-- Login with Login function -->
+        <button id="login" class="login" onclick="login()">Login</button>
+        <button id="logout" class="logout" onclick="logout()">Logout</button>
+    </nav>
+
+    <div class="meal-selector" id="meal-selector">
+    </div>
+
+    <div class="station-list" id="station-list">
+
+    </div>
+
+    <div class="food-description-panel">
+        <h1 id="food-short-name">Sugar Waffle Cone</h1>
+        <h2 id="food-full-name">A delicious sugar waffle cone with sprinkles</h2>
+        <p id="food-per-serving">1 each per serving</p>
+        <p id="food-allergens-header">Allergens</p>
+        <p id="food-allergens">Milk, Eggs, Fish</p>
+        <div id="food-nutrition">
+            <ul>
+                <li>Calories: 200</li>
+                <li>Calories from fat: 200</li>
+                <li>Cholesterol: 20g</li>
+                <li>Dietary Fiber: 20g</li>
+                <li>Saturated Fat: 20g</li>
+                <li>Sodium: 20g</li>
+                <li>Fat: 10g</li>
+                <li>Protein: 5g</li>
+                <li>Sugars: 5g</li>
+                <li>Total Carbohydrates: 5g</li>
+                <li>Total Fat: 5g</li>
+                <li>Trans Fat: 5g</li>
+
+            </ul>
+        </div>
+    </div>
+</body>
+
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+<script src="js/restaurant.js"></script>
+
+
+</html>
