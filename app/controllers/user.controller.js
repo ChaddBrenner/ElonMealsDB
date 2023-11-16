@@ -70,6 +70,7 @@ exports.getCalories = (req, res) => {
     });
 }
 
+
 // Add a food to the user's favorites
 exports.addFavorite = (req, res) => {
     User.checkLogin(req.auth.sub, (err) => {
@@ -79,7 +80,8 @@ exports.addFavorite = (req, res) => {
                 message: "Error retrieving User"
             });
         } else {
-            User.addFavorite(req.auth.sub, req.body.food_id, (err, data) => {
+            // TODO: FIX .body to .params where appropriate
+            User.addFavorite(req.auth.sub, req.params.food_id, (err, data) => {
                 if (err) {
                     console.log("error: ", err);
                     res.status(500).send({
