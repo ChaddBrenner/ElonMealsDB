@@ -24,7 +24,7 @@
             padding-left: 0;
             -webkit-column-count: 3;
             -moz-column-count: 3;
-            column-count: 3;
+            column-count: 4;
 
             /* justify-content: space-evenly; */
         }
@@ -121,11 +121,11 @@
             width: 100%;
             height: 50px;
             box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
-            align-items: center;
+            /* align-items: center; */
             display: flex;
-            padding-left: 20px;
-            padding-right: 20px;
-            justify-content: space-between;
+            /* padding-left: 20px; */
+            /* padding-right: 20px; */
+            /* justify-content: space-between; */
         }
 
         @media screen and (max-width: 600px) {
@@ -148,13 +148,21 @@
             text-decoration: none;
             color: black;
             font-size: 20px;
+            right: 10px;
         }
 
-        .login-redirect {
+        .login {
             text-decoration: none;
             color: black;
             font-size: 20px;
-            margin-right: 40px;
+            float: right;
+        }
+
+        .logout {
+            text-decoration: none;
+            color: black;
+            font-size: 20px;
+            float: right;
         }
 
         .food-description-panel {
@@ -168,14 +176,18 @@
             background-color: #FFFFFF;
             box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
         }
+
+        table {
+            /* width: 100%; */
+            padding-left: 10px;
+        }
     </style>
 </head>
 
 <body>
     <nav>
         <a href="index.html" class="home-redirect">Home</a>
-        <!-- <a href="http://localhost:3000/login" class="login-redirect">Login</a> -->
-        <!-- Login with Login function -->
+        <p id="calorie-counter" class="calorie-counter">Current Calories: 123</p>
         <button id="login" class="login" onclick="login()">Login</button>
         <button id="logout" class="logout" onclick="logout()">Logout</button>
     </nav>
@@ -187,28 +199,75 @@
 
     </div>
 
-    <div class="food-description-panel">
-        <h1 id="food-short-name">Sugar Waffle Cone</h1>
-        <h2 id="food-full-name">A delicious sugar waffle cone with sprinkles</h2>
+    <div class="food-description-panel hidden" id="food-description-panel">
+        <!-- Close button -->
+        <button id="close-food-description" class="close-food-description" onclick="closeFoodDescription()">X</button>
+        <h1 id="food-short-name" class="food-short-name">Sugar Waffle Cone</h1>
+        <h2 id="food-full-name" class="food-short-name">A delicious sugar waffle cone with sprinkles</h2>
+        <div class="food-dietary" id="food-dietary">
+            <img src="images/glutenFree2.png" class="gluten-free" id="food-gluten-free">
+            <img src="images/vegan2.png" class="vegan" id="food-vegan">
+            <img src="images/vegetarian2.png" class="vegetarian" id="food-vegetarian"></img>
+        </div>
         <p id="food-per-serving">1 each per serving</p>
         <p id="food-allergens-header">Allergens</p>
-        <p id="food-allergens">Milk, Eggs, Fish</p>
+        <div id="food-allergens">
+        </div>
         <div id="food-nutrition">
-            <ul>
-                <li>Calories: 200</li>
-                <li>Calories from fat: 200</li>
-                <li>Cholesterol: 20g</li>
-                <li>Dietary Fiber: 20g</li>
-                <li>Saturated Fat: 20g</li>
-                <li>Sodium: 20g</li>
-                <li>Fat: 10g</li>
-                <li>Protein: 5g</li>
-                <li>Sugars: 5g</li>
-                <li>Total Carbohydrates: 5g</li>
-                <li>Total Fat: 5g</li>
-                <li>Trans Fat: 5g</li>
-
-            </ul>
+            <table>
+                <tr>
+                    <th>Nutrition Facts</th>
+                    <th>Amount per serving</th>
+                </tr>
+                <tr>
+                    <td>Calories</td>
+                    <td class="table-calories">200</td>
+                </tr>
+                <tr>
+                    <td>Calories from fat</td>
+                    <td class="table-calories-from-fat">200</td>
+                </tr>
+                <tr>
+                    <td>Cholesterol</td>
+                    <td class="table-cholesterol">20g</td>
+                </tr>
+                <tr>
+                    <td>Dietary Fiber</td>
+                    <td class="table-dietary-fiber">20g</td>
+                </tr>
+                <tr>
+                    <td>Saturated Fat</td>
+                    <td class="table-saturated-fat">20g</td>
+                </tr>
+                <tr>
+                    <td>Sodium</td>
+                    <td class="table-sodium">20g</td>
+                </tr>
+                <tr>
+                    <td>Fat</td>
+                    <td class="table-fat">10g</td>
+                </tr>
+                <tr>
+                    <td>Protein</td>
+                    <td class="table-protein">5g</td>
+                </tr>
+                <tr>
+                    <td>Sugars</td>
+                    <td class="table-sugars">5g</td>
+                </tr>
+                <tr>
+                    <td>Total Carbohydrates</td>
+                    <td class="table-total-carbohydrates">5g</td>
+                </tr>
+                <tr>
+                    <td>Total Fat</td>
+                    <td class="table-total-fat">5g</td>
+                </tr>
+                <tr>
+                    <td>Trans Fat</td>
+                    <td class="table-trans-fat">5g</td>
+                </tr>
+            </table>
         </div>
     </div>
 </body>

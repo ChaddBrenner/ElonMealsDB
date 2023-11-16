@@ -8,12 +8,13 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            color: #333;
             /* background-color: #FF8080; */
             background-color: #f4f4f4;
+            /* background-color: #282828; */
             /* background: linear-gradient(#FF5F6D, #FFC371); */
             padding: 20px;
             margin: 0;
+            display: flex;
         }
 
         .header {
@@ -76,16 +77,12 @@
         }
 
         .open {
-            /* Make it look like the button is grayed out */
-            /* Add a outer border to make it look like a clickable element */
+
             color: #999;
             /* border: 1px solid #999; */
-            /* Add a inner border to make it look like a clickable element */
             border-radius: 5px;
             /* padding: 5px; */
             /* margin: 5px; */
-
-            /* Make it look like the button is grayed out */
             /* background-color: #f4f4f4; */
         }
 
@@ -129,6 +126,13 @@
         <div class="header">
             <h1>What's Open?</h1>
         </div>
+    </div>
+    <div class="favorites" id="favorites">
+        <div class="favorites-header">
+            <h1>Favorites</h1>
+        </div>
+        <ul id="favorites-list">
+        </ul>
     </div>
 
 

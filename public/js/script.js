@@ -91,6 +91,28 @@ auth0.createAuth0Client({
         });
         const data = await result.json();
     });
+
+    if (auth0Client.isAuthenticated()) {
+        const accessToken = await auth0Client.getTokenSilently();
+        document.getElementById('favorites').classList.remove('hidden');
+
+        let response = await fetch('http://localhost:3000/api/user/favorites', {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            }
+        });
+        let favorites = await response.json();
+
+        let favoriteList = document.getElementById('favorites-list');
+        console.log(favorites);
+        for (let favorite of favorites) {
+            let favoriteItem = document.createElement('li');
+            favoriteItem.innerText = favorite.short_name;
+            favoriteList.appendChild(favoriteItem);
+        }
+    }
 });
 
 
@@ -135,7 +157,10 @@ auth0.createAuth0Client({
 async function getRestaurants() {
     let outputObjs = [];
 
-    let restaurantResponse = await fetch('http://localhost:3000/api/restaurants/date/2023-11-14');
+    let currDate = new Date();
+    currDate = currDate.toISOString().substring(0,10);
+
+    let restaurantResponse = await fetch('http://localhost:3000/api/restaurants/date/' + currDate);
     restaurantResponse = await restaurantResponse.json();
 
     let currentTime = new Date();

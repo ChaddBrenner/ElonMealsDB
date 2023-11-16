@@ -35,8 +35,17 @@ auth0.createAuth0Client({
       auth0Client.logout();
     });
   
-    const isAuthenticated = await auth0Client.isAuthenticated();
+    const isAuthenticated = await auth0Client.isAuthenticated();    
     console.log(isAuthenticated);
+    console.log(await auth0Client.getTokenSilently());
+
+    if (isAuthenticated) {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("logout").classList.remove("hidden");
+    } else {
+        document.getElementById("login").classList.remove("hidden");
+        document.getElementById("logout").classList.add("hidden");
+    }
     // const userProfile = await auth0Client.getUser();
   
     // // Assumes an element with id "profile" in the DOM
@@ -73,6 +82,10 @@ auth0.createAuth0Client({
     // });
 });
 
+// Map of food id to food object
+// Scope so that we can access it in the food link event listener
+var foodMap = new Map();
+
 async function getFoods(restaurantId) {
     let meals = await fetch("http://localhost:3000/api/meals/restaurant/" + restaurantId);
     if (meals.status == 404) {
@@ -81,7 +94,7 @@ async function getFoods(restaurantId) {
 
     meals = await meals.json();
 
-    for (meal of meals) {
+    for (let meal of meals) {
         let stations = await fetch("http://localhost:3000/api/stations/meal/" + meal.id);
         if (stations.status == 404) {
             continue;
@@ -89,7 +102,7 @@ async function getFoods(restaurantId) {
 
         stations = await stations.json();
 
-        for (station of stations) {
+        for (let station of stations) {
             let foods = await fetch("http://localhost:3000/api/foods/station/" + station.id);
             if (foods.status == 404) {
                 continue;
@@ -97,9 +110,13 @@ async function getFoods(restaurantId) {
 
             foods = await foods.json();
             station.foods = foods;
+            for (let food of foods) {
+                let food_id = food.id;
+                foodMap.set(food_id, food);
+            }
         }
         meal.stations = stations;
-    }
+    }   
     return meals;
 }
 
@@ -151,8 +168,63 @@ function openTab(mealName) {
     }
 }
 
-function openFood(food) {
-    console.log(food);
+function openFood(foodId) {
+    document.getElementById("food-description-panel").classList.remove("hidden");
+    let food = foodMap.get(parseInt(foodId));
+
+    document.getElementById("food-short-name").innerText = food.short_name;
+    if (food.full_name) {
+        document.getElementById("food-full-name").innerText = food.full_name;
+    }
+    else {
+        document.getElementById("food-full-name").innerText = "";
+    }
+    document.getElementById("food-per-serving").innerText = food.amount_per_serving + " " + food.type_per_serving + " per serving";
+
+    let allergyList = document.getElementById("food-allergens");
+
+    while (allergyList.firstChild) {
+        allergyList.removeChild(allergyList.firstChild);
+    }
+
+    let allergies = [food.allergy_egg, food.allergy_shellfish, food.allergy_soy, food.allergy_peanut, food.allergy_wheat, food.allergy_tree_nut, food.allergy_milk, food.allergy_sesame, food.allergy_fish];
+    let allergyNames = ["Egg", "Shellfish", "Soy", "Peanut", "Wheat", "Tree Nut", "Milk", "Sesame", "Fish"];
+
+    for (let i = 0; i < allergies.length; i++) {
+        let allergy = allergies[i];
+        if (allergy == 1) {
+            let allergyItem = document.createElement("li");
+            allergyItem.classList.add("allergy-item");
+            allergyItem.innerText = allergyNames[i];
+            allergyList.appendChild(allergyItem);
+
+        }
+    }
+
+    if (food.gluten_free) {
+        document.getElementById("food-gluten-free").classList.remove("hidden");
+    }
+    else {
+        document.getElementById("food-gluten-free").classList.add("hidden");
+    }
+
+    if (food.vegetarian) {
+        document.getElementById("food-vegetarian").classList.remove("hidden");
+    }
+    else {
+        document.getElementById("food-vegetarian").classList.add("hidden");
+    }
+
+    if (food.vegan) {
+        document.getElementById("food-vegan").classList.remove("hidden");
+    }
+    else {
+        document.getElementById("food-vegan").classList.add("hidden");
+    }
+}
+
+function closeFoodDescription() {
+    document.getElementById("food-description-panel").classList.add("hidden");
 }
 
 async function displayFoods(restaurantId) {
@@ -192,41 +264,47 @@ async function displayFoods(restaurantId) {
                     
                     for (food of station.foods) {
                         let foodItem = document.createElement("li");
+                        foodItem.classList.add("food-item");
+
+                        let foodDiv = document.createElement("div");
+                        foodDiv.classList.add("food-div");
+
+                        let foodButton = document.createElement("button");
+                        foodButton.classList.add("food-button");
+                        foodButton.innerText = "❤️";
+                        foodButton.setAttribute("data-food-id", food.id);
+                        foodButton.setAttribute("onclick", "favoriteFood('" + food.id + "')");
+                        foodDiv.appendChild(foodButton);
+            
+
+                        foodItem.appendChild(foodDiv);
+
                         let foodLink = document.createElement("a");
                         foodLink.setAttribute("href", "#");
                         foodLink.innerText = food.short_name;
-                        foodLink.addEventListener("click", (e) => {
-                            console.log("clicked");
-                            console.log(e.target);
-                            openFood(food);
-                        });
                         foodLink.setAttribute("data-food-id", food.id);
                         foodLink.classList.add("food-link");
-                        foodItem.appendChild(foodLink);
+                        foodDiv.appendChild(foodLink);
 
-                        foodItem.classList.add("food-item");
-                        // foodItem.innerText = food.short_name;
-        
-                        
                         if (food.gluten_free) {
                             let glutenFree = document.createElement("img");
                             glutenFree.setAttribute("src", "images/glutenFree2.png");
                             glutenFree.classList.add("gluten-free");
-                            foodItem.appendChild(glutenFree);
+                            foodDiv.appendChild(glutenFree);
                         }
         
                         if (food.vegetarian) {
                             let vegetarian = document.createElement("img");
                             vegetarian.setAttribute("src", "images/vegetarian2.png");
                             vegetarian.classList.add("vegetarian");
-                            foodItem.appendChild(vegetarian);
+                            foodDiv.appendChild(vegetarian);
                         }
         
                         if (food.vegan) {
                             let vegan = document.createElement("img");
                             vegan.setAttribute("src", "images/vegan2.png");
                             vegan.classList.add("vegan");
-                            foodItem.appendChild(vegan);
+                            foodDiv.appendChild(vegan);
                         }
         
                         foodList.appendChild(foodItem);
@@ -244,19 +322,35 @@ async function displayFoods(restaurantId) {
     // Select the first meal
     let firstMeal = document.getElementsByClassName("tab-button")[0];
     firstMeal.click();
+
+    const foodItems = document.getElementsByClassName("food-link");
+    for (foodItem of foodItems) {
+        foodItem.addEventListener("click", (e) => {
+            let foodId = e.target.getAttribute("data-food-id");
+            openFood(foodId);
+        });
+    }
     
 }
 
-const foodItems = document.getElementsByClassName("food-item");
-for (foodItem of foodItems) {
-    foodItem.addEventListener("click", (e) => {
-        console.log("clicked");
-        console.log(e.target);
-    });
-}
-// foodItems.addEventListener("click", (e) => {
-//     console.log("clicked");
-//     console.log(e.target);
-// });
-
 displayFoods(restaurantId);
+
+async function favoriteFood(foodId) {
+    let food = foodMap.get(parseInt(foodId));
+
+    let response = await fetch("http://localhost:3000/api/user/favorite/" + foodId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlE3SnU5NnNLZVRCZGhVOGkwQllzOCJ9.eyJpc3MiOiJodHRwczovL2Rldi1pbGJ1dTRqb2huMXAyNzRpLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwMjkwMDgxOTE2MTkwMDE1Nzc5NiIsImF1ZCI6WyJodHRwOi8vbG9jYWxob3N0OjMwMDAiLCJodHRwczovL2Rldi1pbGJ1dTRqb2huMXAyNzRpLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3MDAxMzA2NjEsImV4cCI6MTcwMDIxNzA2MSwiYXpwIjoiUTV2WExiZDVOb010WEZBaVBqalhIdUMwUE9lNENxZGYiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIn0.m0vWhgZfaimKwHGE0btsie9J4_iANyMZZWfTMflm8GBbpCaui_G5boJgC_7B1Md1NWvxDca8IvPdE-O3WuD4rzafHbHBxoe0mbalowh9k_2RsqkhWhhSrCfddHowTnPfgmtIwTYKo25Bm-SniL-w3R6MrlSDDlYSVcGnO9bjhw1lfh6AJS4kN9Qbv0T8uQDZZ4JxNu_zXG_-ZrKVrW0VLUSvxLA84HpsPKGu7tdwqHBSLggieti0g3bmsYZXNzCNynK7vCv88ebQS4yineQ-3Xjmt3jDP6V1l1uaq03yfEoO-gpXxOeVjW-c-jLKudcRBT_JN-fpK_bywWvQC3UTMg`,
+        }
+    });
+
+    if (response.status == 200) {
+        alert("Successfully added " + food.short_name + " to your favorites!");
+    }
+    else {
+        alert("Failed to add " + food.short_name + " to your favorites!");
+    }
+}
+

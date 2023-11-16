@@ -4,17 +4,23 @@ const clense = require('../misc/clense.js')
 // constructor
 const User = function(user) {
   this.calories_goal = user.calories_goal;
-  this.database_id = user.database_id;
+  this.id = user.id;
 };
 
-User.checkLogin = (user, error) => {
+User.checkLogin = (id, error) => {
   // Sanitize the user to prevent SQL injection
-  // let id = clense.escape(user.sub);
-  // let name = clense.escape(user.name);
-  // let email = clense.escape(user.email);
+  id = id.split('|')[1];
+
+  if (!clense.isNumber(id)) {
+    console.log("id not number");
+    error({ kind: "not_found" }, null);
+    return;
+  }
+
+  id = clense.escape(id);
 
   // Get whether the user is in the database
-  sql.query(`SELECT COUNT(id) FROM user WHERE id = '${user}'`, (err, data) => {
+  sql.query(`SELECT COUNT(id) FROM user WHERE id = ${id}`, (err, data) => {
     // If there is an error, log it
     if (err) {
         console.log("error: ", err);
@@ -23,7 +29,7 @@ User.checkLogin = (user, error) => {
     } else {
       // If they are not in the database, add them
       if (data[0]['COUNT(id)'] == 0) {
-          sql.query(`INSERT INTO user (id) VALUES ('${user}')`, (err, data) => {
+          sql.query(`INSERT INTO user (id) VALUES (${id})`, (err, data) => {
             // If there is an error, log it
             if (err) {
                 console.log("error: ", err);
@@ -45,6 +51,13 @@ User.checkLogin = (user, error) => {
 
 User.getUser = (id, result) => {
   // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
+
+  if (!clense.isNumber(id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
   id = clense.escape(id);
 
   sql.query(`SELECT daily_calories_goal FROM user WHERE id = ${id}`, (err, res) => {
@@ -61,9 +74,11 @@ User.getUser = (id, result) => {
 
 User.updateCalorieGoal = (id, calories_goal, result) => {
   // Sanitize the id and calories goal to prevent SQL injection
+  id = id.split('|')[1];
+
   if (!clense.isNumber(id)) {
-    result({ kind: "not_found" }, null);
-    return;
+      result({ kind: "not_found" }, null);
+      return;
   }
 
   id = clense.escape(id);
@@ -73,7 +88,7 @@ User.updateCalorieGoal = (id, calories_goal, result) => {
     return;
   }
   calories_goal = clense.escape(calories_goal);
-        
+
   sql.query(`UPDATE user SET daily_calories_goal = ${calories_goal} WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
@@ -88,20 +103,22 @@ User.updateCalorieGoal = (id, calories_goal, result) => {
 
 User.getCalories = (id, date, result) => {
   // Sanitize the id and date to prevent SQL injection
+  id = id.split('|')[1];
+
   if (!clense.isNumber(id)) {
     result({ kind: "not_found" }, null);
     return;
   }
 
   id = clense.escape(id);
-  
+
   if (!clense.isDate(date)) {
     result({ kind: "not_found" }, null);
     return;
   }
 
   date = clense.escape(date);
-s
+  
   sql.query(`SELECT id FROM user WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
@@ -129,6 +146,8 @@ s
 
 User.addFavorite = (id, food_id, result) => {
   // Sanitize the id and food id to prevent SQL injection
+  id = id.split('|')[1];
+
   if (!clense.isNumber(id)) {
     result({ kind: "not_found" }, null);
     return;
@@ -143,34 +162,25 @@ User.addFavorite = (id, food_id, result) => {
 
   food_id = clense.escape(food_id);
 
-  sql.query(`SELECT id FROM user WHERE id = ${id}`, (err, res) => {
-    if (err) {
-      console.log("error: ", err);
-      result(err, null);
-      return;
-    } else {
-      const user_id = res[0].id;
-      sql.query(`INSERT INTO user_favorite_food (user_id, food_id) VALUES (${user_id}, ${food_id})`, (err, res) => {
-        if (err) {
-          console.log("error: ", err);
-          result(err, null);
-          return;
-        }
-        console.log("added favorite: ", res);
-        result(null, res);
-      });
-    }
-  });
+    sql.query(`INSERT INTO user_favorite_food (user_id, food_id) VALUES (${id}, ${food_id}) ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), food_id = VALUES(food_id)`, (err, res) => {
+      if (err) {
+        console.log("error: ", err);
+        result(err, null);
+        return;
+      }
+      console.log("added favorite: ", res);
+      result(null, res);
+    });
 };
 
 User.removeFavorite = (id, food_id, result) => {
   // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
+
   if (!clense.isNumber(id)) {
     result({ kind: "not_found" }, null);
     return;
   }
-
-  id = clense.escape(id);
 
   if (!clense.isNumber(food_id)) {
     result({ kind: "not_found" }, null);
@@ -201,12 +211,12 @@ User.removeFavorite = (id, food_id, result) => {
 
 User.getFavorites = (id, result) => {
   // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
+  
   if (!clense.isNumber(id)) {
     result({ kind: "not_found" }, null);
     return;
   }
-
-  id = clense.escape(id);
 
   sql.query(`SELECT id FROM user WHERE id = ${id}`, (err, res) => {
     if (err) {
@@ -232,13 +242,12 @@ User.getFavorites = (id, result) => {
 };
 
 User.getMeals = (id, date, result) => {
+  id = id.split('|')[1];
   // Sanitize the id to prevent SQL injection
   if (!clense.isNumber(id)) {
     result({ kind: "not_found" }, null);
     return;
   }
-
-  id = clense.escape(id);
 
   if (!clense.isDate(date)) {
     result({ kind: "not_found" }, null);
@@ -246,7 +255,7 @@ User.getMeals = (id, date, result) => {
   }
 
   date = clense.escape(date);
-    
+
   sql.query(`SELECT id FROM user WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
@@ -275,12 +284,12 @@ User.getMeals = (id, date, result) => {
 
 User.getMeal = (id, meal_id, result) => {
   // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
+
   if (!clense.isNumber(id)) {
     result({ kind: "not_found" }, null);
     return;
   }
-
-  id = clense.escape(id);
 
   if (!clense.isNumber(meal_id)) {
     result({ kind: "not_found" }, null);
@@ -316,12 +325,12 @@ User.getMeal = (id, meal_id, result) => {
 
 User.addMeal = (id, name, datetime, result) => {
   // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
+
   if (!clense.isNumber(id)) {
     result({ kind: "not_found" }, null);
     return;
   }
-
-  id = clense.escape(id);
 
   name = clense.escape(name);
 
@@ -354,12 +363,11 @@ User.addMeal = (id, name, datetime, result) => {
 
 User.removeMeal = (id, meal_id, result) => {
   // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
   if (!clense.isNumber(id)) {
     result({ kind: "not_found" }, null);
     return;
   }
-
-  id = clense.escape(id);
 
   if (!clense.isNumber(meal_id)) {
     result({ kind: "not_found" }, null);
@@ -390,12 +398,11 @@ User.removeMeal = (id, meal_id, result) => {
 
 User.addFood = (id, meal_id, food_id, result) => {
   // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
   if (!clense.isNumber(id)) {
     result({ kind: "not_found" }, null);
     return;
   }
-
-  id = clense.escape(id);
 
   if (!clense.isNumber(meal_id)) {
     result({ kind: "not_found" }, null);
@@ -433,12 +440,12 @@ User.addFood = (id, meal_id, food_id, result) => {
 
 User.removeFood = (id, meal_id, food_id, result) => {
   // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
+
   if (!clense.isNumber(id)) {
     result({ kind: "not_found" }, null);
     return;
   }
-
-  id = clense.escape(id);
 
   if (!clense.isNumber(meal_id)) {
     result({ kind: "not_found" }, null);
