@@ -13,6 +13,9 @@ import time
 # Get current date
 curr_date = datetime.now().date()
 
+# Set the date to 2023-11-13
+curr_date = datetime(2023, 11, 13).date()
+
 def collect_data():
     restaurants = get_restaurants(curr_date)
 
@@ -46,7 +49,7 @@ def insert_data(data):
         restaurant_id = insert_restaurant((restaurant['name'], restaurant['url'], curr_date))
 
         for meal in tqdm(restaurant['hours'], position=1, leave=False, desc='Meals'):
-            meal_id = insert_meal((meal['name'], datetime.fromtimestamp(int(meal['open'])), datetime.fromtimestamp(int(meal['close'])), restaurant_id, curr_date))
+            meal_id = insert_meal((meal['name'], datetime.fromtimestamp(int(meal['open'])), datetime.fromtimestamp(int(meal['close'])), restaurant_id))
 
             if 'meals' not in meal:
                 continue
@@ -96,7 +99,7 @@ def insert_data(data):
 
                     insert_food(new_food, station_id, food['url'])
 
-# data = load_data()
-data = collect_data()
+data = load_data()
+# data = collect_data()
 insert_data(data)
 # collect_data()

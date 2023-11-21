@@ -14,7 +14,6 @@
             /* background: linear-gradient(#FF5F6D, #FFC371); */
             padding: 20px;
             margin: 0;
-            display: flex;
         }
 
         .header {
@@ -114,6 +113,18 @@
             text-decoration: none;
             color: #333;
         }
+
+        .favorites {
+            position: absolute;
+            top: 95%;
+            transform: translate(0, -50%);
+            right: 20px;
+            padding: 10px;
+            margin: 10px;
+            /* padding: 0px;     */
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 
@@ -129,10 +140,14 @@
     </div>
     <div class="favorites" id="favorites">
         <div class="favorites-header">
-            <h1>Favorites</h1>
+            <h1>Favorites Available Today</h1>
         </div>
-        <ul id="favorites-list">
-        </ul>
+        <table id="favorites-list">
+            <tr>
+                <th>Food</th>
+                <th>Restaurant</th>
+            </tr>
+        </table>
     </div>
 
 

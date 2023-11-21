@@ -107,10 +107,25 @@ auth0.createAuth0Client({
 
         let favoriteList = document.getElementById('favorites-list');
         console.log(favorites);
+        let favorite_ids = [];
         for (let favorite of favorites) {
-            let favoriteItem = document.createElement('li');
-            favoriteItem.innerText = favorite.short_name;
-            favoriteList.appendChild(favoriteItem);
+            if (favorite_ids.includes(favorite.food_id)) {
+                continue;
+            } else {
+                favorite_ids.push(favorite.food_id);
+            }
+            let favoriteRow = document.createElement('tr')
+            favoriteRow.classList.add('favorite-row');
+            favoriteRow.setAttribute('data-id', favorite.food_id)
+            let favoriteFoodName = document.createElement('td');
+            favoriteFoodName.innerText = favorite.food_name;
+            let favoriteFoodRestaurant = document.createElement('td');
+            favoriteFoodRestaurant.innerText = favorite.restaurant_name;
+
+            favoriteRow.appendChild(favoriteFoodName);
+            favoriteRow.appendChild(favoriteFoodRestaurant);
+
+            favoriteList.appendChild(favoriteRow);
         }
     }
 });
@@ -158,11 +173,15 @@ async function getRestaurants() {
     let outputObjs = [];
 
     let currDate = new Date();
+    // Make the date 11/13/2023
+
+    currDate.setFullYear(2023);
+    currDate.setMonth(10);
+    currDate.setDate(12);
     currDate = currDate.toISOString().substring(0,10);
 
     let restaurantResponse = await fetch('http://localhost:3000/api/restaurants/date/' + currDate);
     restaurantResponse = await restaurantResponse.json();
-
     let currentTime = new Date();
 
     let mealRequests = [];
