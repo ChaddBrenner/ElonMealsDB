@@ -104,7 +104,7 @@ exports.removeFavorite = (req, res) => {
                 message: "Error retrieving User"
             });
         } else {
-            User.removeFavorite(req.auth.sub, req.body.food_id, (err, data) => {
+            User.removeFavorite(req.auth.sub, req.params.food_id, (err, data) => {
                 if (err) {
                     console.log("error: ", err);
                     res.status(500).send({
@@ -196,7 +196,7 @@ exports.addMeal = (req, res) => {
                 message: "Error retrieving User"
             });
         } else {
-            User.addMeal(req.auth.sub, req.body.meal, (err, data) => {
+            User.addMeal(req.auth.sub, req.body.meal_name, req.body.time_period, req.body.meal_id, (err, data) => {
                 if (err) {
                     console.log("error: ", err);
                     res.status(500).send({
@@ -266,6 +266,52 @@ exports.removeFood = (req, res) => {
             });
         } else {
             User.removeFood(req.auth.sub, req.body.food_id, req.body.meal_id, (err, data) => {
+                if (err) {
+                    console.log("error: ", err);
+                    res.status(500).send({
+                        message: "Error removing Food"
+                    });
+                } else {
+                    res.send(data);
+                }
+            });
+        }
+    });
+}
+
+// Remove a food from a meal
+exports.getFavoritesByRestaurant = (req, res) => {
+    User.checkLogin(req.auth.sub, (err) => {
+        if (err) {
+            console.log("error: ", err);
+            res.status(500).send({
+                message: "Error retrieving User"
+            });
+        } else {
+            User.getFavoritesByRestaurant(req.auth.sub, req.params.restaurant_id, (err, data) => {
+                if (err) {
+                    console.log("error: ", err);
+                    res.status(500).send({
+                        message: "Error removing Food"
+                    });
+                } else {
+                    res.send(data);
+                }
+            });
+        }
+    });
+}
+
+// Remove a food from a meal
+exports.getMealsByRestaurant = (req, res) => {
+    User.checkLogin(req.auth.sub, (err) => {
+        if (err) {
+            console.log("error: ", err);
+            res.status(500).send({
+                message: "Error retrieving User"
+            });
+        } else {
+            User.getMealsByRestaurant(req.auth.sub, req.params.restaurant_id, (err, data) => {
                 if (err) {
                     console.log("error: ", err);
                     res.status(500).send({

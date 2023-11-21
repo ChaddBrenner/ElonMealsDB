@@ -41,7 +41,7 @@ def insert_restaurant(restaurant):
 
 def insert_meal(meal):
     try:
-        query = "INSERT INTO meal (name, time_open, time_closed, restaurant_id, restaurant_date) VALUES (%s, %s, %s, %s, %s)"
+        query = "INSERT INTO meal (name, time_open, time_closed, restaurant_id) VALUES (%s, %s, %s, %s)"
         cursor.execute(query, meal)
         mydb.commit()
         meal_id = cursor.lastrowid
@@ -122,6 +122,14 @@ def insert_food(food, station_id, food_id):
 
 
 def reset_db():
+    query = """DELETE FROM user_meal;"""
+    cursor.execute(query)
+    query = """DELETE FROM user_meal_has_food;"""
+    cursor.execute(query)
+    query = """DELETE FROM user;"""
+    cursor.execute(query)
+    query = """DELETE FROM user_favorite_food;"""
+    cursor.execute(query)
     query = """DELETE FROM station_food;"""
     cursor.execute(query)
     query = """DELETE FROM station;"""

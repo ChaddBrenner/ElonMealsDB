@@ -13,6 +13,20 @@
             "database": "mydb",
             "username": "newuser",
             "password": "pass"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "192.168.1.103",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "local",
+            "database": "mydb",
+            "username": "newuser",
+            "password": "pass"
         }
     ]
 }

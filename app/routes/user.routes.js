@@ -29,15 +29,27 @@ module.exports = (app, checkJwt) => {
     // Get the user's favorites
     router.get('/api/user/favorites', checkJwt, users.getFavorites)
 
+    // Get the user's favorites given a restaurant id
+    router.get('/api/user/favorites/:restaurant_id', checkJwt, users.getFavoritesByRestaurant)
+
     /////////////////////////
     // User Meals          //
     /////////////////////////
 
-    // Get a user's meal given a meal id (getting foods in the meal)
+    // Append a food to a user's meal given a meal id and a food id
+    router.post('/api/user/meal/food', checkJwt, users.addFood)
+
+    // Remove a food from a user's meal given a meal id and a food id
+    router.delete('/api/user/meal/food', checkJwt, users.removeFood)
+
+    // Get a user's meal given a user meal id (getting foods in the meal)
     router.get('/api/user/meal/:meal_id', checkJwt, users.getMeal)
 
     // Get a user's meals given a date
     router.get('/api/user/meals/:date', checkJwt, users.getMeals)
+
+    // Get a user's meals given a restaurant id
+    router.get('/api/user/meals/restaurant/:restaurant_id', checkJwt, users.getMealsByRestaurant)
 
     // Add a meal to the user's meals
     router.post('/api/user/meal', checkJwt, users.addMeal)
@@ -45,11 +57,7 @@ module.exports = (app, checkJwt) => {
     // Remove a meal from the user's meals
     router.delete('/api/user/meal/:meal_id', checkJwt, users.removeMeal)
 
-    // Append a food to a user's meal given a meal id and a food id
-    router.post('/api/user/meal/:meal_id/food/:food_id', checkJwt, users.addFood)
 
-    // Remove a food from a user's meal given a meal id and a food id
-    router.delete('/api/user/meal/:meal_id/food/:food_id', checkJwt, users.removeFood)
 
     app.use('/', router);
 };

@@ -219,16 +219,26 @@ User.getFavorites = (id, result) => {
   }
 
   sql.query(`SELECT id FROM user WHERE id = ${id}`, (err, res) => {
+    let currDate = new Date();
+    currDate = currDate.toISOString().substring(0,10);
+    console.log(currDate);
     if (err) {
       console.log("error: ", err);
       result(err, null);
       return;
     } else {
-      const user_id = res[0].id;
-      sql.query(`SELECT f.id, f.short_name FROM user_favorite_food uff
-                  INNER JOIN food f
-                    ON f.id = uff.food_id
-                  WHERE uff.user_id = ${user_id}`, (err, res) => {
+      sql.query(`SELECT f.id AS food_id, f.short_name AS food_name, s.name AS station_name, m.name AS meal_name, r.name AS restaurant_name, r.date AS restaurant_date FROM user_favorite_food uff
+      INNER JOIN food f
+        ON f.id = uff.food_id
+        INNER JOIN station_food sf
+            ON sf.food_id = f.id
+        INNER JOIN station s
+            ON s.id = sf.station_id
+        INNER JOIN meal m
+            ON m.id = s.meal_id
+        INNER JOIN restaurant r
+            ON r.id = m.restaurant_id
+      WHERE uff.user_id = ${id} AND r.date = '${currDate}';`, (err, res) => {
         if (err) {
           console.log("error: ", err);
           result(err, null);
@@ -305,9 +315,9 @@ User.getMeal = (id, meal_id, result) => {
       return;
     } else {
       const user_id = res[0].id;
-      sql.query(`SELECT f.id, f.short_name, f.calories FROM user_meal um
+      sql.query(`SELECT f.id FROM user_meal um
                   INNER JOIN user_meal_has_food umhf
-                    ON umhf.user_meal_id = um.id AND umhf.user_meal_user_id = um.user_id
+                    ON umhf.user_meal_id = um.id
                   INNER JOIN food f
                     ON f.id = umhf.food_id
                   WHERE um.user_id = ${user_id} AND um.id = ${meal_id}`, (err, res) => {
@@ -323,7 +333,8 @@ User.getMeal = (id, meal_id, result) => {
   });
 };
 
-User.addMeal = (id, name, datetime, result) => {
+User.addMeal = (id, name, time_period, meal_id, result) => {
+  console.log(name, time_period);
   // Sanitize the id to prevent SQL injection
   id = id.split('|')[1];
 
@@ -334,30 +345,28 @@ User.addMeal = (id, name, datetime, result) => {
 
   name = clense.escape(name);
 
-  if (!clense.isDateTime(datetime)) {
+  if (!clense.isDateTime(time_period)) {
     result({ kind: "not_found" }, null);
     return;
   }
 
-  datetime = clense.escape(datetime);
+  time_period = clense.escape(time_period);
 
-  sql.query(`SELECT id FROM user WHERE id = ${id}`, (err, res) => {
+  if (!clense.isNumber(meal_id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  meal_id = clense.escape(meal_id);
+
+  sql.query(`INSERT INTO user_meal (user_id, name, time_period, id) VALUES (${id}, ${name}, ${time_period}, ${meal_id})`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
       return;
-    } else {
-      const user_id = res[0].id;
-      sql.query(`INSERT INTO user_meal (user_id, name, time_period) VALUES (${user_id}, ${name}, ${time_period})`, (err, res) => {
-        if (err) {
-          console.log("error: ", err);
-          result(err, null);
-          return;
-        }
-        console.log("added meal: ", res);
-        result(null, res);
-      });
     }
+    console.log("added meal: ");
+    result(null, { success: true });
   });
 };
 
@@ -396,7 +405,7 @@ User.removeMeal = (id, meal_id, result) => {
   });
 };
 
-User.addFood = (id, meal_id, food_id, result) => {
+User.addFood = (id, food_id, meal_id, result) => {
   // Sanitize the id to prevent SQL injection
   id = id.split('|')[1];
   if (!clense.isNumber(id)) {
@@ -418,27 +427,18 @@ User.addFood = (id, meal_id, food_id, result) => {
 
   food_id = clense.escape(food_id);
 
-  sql.query(`SELECT id FROM user WHERE id = ${id}`, (err, res) => {
+  sql.query(`INSERT INTO user_meal_has_food (user_meal_id, user_meal_user_id, food_id) VALUES (${meal_id}, ${id}, ${food_id})`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
       return;
-    } else {
-      const user_id = res[0].id;
-      sql.query(`INSERT INTO user_meal_has_food (user_meal_id, user_meal_user_id, food_id) VALUES (${meal_id}, ${user_id}, ${food_id})`, (err, res) => {
-        if (err) {
-          console.log("error: ", err);
-          result(err, null);
-          return;
-        }
-        console.log("added food to meal: ", res);
-        result(null, res);
-      });
     }
+    console.log("added food to meal: ", res);
+    result(null, { success: true });
   });
 };
 
-User.removeFood = (id, meal_id, food_id, result) => {
+User.removeFood = (id, food_id, meal_id, result) => {
   // Sanitize the id to prevent SQL injection
   id = id.split('|')[1];
 
@@ -460,24 +460,81 @@ User.removeFood = (id, meal_id, food_id, result) => {
   }
 
   food_id = clense.escape(food_id);
-  
-  sql.query(`SELECT id FROM user WHERE id = ${id}`, (err, res) => {
+
+  sql.query(`DELETE FROM user_meal_has_food WHERE food_id = ${food_id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
       return;
-    } else {
-      const user_id = res[0].id;
-      sql.query(`DELETE FROM user_meal_has_food WHERE user_meal_id = ${meal_id} AND user_meal_user_id = ${user_id} AND food_id = ${food_id}`, (err, res) => {
-        if (err) {
-          console.log("error: ", err);
-          result(err, null);
-          return;
-        }
-        console.log("removed food from meal: ", res);
-        result(null, res);
-      });
     }
+    console.log("removed food from meal: ", res);
+    result(null, { success: true });
+  });
+};
+
+User.getFavoritesByRestaurant = (id, restaurant_id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
+
+  if (!clense.isNumber(id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  if (!clense.isNumber(restaurant_id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  restaurant_id = clense.escape(restaurant_id);
+
+  sql.query(`SELECT DISTINCT f.id FROM restaurant r
+  INNER JOIN meal m ON r.id = m.restaurant_id
+  INNER JOIN station s on s.meal_id = m.id
+  INNER JOIN station_food sf on sf.station_id = s.id
+  INNER JOIN food f ON f.id = sf.food_id
+  INNER JOIN user_favorite_food uff ON uff.food_id = f.id
+  WHERE uff.user_id = ${id} AND r.id = ${restaurant_id};`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    console.log("found favorites: ", res);
+    result(null, res);
+  });
+};
+
+User.getMealsByRestaurant = (id, restaurant_id, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
+
+  if (!clense.isNumber(id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  if (!clense.isNumber(restaurant_id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  restaurant_id = clense.escape(restaurant_id);
+
+  sql.query(`SELECT um.id FROM restaurant r
+  INNER JOIN meal m ON r.id = m.restaurant_id
+  INNER JOIN user_meal um ON m.id = um.id
+  INNER JOIN user u ON um.user_id = u.id
+  WHERE u.id = ${id} AND r.id = ${restaurant_id};`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    console.log("found meals: ", res);
+    result(null, res);
   });
 };
 
