@@ -256,6 +256,28 @@ exports.addFood = (req, res) => {
     });
 }
 
+exports.updateFood = (req, res) => {
+    User.checkLogin(req.auth.sub, (err) => {
+        if (err) {
+            console.log("error: ", err);
+            res.status(500).send({
+                message: "Error retrieving User"
+            });
+        } else {
+            User.updateFood(req.auth.sub, req.body.food_id, req.body.meal_id, req.body.quantity, (err, data) => {
+                if (err) {
+                    console.log("error: ", err);
+                    res.status(500).send({
+                        message: "Error adding Food"
+                    });
+                } else {
+                    res.send(data);
+                }
+            });
+        }
+    });
+}
+
 // Remove a food from a meal
 exports.removeFood = (req, res) => {
     User.checkLogin(req.auth.sub, (err) => {

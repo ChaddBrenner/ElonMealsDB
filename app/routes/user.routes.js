@@ -39,6 +39,9 @@ module.exports = (app, checkJwt) => {
     // Append a food to a user's meal given a meal id and a food id
     router.post('/api/user/meal/food', checkJwt, users.addFood)
 
+    // Update the quantity of a food in a user's meal given a meal id and a food id
+    router.put('/api/user/meal/food', checkJwt, users.updateFood)
+
     // Remove a food from a user's meal given a meal id and a food id
     router.delete('/api/user/meal/food', checkJwt, users.removeFood)
 
@@ -55,7 +58,7 @@ module.exports = (app, checkJwt) => {
     router.post('/api/user/meal', checkJwt, users.addMeal)
 
     // Remove a meal from the user's meals
-    router.delete('/api/user/meal/:meal_id', checkJwt, users.removeMeal)
+    router.delete('/api/user/meal/', checkJwt, users.removeMeal)
 
 
 

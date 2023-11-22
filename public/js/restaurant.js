@@ -2,12 +2,10 @@ const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 const restaurantId = urlParams.get('id');
 
-
 // The Auth0 client, initialized in configureClient()
 let auth0Client = null;
 var userMeals = [];
-var favoritedFoods = [];
-var restaurantName = "";
+var userFoods = [];
 
 
 /**
@@ -64,194 +62,24 @@ const configureClient = async () => {
   });
 };
 
-/**
- * Checks to see if the user is authenticated. If so, `fn` is executed. Otherwise, the user
- * is prompted to log in
- * @param {*} fn The function to execute if the user is logged in
- */
-const requireAuth = async (fn, targetUrl) => {
-  const isAuthenticated = await auth0Client.isAuthenticated();
-
-  if (isAuthenticated) {
-    return fn();
-  }
-
-  return login(targetUrl);
-};
-
-function showContentFromUrl(pathname) {
-    const routes = [
-        { path: "/", fn: () => showContent("content-home") },
-        { path: "/profile", fn: () => showContent("content-profile") },
-        { path: "/external-api", fn: () => showContent("content-external-api") },
-    ];
-
-    for (let route of routes) {
-        if (route.path === pathname) {
-            return route.fn();
-        }
-    }
-
-    return false;
-}
-
-function showContent(id) {
-    const contentElements = document.getElementsByClassName("content");
-
-    for (let el of contentElements) {
-        el.classList.add("hidden");
-    }
-
-    document.getElementById(id).classList.remove("hidden");
-}
-
 // Will run when page finishes loading
 window.onload = async () => {
-    await displayFoods(restaurantId);
+    let foods = await getFoods(restaurantId);
+    await displayFoods(foods);
     await configureClient();
 
-//   If unable to parse the history hash, default to the root URL
-//   if (!showContentFromUrl(window.location.pathname)) {
-//     showContentFromUrl("/");
-//     window.history.replaceState({ url: "/" }, {}, "/");
-//   }
+    const isAuthenticated = await auth0Client.isAuthenticated();
 
-//   const bodyElement = document.getElementsByTagName("body")[0];
-
-//   // Listen out for clicks on any hyperlink that navigates to a #/ URL
-//   bodyElement.addEventListener("click", (e) => {
-//     if (isRouteLink(e.target)) {
-//       const url = e.target.getAttribute("href");
-
-//       if (showContentFromUrl(url)) {
-//         e.preventDefault();
-//         window.history.pushState({ url }, {}, url);
-//       }
-//     }
-//   });
-
-  const isAuthenticated = await auth0Client.isAuthenticated();
-
-  if (isAuthenticated) {
-    console.log("> User is authenticated");
-    // window.history.replaceState({}, document.title, window.location.pathname);
-    // updateUI();
-    let favoritedFoods = await fetch("http://localhost:3000/api/user/favorites/" + restaurantId, {
-        headers: {
-            Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
-        }
-    });
-
-    favoritedFoods = await favoritedFoods.json();
-    
-    for (let food of favoritedFoods) {
-        let foodButtons = document.querySelectorAll("button[data-food-id='" + food.id + "'].food-favorite-button");
-        for (let foodButton of foodButtons) {
-            foodButton.innerText = "💖";
-            foodButton.removeAttribute("onclick");
-            foodButton.setAttribute("onclick", "unfavoriteFood('" + food.id + "')");
-        }
+    if (isAuthenticated) {
+        console.log("> User is authenticated");
+        await getFavoriteFoods(restaurantId);
+        userMeals = await getUserMeals(restaurantId);
     }
-
-    userMeals = await fetch("http://localhost:3000/api/user/meals/restaurant/" + restaurantId, {
-        headers: {
-            Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
-        }
-    });
-
-    userMeals = await userMeals.json();
-    for (let userMeal of userMeals) {
-        let mealButton = document.querySelector("button[meal-id='" + userMeal.id + "']");
-        mealButton.classList.add("adding-meal");
-
-        let foodItems = await fetch("http://localhost:3000/api/user/meal/" + userMeal.id, {
-            headers: {
-                Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
-            }
-        });
-
-        foodItems = await foodItems.json();
-        for (let foodItem of foodItems) {
-            let foodButtons = document.querySelectorAll("button[data-food-id='" + foodItem.id + "'][meal-id='" + userMeal.id + "'].food-button");
-            for (let foodButton of foodButtons) {
-                foodButton.innerText = "➖";
-                foodButton.removeAttribute("onclick");
-                foodButton.setAttribute("onclick", "removeFood('" + foodItem.id + "', '" + userMeal.id + "')");
-            }
-        }
-    }
-  }
-  else {
+    else {
     console.log("> User not authenticated");
-  }
-
-//   const query = window.location.search;
-//   const shouldParseResult = query.includes("code=") && query.includes("state=");
-
-//   if (shouldParseResult) {
-    // console.log("> Parsing redirect");
-    // try {
-//       const result = await auth0Client.handleRedirectCallback();
-
-//       if (result.appState && result.appState.targetUrl) {
-//         showContentFromUrl(result.appState.targetUrl);
-//       }
-
-//       console.log("Logged in!");
-//     } catch (err) {
-//       console.log("Error parsing redirect:", err);
-//     }
-
-//     window.history.replaceState({}, document.title, "/");
-//   }
-
-//   updateUI();
+    }
 };
 
-// auth0.createAuth0Client({
-//     domain: "dev-ilbuu4john1p274i.us.auth0.com",
-//     clientId: "Q5vXLbd5NoMtXFAiPjjXHuC0POe4Cqdf",
-//     authorizationParams: {
-//         redirect_uri: window.location.href,
-//         audience: 'http://localhost:3000', 
-//         scope: 'openid profile email',
-//     }
-//   }).then(async (auth0Client) => {
-//     // Assumes a button with id "login" in the DOM
-//     const loginButton = document.getElementById("login");
-  
-//     loginButton.addEventListener("click", (e) => {
-//       e.preventDefault();
-//       auth0Client.loginWithRedirect();
-//     });
-  
-//     if (location.search.includes("state=") && 
-//         (location.search.includes("code=") || 
-//         location.search.includes("error="))) {
-//       await auth0Client.handleRedirectCallback();
-//       window.history.replaceState({}, document.title, "/");
-//     }
-  
-//     // Assumes a button with id "logout" in the DOM
-//     const logoutButton = document.getElementById("logout");
-  
-//     logoutButton.addEventListener("click", (e) => {
-//       e.preventDefault();
-//       auth0Client.logout();
-//     });
-  
-//     const isAuthenticated = await auth0Client.isAuthenticated();    
-//     console.log(isAuthenticated);
-//     console.log(await auth0Client.getTokenSilently());
-
-//     if (isAuthenticated) {
-//         document.getElementById("login").classList.add("hidden");
-//         document.getElementById("logout").classList.remove("hidden");
-//     } else {
-//         document.getElementById("login").classList.remove("hidden");
-//         document.getElementById("logout").classList.add("hidden");
-//     }
-// });
 
 // Map of food id to food object
 // Scope so that we can access it in the food link event listener
@@ -316,11 +144,11 @@ function isActive(meal) {
     return false;
 }
 
-function openTab(mealName) {
+function openTab(mealId) {
     let stationList = document.getElementsByClassName('station');
 
     for (station of stationList) {
-        if (station.classList.contains(mealName)) {
+        if (station.getAttribute("meal-id") == mealId) {
             station.classList.remove("hidden");
         }
         else {
@@ -331,7 +159,7 @@ function openTab(mealName) {
     // Update the active button
     let tabButtons = document.getElementsByClassName("tab-button");
     for (button of tabButtons) {
-        if (button.innerText.replace(" ", "") == mealName) {
+        if (button.getAttribute("meal-id") == mealId) {
             button.classList.add("active");
         }
         else {
@@ -399,106 +227,214 @@ function closeFoodDescription() {
     document.getElementById("food-description-panel").classList.add("hidden");
 }
 
-async function displayFoods(restaurantId) {
-    let foods = await getFoods(restaurantId);
+function convertTime(time) {
+    time = time.split(':'); // convert to array
 
+    // fetch
+    var hours = Number(time[0]);
+    var minutes = Number(time[1]);
+    var seconds = Number(time[2]);
+
+    // calculate
+    var timeValue;
+
+    if (hours > 0 && hours <= 12) {
+    timeValue= "" + hours;
+    } else if (hours > 12) {
+    timeValue= "" + (hours - 12);
+    } else if (hours == 0) {
+    timeValue= "12";
+    }
+    
+    timeValue += (minutes < 10) ? ":0" + minutes : ":" + minutes;  // get minutes
+    // timeValue += (seconds < 10) ? ":0" + seconds : ":" + seconds;  // get seconds
+    timeValue += (hours >= 12) ? " P.M." : " A.M.";  // get AM/PM
+
+    return timeValue;
+}
+
+
+function createMealSelectorButton(meal) {
+    
+    let mealButton = document.createElement("button");
+    mealButton.classList.add("tab-button");
+    mealButton.innerText = meal.name;
+    mealButton.setAttribute('meal-id', meal.id);
+    mealButton.setAttribute("onclick", "openTab('" + meal.id + "')");
+    if (isActive(meal)) {
+        mealButton.classList.add("active");
+    }
+
+    let mealSelectorDiv = document.createElement("div");
+    mealSelectorDiv.classList.add("meal-selector-item");
+
+    let mealTime = document.createElement("span");
+    mealTime.classList.add("meal-time");
+    mealTime.innerText = convertTime(meal.time_open) + " - " + convertTime(meal.time_closed);
+
+    let modifyMealDiv = document.createElement("div");
+    modifyMealDiv.classList.add("modify-meal-div");
+    modifyMealDiv.classList.add("hidden");
+
+    let deleteMeal = document.createElement("button");
+    deleteMeal.classList.add("delete-meal");
+    deleteMeal.innerText = "❌";
+    deleteMeal.setAttribute("onclick", "removeUserMeal('" + meal.id + "')");
+
+    let editMeal = document.createElement("button");
+    editMeal.classList.add("edit-meal");
+    editMeal.innerText = "✏️";
+    editMeal.setAttribute("onclick", "editMeal('" + meal.id + "')");
+
+    modifyMealDiv.appendChild(deleteMeal);
+    modifyMealDiv.appendChild(editMeal);
+    
+    // mealSelectorDiv.appendChild(mealButton);
+    // mealSelectorDiv.appendChild(mealTime);
+    // mealSelectorDiv.appendChild(modifyMealDiv);
+
+    mealButton.appendChild(mealTime);
+    mealButton.appendChild(modifyMealDiv);
+    return mealButton;
+}
+
+function createStationDiv(station, meal) {
+    let stationDiv = document.createElement("div");
+    stationDiv.classList.add("station");
+    stationDiv.classList.add(meal.name.replace(" ", ""));
+    stationDiv.setAttribute("station-id", station.id);
+    stationDiv.setAttribute("meal-id", station.meal_id);
+    if (!isActive(meal)) {
+        stationDiv.classList.add("hidden");
+    }
+
+    let stationName = document.createElement("h2");
+    stationName.innerText = station.name;
+    
+    stationDiv.appendChild(stationName);
+
+    return stationDiv;
+}
+
+function editMeal(mealId) {
+    let foodPopup = document.getElementById("food-popup");
+    foodPopup.classList.remove("hidden");
+    console.log(userMeals);
+    getNutrition(userMeals[0]);
+}
+
+function createFoodList() {
+    let foodList = document.createElement("ul");
+    foodList.classList.add("food-list");
+
+    return foodList;
+}
+
+function createFoodDiv(food, station) {
+    let foodDiv = document.createElement("div");
+    foodDiv.classList.add("food-div");
+    foodDiv.setAttribute("data-food-id", food.id);
+    foodDiv.setAttribute("station-id", station.id);
+    foodDiv.setAttribute("meal-id", station.meal_id);
+
+    return foodDiv;
+}
+
+function createFoodButton(food, station, meal) {
+    let foodButton = document.createElement("button");
+    foodButton.classList.add("food-button");
+    foodButton.innerText = "➕";
+    foodButton.setAttribute("data-food-id", food.id);
+    foodButton.setAttribute("onclick", "addFood('" + food.id + "'" + ", '" + meal.id + "'" + ")");
+    foodButton.setAttribute("station-id", station.id);
+    foodButton.setAttribute("meal-id", station.meal_id);
+
+    return foodButton;
+}
+
+function createFoodFavoriteButton(food, station) {
+    let foodFavoriteButton = document.createElement("button");
+    foodFavoriteButton.classList.add("food-favorite-button");
+    foodFavoriteButton.innerText = "❤️";
+    foodFavoriteButton.setAttribute("data-food-id", food.id);
+    foodFavoriteButton.setAttribute("onclick", "addFavoriteFood('" + food.id + "')");
+    foodFavoriteButton.setAttribute("station-id", station.id);
+    foodFavoriteButton.setAttribute("meal-id", station.meal_id);
+
+    return foodFavoriteButton;
+}
+
+function createFoodLink(food) {
+    let foodLink = document.createElement("a");
+    foodLink.setAttribute("href", "#");
+    foodLink.innerText = food.short_name;
+    foodLink.setAttribute("data-food-id", food.id);
+    foodLink.classList.add("food-link");
+
+    return foodLink;
+}
+
+function createFoodItem(food, station, meal) {
+    let foodItem = document.createElement("li");
+    foodItem.classList.add("food-item");
+
+    let foodDiv = createFoodDiv(food, station);
+
+    let foodButton = createFoodButton(food, station, meal);
+    foodDiv.appendChild(foodButton);
+
+    let foodFavoriteButton = createFoodFavoriteButton(food, station);
+    foodDiv.appendChild(foodFavoriteButton);
+
+    let foodLink = createFoodLink(food);
+    foodDiv.appendChild(foodLink);
+
+    if (food.gluten_free) {
+        let glutenFree = document.createElement("img");
+        glutenFree.setAttribute("src", "images/glutenFree2.png");
+        glutenFree.classList.add("gluten-free");
+        foodDiv.appendChild(glutenFree);
+    }
+
+    if (food.vegetarian) {
+        let vegetarian = document.createElement("img");
+        vegetarian.setAttribute("src", "images/vegetarian2.png");
+        vegetarian.classList.add("vegetarian");
+        foodDiv.appendChild(vegetarian);
+    }
+
+    if (food.vegan) {
+        let vegan = document.createElement("img");
+        vegan.setAttribute("src", "images/vegan2.png");
+        vegan.classList.add("vegan");
+        foodDiv.appendChild(vegan);
+    }
+
+    foodItem.appendChild(foodDiv);
+
+    return foodItem;
+}
+
+async function displayFoods(foods) {
     let mealSelector = document.getElementById("meal-selector");
     for (let meal of foods) {
-        let mealButton = document.createElement("button");
-        mealButton.classList.add("tab-button");
-        mealButton.innerText = meal.name;
-        mealButton.setAttribute('meal-id', meal.id);
-        mealButton.setAttribute("onclick", "openTab('" + meal.name.replace(" ", "") + "')");
-        if (isActive(meal)) {
-            mealButton.classList.add("active");
-        }
-
+        let mealButton = createMealSelectorButton(meal);
         mealSelector.appendChild(mealButton);
 
         let stationList = document.getElementById("station-list");
+
         if (meal.stations) {
             for (station of meal.stations) {
-                let stationDiv = document.createElement("div");
-                stationDiv.classList.add("station");
-                stationDiv.classList.add(meal.name.replace(" ", ""));
-                if (!isActive(meal)) {
-                    stationDiv.classList.add("hidden");
-                }
-                stationDiv.setAttribute("station-id", station.id);
-                stationDiv.setAttribute("meal-id", station.meal_id);
-    
-                let stationName = document.createElement("h2");
-                stationName.innerText = station.name;
-                
-                stationDiv.appendChild(stationName);
-    
-                let foodList = document.createElement("ul");
-                foodList.classList.add("food-list");
+                let stationDiv = createStationDiv(station, meal);
+                stationList.appendChild(stationDiv);
+
+                let foodList = createFoodList();
+                stationDiv.appendChild(foodList);
                 
                 for (food of station.foods) {
-                    let foodItem = document.createElement("li");
-                    foodItem.classList.add("food-item");
-
-                    let foodDiv = document.createElement("div");
-                    foodDiv.classList.add("food-div");
-                    foodDiv.setAttribute("data-food-id", food.id);
-                    foodDiv.setAttribute("station-id", station.id);
-                    foodDiv.setAttribute("meal-id", station.meal_id);
-
-                    let foodButton = document.createElement("button");
-                    foodButton.classList.add("food-button");
-                    foodButton.innerText = "➕";
-                    foodButton.setAttribute("data-food-id", food.id);
-                    foodButton.setAttribute("onclick", "addFood('" + food.id + "'" + ", '" + meal.id + "'" + ")");
-                    foodButton.setAttribute("station-id", station.id);
-                    foodButton.setAttribute("meal-id", station.meal_id);
-                    foodDiv.appendChild(foodButton);
-
-                    let foodFavoriteButton = document.createElement("button");
-                    foodFavoriteButton.classList.add("food-favorite-button");
-                    foodFavoriteButton.innerText = "❤️";
-                    foodFavoriteButton.setAttribute("data-food-id", food.id);
-                    foodFavoriteButton.setAttribute("onclick", "favoriteFood('" + food.id + "')");
-                    foodFavoriteButton.setAttribute("station-id", station.id);
-                    foodFavoriteButton.setAttribute("meal-id", station.meal_id);
-                    foodDiv.appendChild(foodFavoriteButton);
-        
-
-                    foodItem.appendChild(foodDiv);
-
-                    let foodLink = document.createElement("a");
-                    foodLink.setAttribute("href", "#");
-                    foodLink.innerText = food.short_name;
-                    foodLink.setAttribute("data-food-id", food.id);
-                    foodLink.classList.add("food-link");
-                    foodDiv.appendChild(foodLink);
-
-                    if (food.gluten_free) {
-                        let glutenFree = document.createElement("img");
-                        glutenFree.setAttribute("src", "images/glutenFree2.png");
-                        glutenFree.classList.add("gluten-free");
-                        foodDiv.appendChild(glutenFree);
-                    }
-    
-                    if (food.vegetarian) {
-                        let vegetarian = document.createElement("img");
-                        vegetarian.setAttribute("src", "images/vegetarian2.png");
-                        vegetarian.classList.add("vegetarian");
-                        foodDiv.appendChild(vegetarian);
-                    }
-    
-                    if (food.vegan) {
-                        let vegan = document.createElement("img");
-                        vegan.setAttribute("src", "images/vegan2.png");
-                        vegan.classList.add("vegan");
-                        foodDiv.appendChild(vegan);
-                    }
-    
+                    let foodItem = createFoodItem(food, station, meal);
                     foodList.appendChild(foodItem);
                 }
-    
-                stationDiv.appendChild(foodList);
-                stationList.appendChild(stationDiv);
             }
         }
     }
@@ -514,199 +450,315 @@ async function displayFoods(restaurantId) {
             openFood(foodId);
         });
     }
-    
 }
 
-async function favoriteFood(foodId) {
+function getNutrition(userMeal) {
+    // Clear the popup list
+    let popupList = document.getElementById("popup-list");
+    while (popupList.firstChild) {
+        popupList.removeChild(popupList.firstChild);
+    }
+
+    let nutrition = {
+        calories: 0,
+        calories_from_fat: 0,
+        total_fat: 0,
+        saturated_fat: 0,
+        trans_fat: 0,
+        cholesterol: 0,
+        sodium: 0,
+        total_carbohydrates: 0,
+        dietary_fiber: 0,
+        sugars: 0,
+        protein: 0,
+    };
+    for (let addedFood of userMeals[0].foodItems) {
+        // Add the nutrition of the food to the total nutrition
+        let food = foodMap.get(parseInt(addedFood.id));
+
+
+        let foodItem = document.createElement("li");
+        foodItem.classList.add("food-item");
+    
+        let foodName = document.createElement("span");
+        foodName.classList.add("food-name");
+        foodName.innerText = food.short_name;
+    
+        let foodCalories = document.createElement("span");
+        foodCalories.classList.add("food-calories");
+        foodCalories.innerText = food.calories + " kcal";
+    
+        let removeFoodButton = document.createElement("button");
+        removeFoodButton.classList.add("remove-food");
+        removeFoodButton.innerText = "X";
+        removeFoodButton.setAttribute("data-food-id", food.id);
+        // removeFood.setAttribute("onclick", "removeFood('" + food.id + "', '" + userMeals[0].id + "')");
+        removeFoodButton.addEventListener("click", (e) => {
+            removeFood(food.id, userMeals[0].id);
+            foodItem.remove();
+        });
+
+        let subtractFood = document.createElement("button");
+        subtractFood.classList.add("subtract-food");
+        subtractFood.innerText = "-";
+        // Remove 1 from the quantity of the food and update the food
+        // subtractFood.setAttribute("onclick", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + (parseInt(addedFood.quantity) - 1) + ")");
+        subtractFood.addEventListener("click", (e) => {
+            if (addedFood.quantity == 1) {
+                return;
+            }
+            updateFood(food.id, userMeals[0].id, parseInt(addedFood.quantity) - 1);
+            addedFood.quantity = parseInt(addedFood.quantity) - 1;
+            // foodQuantity.setAttribute("value", addedFood.quantity);
+            foodQuantity.innerText = addedFood.quantity;
+
+            subtractNutrition(food);
+        });
+
+        // Add a button to add another food
+        let addFood = document.createElement("button");
+        addFood.classList.add("add-food");
+        addFood.innerText = "+";
+        // Add 1 to the quantity of the food and update the food
+        // addFood.setAttribute("onclick", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + (parseInt(addedFood.quantity) + 1) + ")");
+        addFood.addEventListener("click", (e) => {
+            updateFood(food.id, userMeals[0].id, parseInt(addedFood.quantity) + 1);
+            addedFood.quantity = parseInt(addedFood.quantity) + 1;
+            // foodQuantity.setAttribute("value", addedFood.quantity);
+            foodQuantity.innerText = addedFood.quantity;
+
+            addNutrition(food);
+        });
+
+        // TODO: Make this a text input and work correctly
+        // Add a text input for the quantity
+        // let foodQuantity = document.createElement("input");
+        // foodQuantity.classList.add("food-quantity");
+        // foodQuantity.setAttribute("type", "number");
+        // foodQuantity.setAttribute("value", addedFood.quantity);
+        // foodQuantity.setAttribute("min", "1");
+        // foodQuantity.setAttribute("data-food-id", food.id);
+        // foodQuantity.setAttribute("onchange", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + foodQuantity.value + ")");
+        // foodQuantity.addEventListener("change", (e) => {
+        //     updateFood(food.id, userMeals[0].id, foodQuantity.value);
+        //     addedFood.quantity = foodQuantity.value;
+
+        //     let difference = foodQuantity.value - addedFood.quantity;
+        //     if (difference > 0) {
+        //         addNutrition(food);
+        //     }
+        //     else if (difference < 0) {
+        //         subtractNutrition(food);
+        //     }
+        // });
+
+        // add text showing the quantity
+        let foodQuantity = document.createElement("span");
+        foodQuantity.classList.add("food-quantity");
+        foodQuantity.innerText = addedFood.quantity;
+        foodQuantity.setAttribute("data-food-id", food.id);
+
+
+        // Add the nutrition of the food to the total nutrition
+        nutrition.calories += food.calories * addedFood.quantity;
+        nutrition.calories_from_fat += food.calories_from_fat * addedFood.quantity;
+        nutrition.total_fat += food.total_fat * addedFood.quantity;
+        nutrition.saturated_fat += food.saturated_fat * addedFood.quantity;
+        nutrition.trans_fat += food.trans_fat * addedFood.quantity;
+        nutrition.cholesterol += food.cholesterol * addedFood.quantity;
+        nutrition.sodium += food.sodium * addedFood.quantity;
+        nutrition.total_carbohydrates += food.total_carbohydrates * addedFood.quantity;
+        nutrition.dietary_fiber += food.dietary_fiber * addedFood.quantity;
+        nutrition.sugars += food.sugars * addedFood.quantity;
+        nutrition.protein += food.protein * addedFood.quantity;
+
+        foodItem.appendChild(removeFoodButton);
+        foodItem.appendChild(subtractFood);
+        foodItem.appendChild(addFood);
+        foodItem.appendChild(foodQuantity);
+        foodItem.appendChild(foodName);
+        foodItem.appendChild(foodCalories);
+    
+        document.getElementById("popup-list").appendChild(foodItem);
+    }
+
+    document.getElementById("totalCalories").innerText = nutrition.calories;
+    document.getElementById("totalCaloriesFat").innerText = nutrition.calories_from_fat;
+    document.getElementById("totalFat").innerText = nutrition.total_fat;
+    document.getElementById("saturatedFat").innerText = nutrition.saturated_fat;
+    document.getElementById("cholesterol").innerText = nutrition.cholesterol;
+    document.getElementById("sodium").innerText = nutrition.sodium;
+    document.getElementById("totalCarbohydrates").innerText = nutrition.total_carbohydrates;
+    document.getElementById("dietaryFiber").innerText = nutrition.dietary_fiber;
+    document.getElementById("sugars").innerText = nutrition.sugars;
+    document.getElementById("protein").innerText = nutrition.protein;
+}
+
+function updateNutrition(nutrition) {
+    document.getElementById("totalCalories").innerText = nutrition.calories;
+    document.getElementById("totalCaloriesFat").innerText = nutrition.calories_from_fat;
+    document.getElementById("totalFat").innerText = nutrition.total_fat;
+    document.getElementById("saturatedFat").innerText = nutrition.saturated_fat;
+    document.getElementById("cholesterol").innerText = nutrition.cholesterol;
+    document.getElementById("sodium").innerText = nutrition.sodium;
+    document.getElementById("totalCarbohydrates").innerText = nutrition.total_carbohydrates;
+    document.getElementById("dietaryFiber").innerText = nutrition.dietary_fiber;
+    document.getElementById("sugars").innerText = nutrition.sugars;
+    document.getElementById("protein").innerText = nutrition.protein;
+}
+
+function addNutrition(nutrition) {
+    // add values from nutrition to the popup
+    document.getElementById("totalCalories").innerText = parseInt(document.getElementById("totalCalories").innerText) + nutrition.calories;
+    document.getElementById("totalCaloriesFat").innerText = parseInt(document.getElementById("totalCaloriesFat").innerText) + nutrition.calories_from_fat;
+    document.getElementById("totalFat").innerText = parseInt(document.getElementById("totalFat").innerText) + nutrition.total_fat;
+    document.getElementById("saturatedFat").innerText = parseInt(document.getElementById("saturatedFat").innerText) + nutrition.saturated_fat;
+    document.getElementById("cholesterol").innerText = parseInt(document.getElementById("cholesterol").innerText) + nutrition.cholesterol;
+    document.getElementById("sodium").innerText = parseInt(document.getElementById("sodium").innerText) + nutrition.sodium;
+    document.getElementById("totalCarbohydrates").innerText = parseInt(document.getElementById("totalCarbohydrates").innerText) + nutrition.total_carbohydrates;
+    document.getElementById("dietaryFiber").innerText = parseInt(document.getElementById("dietaryFiber").innerText) + nutrition.dietary_fiber;
+    document.getElementById("sugars").innerText = parseInt(document.getElementById("sugars").innerText) + nutrition.sugars;
+    document.getElementById("protein").innerText = parseInt(document.getElementById("protein").innerText) + nutrition.protein;
+}
+
+function subtractNutrition(nutrition) {
+    // subtract values from nutrition to the popup
+    document.getElementById("totalCalories").innerText = parseInt(document.getElementById("totalCalories").innerText) - nutrition.calories;
+    document.getElementById("totalCaloriesFat").innerText = parseInt(document.getElementById("totalCaloriesFat").innerText) - nutrition.calories_from_fat;
+    document.getElementById("totalFat").innerText = parseInt(document.getElementById("totalFat").innerText) - nutrition.total_fat;
+    document.getElementById("saturatedFat").innerText = parseInt(document.getElementById("saturatedFat").innerText) - nutrition.saturated_fat;
+    document.getElementById("cholesterol").innerText = parseInt(document.getElementById("cholesterol").innerText) - nutrition.cholesterol;
+    document.getElementById("sodium").innerText = parseInt(document.getElementById("sodium").innerText) - nutrition.sodium;
+    document.getElementById("totalCarbohydrates").innerText = parseInt(document.getElementById("totalCarbohydrates").innerText) - nutrition.total_carbohydrates;
+    document.getElementById("dietaryFiber").innerText = parseInt(document.getElementById("dietaryFiber").innerText) - nutrition.dietary_fiber;
+    document.getElementById("sugars").innerText = parseInt(document.getElementById("sugars").innerText) - nutrition.sugars;
+    document.getElementById("protein").innerText = parseInt(document.getElementById("protein").innerText) - nutrition.protein;
+}
+
+function addFoodToPopup(foodId, mealId) {
+    let nutrition = {
+        calories: 0,
+        calories_from_fat: 0,
+        total_fat: 0,
+        saturated_fat: 0,
+        trans_fat: 0,
+        cholesterol: 0,
+        sodium: 0,
+        total_carbohydrates: 0,
+        dietary_fiber: 0,
+        sugars: 0,
+        protein: 0,
+    }
+    // Add the nutrition of the food to the total nutrition
     let food = foodMap.get(parseInt(foodId));
-    let response = await fetch("http://localhost:3000/api/user/favorite/" + foodId, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
-        }
+
+
+    let foodItem = document.createElement("li");
+    foodItem.classList.add("food-item");
+
+    let foodName = document.createElement("span");
+    foodName.classList.add("food-name");
+    foodName.innerText = food.short_name;
+
+    let foodCalories = document.createElement("span");
+    foodCalories.classList.add("food-calories");
+    foodCalories.innerText = food.calories + " kcal";
+
+    let removeFoodButton = document.createElement("button");
+    removeFoodButton.classList.add("remove-food");
+    removeFoodButton.innerText = "X";
+    removeFoodButton.setAttribute("data-food-id", food.id);
+    // removeFood.setAttribute("onclick", "removeFood('" + food.id + "', '" + userMeals[0].id + "')");
+    removeFoodButton.addEventListener("click", (e) => {
+        removeFood(food.id, userMeals[0].id);
+        foodItem.remove();
     });
 
-    if (response.status == 200) {
-        let foodButtons = document.querySelectorAll("button[data-food-id='" + food.id + "'].food-favorite-button");
-        for (let foodButton of foodButtons) {
-            foodButton.innerText = "💖";
-            foodButton.removeAttribute("onclick");
-            foodButton.setAttribute("onclick", "unfavoriteFood('" + food.id + "')");
+    let subtractFood = document.createElement("button");
+    subtractFood.classList.add("subtract-food");
+    subtractFood.innerText = "-";
+    // Remove 1 from the quantity of the food and update the food
+    // subtractFood.setAttribute("onclick", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + (parseInt(addedFood.quantity) - 1) + ")");
+    subtractFood.addEventListener("click", (e) => {
+        if (addedFood.quantity == 1) {
+            return;
         }
-    }
-    else {
-        alert("Failed to add " + food.short_name + " to your favorites!");
-    }
-}
+        updateFood(food.id, userMeals[0].id, parseInt(addedFood.quantity) - 1);
+        addedFood.quantity = parseInt(addedFood.quantity) - 1;
+        // foodQuantity.setAttribute("value", addedFood.quantity);
+        foodQuantity.innerText = addedFood.quantity;
 
-async function unfavoriteFood(foodId) {
-    let food = foodMap.get(parseInt(foodId));
-    let response = await fetch("http://localhost:3000/api/user/favorite/" + foodId, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
-        }
+        subtractNutrition(food);
     });
 
-    if (response.status == 200) {
-        // Select all buttons with the data-food-id attribute and the class food-favorite-button
-        let foodButtons = document.querySelectorAll("button[data-food-id='" + food.id + "'].food-favorite-button");
-        for (let foodButton of foodButtons) {
-            foodButton.innerText = "❤️";
-            foodButton.removeAttribute("onclick");
-            foodButton.setAttribute("onclick", "favoriteFood('" + food.id + "')");
-        }
-    }
-    else {
-        alert("Failed to remove " + food.short_name + " from your favorites!");
-    }
-}
+    // Add a button to add another food
+    let addFood = document.createElement("button");
+    addFood.classList.add("add-food");
+    addFood.innerText = "+";
+    // Add 1 to the quantity of the food and update the food
+    // addFood.setAttribute("onclick", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + (parseInt(addedFood.quantity) + 1) + ")");
+    addFood.addEventListener("click", (e) => {
+        updateFood(food.id, userMeals[0].id, parseInt(addedFood.quantity) + 1);
+        // TODO: Fix this
+        addedFood.quantity = parseInt(addedFood.quantity) + 1;
+        // foodQuantity.setAttribute("value", addedFood.quantity);
+        foodQuantity.innerText = addedFood.quantity;
 
-function formatDate(date) {
-    // Padding function to add leading zeros if necessary
-    const pad = (num) => num.toString().padStart(2, '0');
-
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1); // Adding 1 because months are 0-indexed
-    const day = pad(date.getDate());
-
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
-
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
-
-
-async function createUserMeal(mealId) {
-    let restaurant = await fetch("http://localhost:3000/api/restaurants/" + restaurantId);
-    restaurant = await restaurant.json();
-    restaurantName = restaurant.name;
-    restaurantDate = restaurant.date.substring(0,10);
-
-    let userMeal = null;
-    for (let meal of meals) {
-        if (parseInt(meal.id) === parseInt(mealId)) {
-            userMeal = meal;
-        }
-    }
-    
-    let time_open = new Date(restaurantDate + " " + userMeal.time_open);
-    let time_closed = new Date(restaurantDate + " " + userMeal.time_closed);
-
-    if (time_open > time_closed) {
-        time_closed.setDate(time_closed.getDate() + 1);
-    }
-
-    let currTime = new Date();
-
-    // See if the current time is between the time open and time closed
-    if (currTime < time_open || currTime > time_closed) {
-        currTime = time_open;
-    }
-    
-    let userMealName = restaurantDate + " " + restaurantName + " " + userMeal.name;
-    currTime = formatDate(currTime)
-
-    let response = await fetch("http://localhost:3000/api/user/meal", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
-        },
-        body: JSON.stringify({
-            meal_name: userMealName,
-            time_period: currTime,
-            meal_id: mealId
-        })
+        addNutrition(food);
     });
 
-    
-    
-    if (response.status == 200) {
-        let mealButton = document.querySelector("button[meal-id='" + mealId + "']");
-        mealButton.classList.add("adding-meal");
-        console.log("Meal added!");
-        response = await response.json();
-        
-        userMeals.push({id: mealId});
-    }
-    else {
-        alert("Failed to create meal!");
-    }
+    // TODO: Make this a text input and work correctly
+    // Add a text input for the quantity
+    // let foodQuantity = document.createElement("input");
+    // foodQuantity.classList.add("food-quantity");
+    // foodQuantity.setAttribute("type", "number");
+    // foodQuantity.setAttribute("value", addedFood.quantity);
+    // foodQuantity.setAttribute("min", "1");
+    // foodQuantity.setAttribute("data-food-id", food.id);
+    // foodQuantity.setAttribute("onchange", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + foodQuantity.value + ")");
+    // foodQuantity.addEventListener("change", (e) => {
+    //     updateFood(food.id, userMeals[0].id, foodQuantity.value);
+    //     addedFood.quantity = foodQuantity.value;
+
+    //     let difference = foodQuantity.value - addedFood.quantity;
+    //     if (difference > 0) {
+    //         addNutrition(food);
+    //     }
+    //     else if (difference < 0) {
+    //         subtractNutrition(food);
+    //     }
+    // });
+
+    // add text showing the quantity
+    let foodQuantity = document.createElement("span");
+    foodQuantity.classList.add("food-quantity");
+    foodQuantity.innerText = 1;
+    foodQuantity.setAttribute("data-food-id", food.id);
+
+
+    // Add the nutrition of the food to the total nutrition
+    nutrition.calories += food.calories;
+    nutrition.calories_from_fat += food.calories_from_fat;
+    nutrition.total_fat += food.total_fat;
+    nutrition.saturated_fat += food.saturated_fat;
+    nutrition.trans_fat += food.trans_fat;
+    nutrition.cholesterol += food.cholesterol;
+    nutrition.sodium += food.sodium;
+    nutrition.total_carbohydrates += food.total_carbohydrates;
+    nutrition.dietary_fiber += food.dietary_fiber;
+    nutrition.sugars += food.sugars;
+    nutrition.protein += food.protein;
+
+    foodItem.appendChild(removeFoodButton);
+    foodItem.appendChild(subtractFood);
+    foodItem.appendChild(addFood);
+    foodItem.appendChild(foodQuantity);
+    foodItem.appendChild(foodName);
+    foodItem.appendChild(foodCalories);
+
+    document.getElementById("popup-list").appendChild(foodItem);
 }
 
-async function addFood(foodId, mealId) {
-    let food = foodMap.get(parseInt(foodId));
-    // Check to see if mealId is in userMeals
-    let selectedUserMeal = null;
-    for (let userMeal of userMeals) {
-        console.log(userMeal.id, mealId)
-        if (parseInt(userMeal.id) === parseInt(mealId)) {
-            selectedUserMeal = userMeal;
-        }
-    }
-    
-    if (selectedUserMeal == null) {
-        console.log("Meal not found!");
-        await createUserMeal(mealId);
-    }
-    let response = await fetch("http://localhost:3000/api/user/meal/food", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
-        },
-        body: JSON.stringify({
-            meal_id: mealId,
-            food_id: foodId
-        })
-    });
-
-    if (response.status == 200) {
-        console.log("Food added!");
-        // Select the button with the data-food-id attribute and the class food-button
-        let foodButtons = document.querySelectorAll(`button.food-button[data-food-id="${foodId}"][meal-id="${mealId}"]`);
-        console.log(foodButtons, mealId);
-        for (let foodButton of foodButtons) {
-            foodButton.innerText = "➖";
-            foodButton.removeAttribute("onclick");
-            foodButton.setAttribute("onclick", "removeFood('" + food.id + "', '" + mealId + "')");
-        }
-    }
-    else {
-        alert("Failed to add food!");
-    }
-}
-
-async function removeFood(foodId, mealId) {
-    let food = foodMap.get(parseInt(foodId));
-    let response = await fetch("http://localhost:3000/api/user/meal/food", {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
-        },
-        body: JSON.stringify({
-            meal_id: mealId,
-            food_id: foodId
-        })
-    });
-
-    if (response.status == 200) {
-        console.log("Food removed!");
-        // Select the button with the data-food-id attribute and the class food-button
-        let foodButtons = document.querySelectorAll(`button.food-button[data-food-id="${foodId}"][meal-id="${mealId}"]`);
-        console.log(foodButtons, mealId);
-        for (let foodButton of foodButtons) {
-            foodButton.innerText = "➕";
-            foodButton.removeAttribute("onclick");
-            foodButton.setAttribute("onclick", "addFood('" + food.id + "', '" + mealId + "')");
-        }
-    }
-    else {
-        alert("Failed to remove food!");
-    }
-}
+document.getElementById("close-popup").addEventListener("click", (e) => {
+    document.getElementById("food-popup").classList.add("hidden");
+});
