@@ -315,7 +315,7 @@ User.getMeal = (id, meal_id, result) => {
       return;
     } else {
       const user_id = res[0].id;
-      sql.query(`SELECT f.id FROM user_meal um
+      sql.query(`SELECT f.id, umhf.quantity FROM user_meal um
                   INNER JOIN user_meal_has_food umhf
                     ON umhf.user_meal_id = um.id
                   INNER JOIN food f
@@ -437,6 +437,47 @@ User.addFood = (id, food_id, meal_id, result) => {
     result(null, { success: true });
   });
 };
+
+User.updateFood = (id, food_id, meal_id, quantity, result) => {
+  // Sanitize the id to prevent SQL injection
+  id = id.split('|')[1];
+
+  if (!clense.isNumber(id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  if (!clense.isNumber(meal_id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  meal_id = clense.escape(meal_id);
+
+  if (!clense.isNumber(food_id)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  food_id = clense.escape(food_id);
+
+  if (!clense.isNumber(quantity)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  quantity = clense.escape(quantity);
+
+  sql.query(`UPDATE user_meal_has_food SET quantity = ${quantity} WHERE user_meal_id = ${meal_id} AND user_meal_user_id = ${id} AND food_id = ${food_id}`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+    console.log("updated food in meal: ", res);
+    result(null, { success: true });
+  });
+}
 
 User.removeFood = (id, food_id, meal_id, result) => {
   // Sanitize the id to prevent SQL injection

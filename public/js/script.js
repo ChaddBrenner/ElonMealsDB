@@ -177,7 +177,7 @@ async function getRestaurants() {
 
     currDate.setFullYear(2023);
     currDate.setMonth(10);
-    currDate.setDate(12);
+    currDate.setDate(13);
     currDate = currDate.toISOString().substring(0,10);
 
     let restaurantResponse = await fetch('http://localhost:3000/api/restaurants/date/' + currDate);
