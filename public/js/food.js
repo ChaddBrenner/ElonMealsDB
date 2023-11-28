@@ -1,4 +1,4 @@
-async function addFoodRequest(foodId, mealId) { 
+async function addFoodRequest(foodId, mealId) {
     let response = await fetch("http://localhost:3000/api/user/meal/food", {
         method: 'POST',
         headers: {
@@ -21,8 +21,7 @@ function addFoodUI(foodId, mealId) {
         foodButton.removeAttribute("onclick");
         foodButton.setAttribute("onclick", "removeFood('" + foodId + "', '" + mealId + "')");
     }
-
-    addFoodToPopup(foodId, mealId);
+    updateNutrition();
 }
 
 async function addFood(foodId, mealId) {
@@ -45,14 +44,25 @@ async function addFood(foodId, mealId) {
 
     if (response.status == 200) {
         console.log("Food added!");
-        addFoodUI(foodId, mealId);
+
+        // Add the quantity value to the food in foodMap
+        for (let food of foodMap) {
+            if (parseInt(food.id) === parseInt(foodId)) {
+                food.quantity = 1;
+                break;
+            }
+        }
+
         // Add food to foodItems of userMeal in userMeals
         for (let userMeal of userMeals) {
             if (parseInt(userMeal.id) === parseInt(mealId)) {
                 userMeal.foodItems.push({id: foodId, quantity: 1});
+                addNutritionItem({id: foodId, quantity: 1});
                 break;
             }
         }
+
+        addFoodUI(foodId, mealId);
     }
     else {
         alert("Failed to add food!");
@@ -82,6 +92,7 @@ function removeFoodUI(foodId, mealId) {
         foodButton.removeAttribute("onclick");
         foodButton.setAttribute("onclick", "addFood('" + foodId + "', '" + mealId + "')");
     }
+    updateNutrition();
 }
 
 async function removeFood(foodId, mealId) {
@@ -89,12 +100,12 @@ async function removeFood(foodId, mealId) {
 
     if (response.status == 200) {
         console.log("Food removed!");
-        removeFoodUI(foodId, mealId);
         // Remove food from foodItems of userMeal in userMeals
         for (let userMeal of userMeals) {
             if (parseInt(userMeal.id) === parseInt(mealId)) {
                 for (let i = 0; i < userMeal.foodItems.length; i++) {
                     if (parseInt(userMeal.foodItems[i].id) === parseInt(foodId)) {
+                        removeNutritionItem(userMeal.foodItems[i]);
                         userMeal.foodItems.splice(i, 1);
                         break;
                     }
@@ -117,6 +128,8 @@ async function removeFood(foodId, mealId) {
         if (mealIsEmpty) {
             await removeUserMeal(mealId);
         }
+
+        removeFoodUI(foodId, mealId);
     }
     else {
         alert("Failed to remove food!");
@@ -124,7 +137,6 @@ async function removeFood(foodId, mealId) {
 }
 
 async function updateFood(foodId, mealId, quantity) {
-    console.log(quantity);
     let response = await fetch("http://localhost:3000/api/user/meal/food", {
         method: 'PUT',
         headers: {

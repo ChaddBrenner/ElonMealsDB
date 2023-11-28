@@ -184,11 +184,11 @@
             }
         }
 
-        @media screen and (min-width: 1100px) {
+        /* @media screen and (min-width: 1100px) {
             .food-list {
                 column-count: 4;
             }
-        }
+        } */
 
         .home-redirect {
             text-decoration: none;
@@ -326,24 +326,33 @@
         }
 
         .food-link {
-            text-decoration: none;
+            text-decoration: underline;
             color: black;
             /* Dont allow the wrapping of text */
-            white-space: nowrap;
+            /* white-space: nowrap; */
             /* overflow: hidden; */
-            text-overflow: ellipsis;
+            /* text-overflow: ellipsis; */
+        }
+
+        .food-quantity {
+            margin-left: 10px;
+            margin-right: 10px;
         }
     </style>
 </head>
 
 <body>
     <nav>
-        <a href="index.html" class="home-redirect">Home</a>
-        <p id="calorie-counter" class="calorie-counter">Current Calories: 123</p>
-        <button id="login" class="login" onclick="login()">Login</button>
-        <button id="logout" class="logout" onclick="logout()">Logout</button>
-        <button id="test" onclick="getNutrition()">abc</button>
+        <div class="nav-left">
+            <a href="index.html" class="home-redirect">Home</a>
+            <p>Current Calories: <span id="calorie-counter" class="calorie-counter"></span></p>
+        </div>
+        <div class="nav-right">
+            <button id="login" class="login" onclick="login()">Login</button>
+            <button id="logout" class="logout" onclick="logout()">Logout</button>
+        </div>
     </nav>
+
 
     <div class="meal-selector" id="meal-selector">
     </div>
@@ -374,52 +383,52 @@
                 </tr>
                 <tr>
                     <td>Calories</td>
-                    <td class="table-calories">200</td>
+                    <td class="table-calories" id="table-calories">200</td>
                 </tr>
                 <tr>
                     <td>Calories from fat</td>
-                    <td class="table-calories-from-fat">200</td>
-                </tr>
-                <tr>
-                    <td>Cholesterol</td>
-                    <td class="table-cholesterol">20g</td>
-                </tr>
-                <tr>
-                    <td>Dietary Fiber</td>
-                    <td class="table-dietary-fiber">20g</td>
-                </tr>
-                <tr>
-                    <td>Saturated Fat</td>
-                    <td class="table-saturated-fat">20g</td>
-                </tr>
-                <tr>
-                    <td>Sodium</td>
-                    <td class="table-sodium">20g</td>
-                </tr>
-                <tr>
-                    <td>Fat</td>
-                    <td class="table-fat">10g</td>
-                </tr>
-                <tr>
-                    <td>Protein</td>
-                    <td class="table-protein">5g</td>
-                </tr>
-                <tr>
-                    <td>Sugars</td>
-                    <td class="table-sugars">5g</td>
-                </tr>
-                <tr>
-                    <td>Total Carbohydrates</td>
-                    <td class="table-total-carbohydrates">5g</td>
+                    <td class="table-calories-from-fat" id="table-calories-from-fat">200</td>
                 </tr>
                 <tr>
                     <td>Total Fat</td>
-                    <td class="table-total-fat">5g</td>
+                    <td class="table-total-fat" id="table-total-fat">5g</td>
+                </tr>
+                <tr>
+                    <td>Saturated Fat</td>
+                    <td class="table-saturated-fat" id="table-saturated-fat">20g</td>
                 </tr>
                 <tr>
                     <td>Trans Fat</td>
-                    <td class="table-trans-fat">5g</td>
+                    <td class="table-trans-fat" id="table-trans-fat">5g</td>
                 </tr>
+                <tr>
+                    <td>Cholesterol</td>
+                    <td class="table-cholesterol" id="table-cholesterol">20g</td>
+                </tr>
+
+                <tr>
+                    <td>Sodium</td>
+                    <td class="table-sodium" id="table-sodium">20g</td>
+                </tr>
+                <tr>
+                    <td>Total Carbohydrates</td>
+                    <td class="table-carbohydrates" id="table-carbohydrates">5g</td>
+                </tr>
+                <tr>
+
+                    <td>Dietary Fiber</td>
+                    <td class="table-dietary-fiber" id="table-dietary-fiber">20g</td>
+                </tr>
+                <tr>
+                    <td>Sugars</td>
+                    <td class="table-sugars" id="table-sugars">5g</td>
+                </tr>
+                <tr>
+                    <td>Protein</td>
+                    <td class="table-protein" id="table-protein">5g</td>
+                </tr>
+
+
             </table>
         </div>
     </div>

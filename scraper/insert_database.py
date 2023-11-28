@@ -37,6 +37,13 @@ def insert_restaurant(restaurant):
     
     except mysql.connector.Error as err:
         print("Something went wrong: {}".format(err))
+        # Handle duplicate entry error
+        # if err.errno == 1062:
+        #     query = "SELECT id FROM restaurant WHERE name=%s AND url=%s AND date=%s"
+        #     cursor.execute(query, restaurant)
+        #     mydb.commit()
+        # restaurant_id = cursor.fetchall()[0][0]
+        # return restaurant_id
 
 
 def insert_meal(meal):
@@ -49,6 +56,12 @@ def insert_meal(meal):
     
     except mysql.connector.Error as err:
         print("Something went wrong: {}".format(err))
+        # if err.errno == 1062:
+        #     query = "SELECT id FROM meal WHERE name=%s AND time_open=%s AND time_closed=%s AND restaurant_id=%s"
+        #     cursor.execute(query, meal)
+        #     mydb.commit()
+        #     meal_id = cursor.fetchall()[0][0]
+        #     return meal_id
 
 
 def insert_station(station):
@@ -61,6 +74,12 @@ def insert_station(station):
     
     except mysql.connector.Error as err:
         print("Something went wrong: {}".format(err))
+        # if err.errno == 1062:
+        #     query = "SELECT id FROM station WHERE name=%s AND meal_id=%s"
+        #     cursor.execute(query, station)
+        #     mydb.commit()
+        #     station_id = cursor.fetchall()[0][0]
+        #     return station_id
 
 
 def insert_food(food, station_id, food_id):
@@ -74,6 +93,17 @@ def insert_food(food, station_id, food_id):
         if food_database_id:
             food_database_id = food_database_id[0][0]
             # Even if the food is already in the database, we still need to link it to the station, but first we need to see if it is already linked
+            # Check if the food is already linked to the station
+            query = """SELECT station_id from station_food WHERE station_id=%s AND food_id=%s LIMIT 0, 1;"""
+            values = (station_id, food_database_id)
+            cursor.execute(query, values)
+            mydb.commit()
+            station_food_id = cursor.fetchall()
+
+            if station_food_id:
+                return food_database_id
+            
+            # If the food is not linked to the station, link it
             query_link = "INSERT INTO station_food (station_id, food_id) VALUES (%s, %s)"
             values = (station_id, food_database_id)
             cursor.execute(query_link, values)
@@ -122,9 +152,9 @@ def insert_food(food, station_id, food_id):
 
 
 def reset_db():
-    query = """DELETE FROM user_meal;"""
-    cursor.execute(query)
     query = """DELETE FROM user_meal_has_food;"""
+    cursor.execute(query)
+    query = """DELETE FROM user_meal;"""
     cursor.execute(query)
     query = """DELETE FROM user;"""
     cursor.execute(query)
