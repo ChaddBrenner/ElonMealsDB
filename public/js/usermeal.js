@@ -216,6 +216,10 @@ async function getUserMeals(restaurantId) {
             removeUserMeal(userMeal.id);
         }
         userMeal.foodItems = foodItems;
+
+        for (let foodItem of foodItems) {
+            addNutritionItem(foodItem);
+        }    
     }
     
     return userMeals;   

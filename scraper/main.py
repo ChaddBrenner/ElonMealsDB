@@ -13,8 +13,6 @@ import time
 # Get current date
 curr_date = datetime.now().date()
 
-# Set the date to 2023-11-13
-curr_date = datetime(2023, 11, 13).date()
 
 def collect_data():
     restaurants = get_restaurants(curr_date)
@@ -102,4 +100,3 @@ def insert_data(data):
 data = load_data()
 # data = collect_data()
 insert_data(data)
-# collect_data()

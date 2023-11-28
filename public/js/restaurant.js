@@ -5,8 +5,6 @@ const restaurantId = urlParams.get('id');
 // The Auth0 client, initialized in configureClient()
 let auth0Client = null;
 var userMeals = [];
-var userFoods = [];
-
 
 /**
  * Starts the authentication flow
@@ -74,6 +72,7 @@ window.onload = async () => {
         console.log("> User is authenticated");
         await getFavoriteFoods(restaurantId);
         userMeals = await getUserMeals(restaurantId);
+        updateNutrition();
     }
     else {
     console.log("> User not authenticated");
@@ -221,6 +220,18 @@ function openFood(foodId) {
     else {
         document.getElementById("food-vegan").classList.add("hidden");
     }
+
+    document.getElementById("table-calories").innerText = food.calories;
+    document.getElementById("table-calories-from-fat").innerText = food.calories_from_fat;
+    document.getElementById("table-total-fat").innerText = food.total_fat;
+    document.getElementById("table-saturated-fat").innerText = food.saturated_fat;
+    document.getElementById('table-trans-fat').innerText = food.trans_fat;
+    document.getElementById("table-cholesterol").innerText = food.cholesterol;
+    document.getElementById("table-sodium").innerText = food.sodium;
+    document.getElementById("table-carbohydrates").innerText = food.total_carbohydrates;
+    document.getElementById("table-dietary-fiber").innerText = food.dietary_fiber;
+    document.getElementById("table-sugars").innerText = food.sugars;
+    document.getElementById("table-protein").innerText = food.protein;
 }
 
 function closeFoodDescription() {
@@ -255,7 +266,6 @@ function convertTime(time) {
 
 
 function createMealSelectorButton(meal) {
-    
     let mealButton = document.createElement("button");
     mealButton.classList.add("tab-button");
     mealButton.innerText = meal.name;
@@ -289,12 +299,9 @@ function createMealSelectorButton(meal) {
     modifyMealDiv.appendChild(deleteMeal);
     modifyMealDiv.appendChild(editMeal);
     
-    // mealSelectorDiv.appendChild(mealButton);
-    // mealSelectorDiv.appendChild(mealTime);
-    // mealSelectorDiv.appendChild(modifyMealDiv);
-
     mealButton.appendChild(mealTime);
     mealButton.appendChild(modifyMealDiv);
+    
     return mealButton;
 }
 
@@ -314,13 +321,6 @@ function createStationDiv(station, meal) {
     stationDiv.appendChild(stationName);
 
     return stationDiv;
-}
-
-function editMeal(mealId) {
-    let foodPopup = document.getElementById("food-popup");
-    foodPopup.classList.remove("hidden");
-    console.log(userMeals);
-    getNutrition(userMeals[0]);
 }
 
 function createFoodList() {
@@ -452,13 +452,90 @@ async function displayFoods(foods) {
     }
 }
 
-function getNutrition(userMeal) {
-    // Clear the popup list
-    let popupList = document.getElementById("popup-list");
-    while (popupList.firstChild) {
-        popupList.removeChild(popupList.firstChild);
-    }
+function editMeal() {
+    let foodPopup = document.getElementById("food-popup");
+    foodPopup.classList.remove("hidden");
+    updateNutrition();
+}
 
+function addNutritionItem(foodIndiv) {
+    // Add the nutrition of the food to the total nutrition
+    let food = foodMap.get(parseInt(foodIndiv.id));
+    food.quantity = foodIndiv.quantity;
+
+    let foodItem = document.createElement("li");
+    foodItem.classList.add("food-item");
+    foodItem.setAttribute("data-food-id", food.id);
+
+    let foodName = document.createElement("span");
+    foodName.classList.add("food-name");
+    foodName.innerText = food.short_name;
+
+    let foodCalories = document.createElement("span");
+    foodCalories.classList.add("food-calories");
+    foodCalories.innerText = food.calories * food.quantity + " kcal";
+
+    let removeFoodButton = document.createElement("button");
+    removeFoodButton.classList.add("remove-food");
+    removeFoodButton.innerText = "X";
+    removeFoodButton.setAttribute("data-food-id", food.id);
+    removeFoodButton.addEventListener("click", async (e) => {
+        await removeFood(food.id, userMeals[0].id);
+
+        updateNutrition(userMeals);
+    });
+
+    let subtractFoodButton = document.createElement("button");
+    subtractFoodButton.classList.add("subtract-food");
+    subtractFoodButton.innerText = "-";
+    subtractFoodButton.addEventListener("click", async (e) => {
+        if (food.quantity == 1) {
+            return;
+        }
+        await updateFood(food.id, userMeals[0].id, parseInt(food.quantity) - 1);
+        food.quantity = parseInt(food.quantity) - 1;
+        foodQuantity.innerText = food.quantity;
+        foodCalories.innerText = food.calories * food.quantity + " kcal";
+
+        updateNutrition(userMeals);
+    });
+
+    // Add a button to add another food
+    let addFoodButton = document.createElement("button");
+    addFoodButton.classList.add("add-food");
+    addFoodButton.innerText = "+";
+    addFoodButton.addEventListener("click", async (e) => {
+        await updateFood(food.id, userMeals[0].id, parseInt(food.quantity) + 1);
+        food.quantity = parseInt(food.quantity) + 1;
+        foodQuantity.innerText = food.quantity;
+        foodCalories.innerText = food.calories * food.quantity + " kcal";
+
+        updateNutrition(userMeals);
+    });
+
+    // add text showing the quantity
+    let foodQuantity = document.createElement("span");
+    foodQuantity.classList.add("food-quantity");
+    foodQuantity.innerText = food.quantity;
+    foodQuantity.setAttribute("data-food-id", food.id);
+
+    foodItem.appendChild(removeFoodButton);
+    foodItem.appendChild(subtractFoodButton);
+    foodItem.appendChild(addFoodButton);
+    foodItem.appendChild(foodQuantity);
+    foodItem.appendChild(foodName);
+    foodItem.appendChild(foodCalories);
+
+    document.getElementById("popup-list").appendChild(foodItem);
+}
+
+function removeNutritionItem(foodIndiv) {
+    let foodItem = document.querySelector("li[data-food-id='" + foodIndiv.id + "']");
+    foodItem.remove();
+}
+
+
+function updateNutrition() {
     let nutrition = {
         calories: 0,
         calories_from_fat: 0,
@@ -472,116 +549,27 @@ function getNutrition(userMeal) {
         sugars: 0,
         protein: 0,
     };
-    for (let addedFood of userMeals[0].foodItems) {
-        // Add the nutrition of the food to the total nutrition
-        let food = foodMap.get(parseInt(addedFood.id));
 
+    let foodQuantities = document.getElementsByClassName('food-quantity')
 
-        let foodItem = document.createElement("li");
-        foodItem.classList.add("food-item");
-    
-        let foodName = document.createElement("span");
-        foodName.classList.add("food-name");
-        foodName.innerText = food.short_name;
-    
-        let foodCalories = document.createElement("span");
-        foodCalories.classList.add("food-calories");
-        foodCalories.innerText = food.calories + " kcal";
-    
-        let removeFoodButton = document.createElement("button");
-        removeFoodButton.classList.add("remove-food");
-        removeFoodButton.innerText = "X";
-        removeFoodButton.setAttribute("data-food-id", food.id);
-        // removeFood.setAttribute("onclick", "removeFood('" + food.id + "', '" + userMeals[0].id + "')");
-        removeFoodButton.addEventListener("click", (e) => {
-            removeFood(food.id, userMeals[0].id);
-            foodItem.remove();
-        });
+    for (let foodQuantity of foodQuantities) {
+        let foodItem = foodMap.get(parseInt(foodQuantity.getAttribute("data-food-id")));
+        foodItem.quantity = parseInt(foodQuantity.innerText);
 
-        let subtractFood = document.createElement("button");
-        subtractFood.classList.add("subtract-food");
-        subtractFood.innerText = "-";
-        // Remove 1 from the quantity of the food and update the food
-        // subtractFood.setAttribute("onclick", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + (parseInt(addedFood.quantity) - 1) + ")");
-        subtractFood.addEventListener("click", (e) => {
-            if (addedFood.quantity == 1) {
-                return;
-            }
-            updateFood(food.id, userMeals[0].id, parseInt(addedFood.quantity) - 1);
-            addedFood.quantity = parseInt(addedFood.quantity) - 1;
-            // foodQuantity.setAttribute("value", addedFood.quantity);
-            foodQuantity.innerText = addedFood.quantity;
-
-            subtractNutrition(food);
-        });
-
-        // Add a button to add another food
-        let addFood = document.createElement("button");
-        addFood.classList.add("add-food");
-        addFood.innerText = "+";
-        // Add 1 to the quantity of the food and update the food
-        // addFood.setAttribute("onclick", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + (parseInt(addedFood.quantity) + 1) + ")");
-        addFood.addEventListener("click", (e) => {
-            updateFood(food.id, userMeals[0].id, parseInt(addedFood.quantity) + 1);
-            addedFood.quantity = parseInt(addedFood.quantity) + 1;
-            // foodQuantity.setAttribute("value", addedFood.quantity);
-            foodQuantity.innerText = addedFood.quantity;
-
-            addNutrition(food);
-        });
-
-        // TODO: Make this a text input and work correctly
-        // Add a text input for the quantity
-        // let foodQuantity = document.createElement("input");
-        // foodQuantity.classList.add("food-quantity");
-        // foodQuantity.setAttribute("type", "number");
-        // foodQuantity.setAttribute("value", addedFood.quantity);
-        // foodQuantity.setAttribute("min", "1");
-        // foodQuantity.setAttribute("data-food-id", food.id);
-        // foodQuantity.setAttribute("onchange", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + foodQuantity.value + ")");
-        // foodQuantity.addEventListener("change", (e) => {
-        //     updateFood(food.id, userMeals[0].id, foodQuantity.value);
-        //     addedFood.quantity = foodQuantity.value;
-
-        //     let difference = foodQuantity.value - addedFood.quantity;
-        //     if (difference > 0) {
-        //         addNutrition(food);
-        //     }
-        //     else if (difference < 0) {
-        //         subtractNutrition(food);
-        //     }
-        // });
-
-        // add text showing the quantity
-        let foodQuantity = document.createElement("span");
-        foodQuantity.classList.add("food-quantity");
-        foodQuantity.innerText = addedFood.quantity;
-        foodQuantity.setAttribute("data-food-id", food.id);
-
-
-        // Add the nutrition of the food to the total nutrition
-        nutrition.calories += food.calories * addedFood.quantity;
-        nutrition.calories_from_fat += food.calories_from_fat * addedFood.quantity;
-        nutrition.total_fat += food.total_fat * addedFood.quantity;
-        nutrition.saturated_fat += food.saturated_fat * addedFood.quantity;
-        nutrition.trans_fat += food.trans_fat * addedFood.quantity;
-        nutrition.cholesterol += food.cholesterol * addedFood.quantity;
-        nutrition.sodium += food.sodium * addedFood.quantity;
-        nutrition.total_carbohydrates += food.total_carbohydrates * addedFood.quantity;
-        nutrition.dietary_fiber += food.dietary_fiber * addedFood.quantity;
-        nutrition.sugars += food.sugars * addedFood.quantity;
-        nutrition.protein += food.protein * addedFood.quantity;
-
-        foodItem.appendChild(removeFoodButton);
-        foodItem.appendChild(subtractFood);
-        foodItem.appendChild(addFood);
-        foodItem.appendChild(foodQuantity);
-        foodItem.appendChild(foodName);
-        foodItem.appendChild(foodCalories);
-    
-        document.getElementById("popup-list").appendChild(foodItem);
-    }
-
+        foodItem = foodMap.get(parseInt(foodItem.id));
+        nutrition.calories += foodItem.calories * foodItem.quantity;
+        nutrition.calories_from_fat += foodItem.calories_from_fat * foodItem.quantity;
+        nutrition.total_fat += foodItem.total_fat * foodItem.quantity;
+        nutrition.saturated_fat += foodItem.saturated_fat * foodItem.quantity;
+        nutrition.trans_fat += foodItem.trans_fat * foodItem.quantity;
+        nutrition.cholesterol += foodItem.cholesterol * foodItem.quantity;
+        nutrition.sodium += foodItem.sodium * foodItem.quantity;
+        nutrition.total_carbohydrates += foodItem.total_carbohydrates * foodItem.quantity;
+        nutrition.dietary_fiber += foodItem.dietary_fiber * foodItem.quantity;
+        nutrition.sugars += foodItem.sugars * foodItem.quantity;
+        nutrition.protein += foodItem.protein * foodItem.quantity;
+    };
+        
     document.getElementById("totalCalories").innerText = nutrition.calories;
     document.getElementById("totalCaloriesFat").innerText = nutrition.calories_from_fat;
     document.getElementById("totalFat").innerText = nutrition.total_fat;
@@ -592,172 +580,10 @@ function getNutrition(userMeal) {
     document.getElementById("dietaryFiber").innerText = nutrition.dietary_fiber;
     document.getElementById("sugars").innerText = nutrition.sugars;
     document.getElementById("protein").innerText = nutrition.protein;
+
+    document.getElementById('calorie-counter').innerText = nutrition.calories;
 }
 
-function updateNutrition(nutrition) {
-    document.getElementById("totalCalories").innerText = nutrition.calories;
-    document.getElementById("totalCaloriesFat").innerText = nutrition.calories_from_fat;
-    document.getElementById("totalFat").innerText = nutrition.total_fat;
-    document.getElementById("saturatedFat").innerText = nutrition.saturated_fat;
-    document.getElementById("cholesterol").innerText = nutrition.cholesterol;
-    document.getElementById("sodium").innerText = nutrition.sodium;
-    document.getElementById("totalCarbohydrates").innerText = nutrition.total_carbohydrates;
-    document.getElementById("dietaryFiber").innerText = nutrition.dietary_fiber;
-    document.getElementById("sugars").innerText = nutrition.sugars;
-    document.getElementById("protein").innerText = nutrition.protein;
-}
-
-function addNutrition(nutrition) {
-    // add values from nutrition to the popup
-    document.getElementById("totalCalories").innerText = parseInt(document.getElementById("totalCalories").innerText) + nutrition.calories;
-    document.getElementById("totalCaloriesFat").innerText = parseInt(document.getElementById("totalCaloriesFat").innerText) + nutrition.calories_from_fat;
-    document.getElementById("totalFat").innerText = parseInt(document.getElementById("totalFat").innerText) + nutrition.total_fat;
-    document.getElementById("saturatedFat").innerText = parseInt(document.getElementById("saturatedFat").innerText) + nutrition.saturated_fat;
-    document.getElementById("cholesterol").innerText = parseInt(document.getElementById("cholesterol").innerText) + nutrition.cholesterol;
-    document.getElementById("sodium").innerText = parseInt(document.getElementById("sodium").innerText) + nutrition.sodium;
-    document.getElementById("totalCarbohydrates").innerText = parseInt(document.getElementById("totalCarbohydrates").innerText) + nutrition.total_carbohydrates;
-    document.getElementById("dietaryFiber").innerText = parseInt(document.getElementById("dietaryFiber").innerText) + nutrition.dietary_fiber;
-    document.getElementById("sugars").innerText = parseInt(document.getElementById("sugars").innerText) + nutrition.sugars;
-    document.getElementById("protein").innerText = parseInt(document.getElementById("protein").innerText) + nutrition.protein;
-}
-
-function subtractNutrition(nutrition) {
-    // subtract values from nutrition to the popup
-    document.getElementById("totalCalories").innerText = parseInt(document.getElementById("totalCalories").innerText) - nutrition.calories;
-    document.getElementById("totalCaloriesFat").innerText = parseInt(document.getElementById("totalCaloriesFat").innerText) - nutrition.calories_from_fat;
-    document.getElementById("totalFat").innerText = parseInt(document.getElementById("totalFat").innerText) - nutrition.total_fat;
-    document.getElementById("saturatedFat").innerText = parseInt(document.getElementById("saturatedFat").innerText) - nutrition.saturated_fat;
-    document.getElementById("cholesterol").innerText = parseInt(document.getElementById("cholesterol").innerText) - nutrition.cholesterol;
-    document.getElementById("sodium").innerText = parseInt(document.getElementById("sodium").innerText) - nutrition.sodium;
-    document.getElementById("totalCarbohydrates").innerText = parseInt(document.getElementById("totalCarbohydrates").innerText) - nutrition.total_carbohydrates;
-    document.getElementById("dietaryFiber").innerText = parseInt(document.getElementById("dietaryFiber").innerText) - nutrition.dietary_fiber;
-    document.getElementById("sugars").innerText = parseInt(document.getElementById("sugars").innerText) - nutrition.sugars;
-    document.getElementById("protein").innerText = parseInt(document.getElementById("protein").innerText) - nutrition.protein;
-}
-
-function addFoodToPopup(foodId, mealId) {
-    let nutrition = {
-        calories: 0,
-        calories_from_fat: 0,
-        total_fat: 0,
-        saturated_fat: 0,
-        trans_fat: 0,
-        cholesterol: 0,
-        sodium: 0,
-        total_carbohydrates: 0,
-        dietary_fiber: 0,
-        sugars: 0,
-        protein: 0,
-    }
-    // Add the nutrition of the food to the total nutrition
-    let food = foodMap.get(parseInt(foodId));
-
-
-    let foodItem = document.createElement("li");
-    foodItem.classList.add("food-item");
-
-    let foodName = document.createElement("span");
-    foodName.classList.add("food-name");
-    foodName.innerText = food.short_name;
-
-    let foodCalories = document.createElement("span");
-    foodCalories.classList.add("food-calories");
-    foodCalories.innerText = food.calories + " kcal";
-
-    let removeFoodButton = document.createElement("button");
-    removeFoodButton.classList.add("remove-food");
-    removeFoodButton.innerText = "X";
-    removeFoodButton.setAttribute("data-food-id", food.id);
-    // removeFood.setAttribute("onclick", "removeFood('" + food.id + "', '" + userMeals[0].id + "')");
-    removeFoodButton.addEventListener("click", (e) => {
-        removeFood(food.id, userMeals[0].id);
-        foodItem.remove();
-    });
-
-    let subtractFood = document.createElement("button");
-    subtractFood.classList.add("subtract-food");
-    subtractFood.innerText = "-";
-    // Remove 1 from the quantity of the food and update the food
-    // subtractFood.setAttribute("onclick", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + (parseInt(addedFood.quantity) - 1) + ")");
-    subtractFood.addEventListener("click", (e) => {
-        if (addedFood.quantity == 1) {
-            return;
-        }
-        updateFood(food.id, userMeals[0].id, parseInt(addedFood.quantity) - 1);
-        addedFood.quantity = parseInt(addedFood.quantity) - 1;
-        // foodQuantity.setAttribute("value", addedFood.quantity);
-        foodQuantity.innerText = addedFood.quantity;
-
-        subtractNutrition(food);
-    });
-
-    // Add a button to add another food
-    let addFood = document.createElement("button");
-    addFood.classList.add("add-food");
-    addFood.innerText = "+";
-    // Add 1 to the quantity of the food and update the food
-    // addFood.setAttribute("onclick", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + (parseInt(addedFood.quantity) + 1) + ")");
-    addFood.addEventListener("click", (e) => {
-        updateFood(food.id, userMeals[0].id, parseInt(addedFood.quantity) + 1);
-        // TODO: Fix this
-        addedFood.quantity = parseInt(addedFood.quantity) + 1;
-        // foodQuantity.setAttribute("value", addedFood.quantity);
-        foodQuantity.innerText = addedFood.quantity;
-
-        addNutrition(food);
-    });
-
-    // TODO: Make this a text input and work correctly
-    // Add a text input for the quantity
-    // let foodQuantity = document.createElement("input");
-    // foodQuantity.classList.add("food-quantity");
-    // foodQuantity.setAttribute("type", "number");
-    // foodQuantity.setAttribute("value", addedFood.quantity);
-    // foodQuantity.setAttribute("min", "1");
-    // foodQuantity.setAttribute("data-food-id", food.id);
-    // foodQuantity.setAttribute("onchange", "updateFood('" + food.id + "', '" + userMeals[0].id + "', " + foodQuantity.value + ")");
-    // foodQuantity.addEventListener("change", (e) => {
-    //     updateFood(food.id, userMeals[0].id, foodQuantity.value);
-    //     addedFood.quantity = foodQuantity.value;
-
-    //     let difference = foodQuantity.value - addedFood.quantity;
-    //     if (difference > 0) {
-    //         addNutrition(food);
-    //     }
-    //     else if (difference < 0) {
-    //         subtractNutrition(food);
-    //     }
-    // });
-
-    // add text showing the quantity
-    let foodQuantity = document.createElement("span");
-    foodQuantity.classList.add("food-quantity");
-    foodQuantity.innerText = 1;
-    foodQuantity.setAttribute("data-food-id", food.id);
-
-
-    // Add the nutrition of the food to the total nutrition
-    nutrition.calories += food.calories;
-    nutrition.calories_from_fat += food.calories_from_fat;
-    nutrition.total_fat += food.total_fat;
-    nutrition.saturated_fat += food.saturated_fat;
-    nutrition.trans_fat += food.trans_fat;
-    nutrition.cholesterol += food.cholesterol;
-    nutrition.sodium += food.sodium;
-    nutrition.total_carbohydrates += food.total_carbohydrates;
-    nutrition.dietary_fiber += food.dietary_fiber;
-    nutrition.sugars += food.sugars;
-    nutrition.protein += food.protein;
-
-    foodItem.appendChild(removeFoodButton);
-    foodItem.appendChild(subtractFood);
-    foodItem.appendChild(addFood);
-    foodItem.appendChild(foodQuantity);
-    foodItem.appendChild(foodName);
-    foodItem.appendChild(foodCalories);
-
-    document.getElementById("popup-list").appendChild(foodItem);
-}
 
 document.getElementById("close-popup").addEventListener("click", (e) => {
     document.getElementById("food-popup").classList.add("hidden");
