@@ -26,7 +26,7 @@ async function addFavoriteFood(foodId) {
         addFavoriteFoodUI(foodId);
     }
     else {
-        alert("Failed to add food to your favorites!")
+        // alert("Failed to add food to your favorites!")
     }
 }
 
@@ -59,7 +59,7 @@ async function removeFavoriteFood(foodId) {
         removeFavoriteFoodUI(foodId);
     }
     else {
-        alert("Failed to remove food from your favorites!")
+        // alert("Failed to remove food from your favorites!")
     }
 }
 
@@ -94,6 +94,6 @@ async function getFavoriteFoods(restaurantId) {
         getFavoriteFoodsUI(favoriteFoods);
     }
     else {
-        alert("Failed to get favorite foods!");
+        // alert("Failed to get favorite foods!");
     }
 }

@@ -12,15 +12,14 @@
             background-color: #f4f4f4;
             /* background-color: #282828; */
             /* background: linear-gradient(#FF5F6D, #FFC371); */
-            padding: 20px;
-            margin: 0;
+            padding: 0px;
+            margin: 0px;
         }
 
         .header {
             text-align: center;
             font-size: 24px;
             margin-bottom: 20px;
-
         }
 
         .dining-hall {
@@ -125,14 +124,55 @@
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
+        nav {
+            background-color: white;
+            position: fixed;
+            top: 0px;
+            width: 100%;
+            height: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            padding-right: 10px;
+        }
+
+        button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
+    <nav>
+        <div class="nav-left">
+            <a href="index.html" class="home-redirect">Home</a>
+            <p class="calorie-counter hidden" id="calorie-counter">Current Calories: <span id="calorie-counter-number"
+                    class="calorie-counter-number"></span></p>
+        </div>
+        <div class="nav-right">
+            <button id="login" class="login hidden" onclick="login()">Login</button>
+            <button id="logout" class="logout hidden" onclick="logout()">Logout</button>
+        </div>
+    </nav>
     <button id="login" class="login">Login</button>
     <button id="logout" class="logout">Logout</button>
-    <button id="call-api">Call API</button>
-    <div id="profile"></div>
     <div class="diningHallList" id="diningHallList">
         <div class="header">
             <h1>What's Open?</h1>

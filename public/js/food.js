@@ -65,7 +65,7 @@ async function addFood(foodId, mealId) {
         addFoodUI(foodId, mealId);
     }
     else {
-        alert("Failed to add food!");
+        // alert("Failed to add food!");
     }
 }
 
@@ -132,7 +132,7 @@ async function removeFood(foodId, mealId) {
         removeFoodUI(foodId, mealId);
     }
     else {
-        alert("Failed to remove food!");
+        // alert("Failed to remove food!");
     }
 }
 
