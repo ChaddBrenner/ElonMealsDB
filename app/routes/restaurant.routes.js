@@ -8,5 +8,9 @@ module.exports = app => {
     // Retrieve all Restaurants from the database on a certain date.
     router.get('/date/:date', restaurants.findByDate)
 
+    // Retrieve all the information for a restaurant in the request
+    // stations, foods, etc.
+    router.get('/all/:id', restaurants.findByIdAll)
+
     app.use('/api/restaurants', router);
 };

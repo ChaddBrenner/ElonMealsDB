@@ -101,7 +101,7 @@ async function addUserMeal(mealId) {
         userMeals.push({id: mealId, foodItems: []});
     }
     else {
-        alert("Failed to create meal!");
+        // alert("Failed to create meal!");
     }
 }
 
@@ -154,7 +154,7 @@ async function removeUserMeal(mealId) {
         }
     }
     else {
-        alert("Failed to remove meal!");
+        // alert("Failed to remove meal!");
     }
 }
 

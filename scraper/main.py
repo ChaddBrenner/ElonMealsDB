@@ -97,6 +97,6 @@ def insert_data(data):
 
                     insert_food(new_food, station_id, food['url'])
 
-data = load_data()
-# data = collect_data()
+# data = load_data()
+data = collect_data()
 insert_data(data)

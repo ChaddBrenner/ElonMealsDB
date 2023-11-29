@@ -73,9 +73,21 @@ window.onload = async () => {
         await getFavoriteFoods(restaurantId);
         userMeals = await getUserMeals(restaurantId);
         updateNutrition();
+        document.getElementById("logout").classList.remove("hidden");
+        document.getElementById("calorie-counter").classList.remove("hidden");
     }
     else {
-    console.log("> User not authenticated");
+        console.log("> User not authenticated");
+        document.getElementById("login").classList.remove("hidden");
+        let foodButtons = document.getElementsByClassName("food-button");
+        for (let foodButton of foodButtons) {
+            foodButton.classList.add("hidden");
+        }
+
+        let foodFavoriteButtons = document.getElementsByClassName("food-favorite-button");
+        for (let foodFavoriteButton of foodFavoriteButtons) {
+            foodFavoriteButton.classList.add("hidden");
+        }
     }
 };
 
@@ -116,6 +128,7 @@ async function getFoods(restaurantId) {
         }
         meal.stations = stations;
     } 
+    console.log(meals);
     return meals;
 }
 
@@ -221,17 +234,17 @@ function openFood(foodId) {
         document.getElementById("food-vegan").classList.add("hidden");
     }
 
-    document.getElementById("table-calories").innerText = food.calories;
-    document.getElementById("table-calories-from-fat").innerText = food.calories_from_fat;
-    document.getElementById("table-total-fat").innerText = food.total_fat;
-    document.getElementById("table-saturated-fat").innerText = food.saturated_fat;
-    document.getElementById('table-trans-fat').innerText = food.trans_fat;
-    document.getElementById("table-cholesterol").innerText = food.cholesterol;
-    document.getElementById("table-sodium").innerText = food.sodium;
-    document.getElementById("table-carbohydrates").innerText = food.total_carbohydrates;
-    document.getElementById("table-dietary-fiber").innerText = food.dietary_fiber;
-    document.getElementById("table-sugars").innerText = food.sugars;
-    document.getElementById("table-protein").innerText = food.protein;
+    document.getElementById("table-calories").innerText = food.calories.toFixed(2);
+    document.getElementById("table-calories-from-fat").innerText = food.calories_from_fat.toFixed(2);
+    document.getElementById("table-total-fat").innerText = food.total_fat.toFixed(2);
+    document.getElementById("table-saturated-fat").innerText = food.saturated_fat.toFixed(2);
+    document.getElementById('table-trans-fat').innerText = food.trans_fat.toFixed(2);
+    document.getElementById("table-cholesterol").innerText = food.cholesterol.toFixed(2);
+    document.getElementById("table-sodium").innerText = food.sodium.toFixed(2);
+    document.getElementById("table-carbohydrates").innerText = food.total_carbohydrates.toFixed(2);
+    document.getElementById("table-dietary-fiber").innerText = food.dietary_fiber.toFixed(2);
+    document.getElementById("table-sugars").innerText = food.sugars.toFixed(2);
+    document.getElementById("table-protein").innerText = food.protein.toFixed(2);
 }
 
 function closeFoodDescription() {
@@ -581,7 +594,7 @@ function updateNutrition() {
     document.getElementById("sugars").innerText = nutrition.sugars;
     document.getElementById("protein").innerText = nutrition.protein;
 
-    document.getElementById('calorie-counter').innerText = nutrition.calories;
+    document.getElementById('calorie-counter-number').innerText = nutrition.calories;
 }
 
 
