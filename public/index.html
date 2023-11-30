@@ -7,12 +7,6 @@
     <title>What's Open?</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .header {
-            text-align: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-
         .dining-hall {
             background-color: #ffffff;
             border-radius: 5px;
@@ -29,9 +23,11 @@
         }
 
         .hours {
-            color: #666;
+            color: black;
             font-size: 14px;
             align-content: center;
+            margin: 5px;
+            border-radius: 5px;
         }
 
         .diningHallList {
@@ -42,52 +38,8 @@
             background-color: white;
         }
 
-        .nutrition-row {
-            margin: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-
-        .nutrition-status {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .nutrition-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .closed {
-            color: #999;
-            border-radius: 5px;
-        }
-
-        .open {
-            color: #999;
-            border-radius: 5px;
-
-        }
-
-        .hours {
-            margin: 5px;
-            color: #666;
-        }
-
         .restaurant-open {
             background-color: lightgreen;
-
         }
 
         .restaurant-closed {
@@ -105,21 +57,11 @@
             color: #333;
         }
 
-        .favorites {
-            margin: 20px;
-            margin-top: 0px;
-            margin-right: 10px;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            background-color: white;
-            width: 45vw;
-        }
-
+        .favorites,
         .meals-today {
             margin: 20px;
             margin-top: 0px;
-            margin-left: 10px;
+            margin-right: 10px;
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -134,90 +76,11 @@
             margin-bottom: 10px;
         }
 
-        nav {
-            background-color: white;
-            top: 0px;
-            width: 100%;
-            height: 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
-
-        .nav-left {
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            padding-right: 10px;
-        }
-
-        .nav-center {
-            display: flex;
-            align-items: center;
-            position: absolute;
-            left: 50%;
-            transform: translate(-50%, 0);
-        }
-
-        button {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-        }
-
         .details-row {
             display: flex;
             justify-content: space-between;
             margin: 0px;
             padding: 0px;
-        }
-
-
-        .task-progress p {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .progress {
-            -webkit-appearance: none;
-            appearance: none;
-            border: none;
-            border-radius: 10px;
-            height: 10px;
-        }
-
-        .progress::-webkit-progress-bar {
-            background-color: #f0f0f0;
-        }
-
-        .progress::-webkit-progress-bar,
-        .progress::-webkit-progress-value {
-            border-radius: 10px;
-        }
-
-        .progress::-moz-progress-bar {
-            border-radius: 10px;
-        }
-
-        .progress1::-webkit-progress-value {
-            background: #56b6ff;
-        }
-
-        .progress2::-webkit-progress-value {
-            background: #ffb453;
-        }
-
-        .progress3::-webkit-progress-value {
-            background: #3fff76;
         }
 
         .status {
@@ -236,81 +99,21 @@
             background-color: lightgreen;
         }
 
-        /* Make the settings panel on top of everything else and appear at the top of the page */
-        .settings-panel {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 40%;
-            height: 40%;
-            z-index: 1000;
-            background-color: green;
-        }
-
-        .settings-form {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            height: 100%;
-        }
-
-        .close-settings-button {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        a {
-            font-size: 20px;
-            text-decoration: none;
-            color: #333;
-        }
-
-        .settings-warning {
-            color: red;
-        }
-
         @media screen and (max-width: 800px) {
-            .row {
-                flex-direction: column;
-            }
 
-            .dining-hall {
-                width: 100%;
-            }
-
-            .favorites {
-                width: 100%;
-            }
-
+            .dining-hall,
+            .favorites,
             .meals-today {
                 width: 100%;
             }
 
-            .nutrition-status {
+            .nutrition-status,
+            .details-row,
+            .row {
                 flex-direction: column;
             }
 
-            .details-row {
-                flex-direction: column;
-            }
-
-            .favorites {
-                width: 80%;
-                margin-left: 20px;
-                margin-right: 20px;
-            }
-
+            .favorites,
             .meals-today {
                 width: 80%;
                 margin-left: 20px;
