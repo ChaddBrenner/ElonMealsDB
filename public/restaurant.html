@@ -5,16 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meal Selector</title>
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        * {
-            scroll-behavior: smooth;
-            font-family: Arial, Helvetica, sans-serif;
+        body {
+            padding-top: 50px;
         }
-
-        .hidden {
-            display: none;
-        }
-
 
         .food-list {
             flex-wrap: wrap;
@@ -35,7 +30,6 @@
             text-align: -webkit-match-parent;
         }
 
-
         .delete-meal {
             float: left;
         }
@@ -52,13 +46,6 @@
             margin: auto;
             margin-bottom: 0px;
             padding-bottom: 5px;
-        }
-
-        body {
-            background: gray;
-            margin: 0px;
-            padding: 0px;
-            padding-top: 50px;
         }
 
         .gluten-free {
@@ -104,9 +91,7 @@
             flex-direction: column;
         }
 
-        /* Active button */
         .active {
-            /* background-color: #CCCCCC; */
             border-color: #CCCCCC;
             scale: 1.1;
             box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
@@ -165,7 +150,6 @@
 
         .food-description-panel {
             position: fixed;
-            /* width: 40%; */
             width: 350px;
             transition: all 300ms ease 0s;
             height: 100%;
@@ -177,12 +161,11 @@
         }
 
         table {
-            /* width: 100%; */
             padding-left: 10px;
         }
 
         .adding-meal {
-            background-color: lightblue;
+            background-color: lightgreen;
             border: 0px;
         }
 
@@ -237,7 +220,6 @@
 
         .food-calories {
             font-weight: bold;
-            /* right align */
             text-align: right;
             float: right;
         }
@@ -308,6 +290,12 @@
             padding-right: 10px;
         }
 
+        .nav-center {
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, 0);
+        }
+
         .food-short-name {
             padding-left: 10px;
         }
@@ -341,6 +329,48 @@
         .food-nutrition {
             padding-left: 10px;
         }
+
+        @media screen and (max-width: 800px) {
+            .food-description-panel {
+                width: 100%;
+            }
+
+            .food-popup {
+                width: 100%;
+            }
+
+            .food-list {
+                column-count: 1;
+            }
+
+            .food-item {
+                padding-left: 0px;
+            }
+
+            .food-short-name {
+                padding-left: 0px;
+            }
+
+            .food-full-name {
+                padding-left: 0px;
+            }
+
+            .tab-button {
+                height: 100px;
+            }
+
+            .restaurant-name {
+                display: none;
+            }
+
+            .active {
+                scale: 1.02;
+            }
+
+            .calorie-counter {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -350,6 +380,11 @@
             <a href="index.html" class="home-redirect">Home</a>
             <p class="calorie-counter hidden" id="calorie-counter">Current Calories: <span id="calorie-counter-number"
                     class="calorie-counter-number"></span></p>
+        </div>
+        <div class="nav-center">
+            <h2>
+                <span class="restaurant-name" id="restaurant-name"></span>
+            </h2>
         </div>
         <div class="nav-right">
             <button id="login" class="login hidden" onclick="login()">Login</button>
@@ -366,7 +401,6 @@
     </div>
 
     <div class="food-description-panel hidden" id="food-description-panel">
-        <!-- Close button -->
         <button id="close-food-description" class="close-food-description" onclick="closeFoodDescription()">X</button>
         <h1 id="food-short-name" class="food-short-name">Sugar Waffle Cone</h1>
         <h2 id="food-full-name" class="food-short-name">A delicious sugar waffle cone with sprinkles</h2>
@@ -442,7 +476,6 @@
             <button id="close-popup">Close</button>
         </div>
         <ul id="popup-list">
-            <!-- Food items will be dynamically inserted here -->
         </ul>
         <div class="nutrition-info">
             <p>Total Calories: <span id="totalCalories">0</span></p>

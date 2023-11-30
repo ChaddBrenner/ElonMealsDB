@@ -66,6 +66,9 @@ window.onload = async () => {
     await displayFoods(foods);
     await configureClient();
 
+    let restaurant = await getRestaurantRequest(restaurantId);
+    document.getElementById("restaurant-name").innerText = restaurant.name;
+
     const isAuthenticated = await auth0Client.isAuthenticated();
 
     if (isAuthenticated) {
@@ -128,7 +131,7 @@ async function getFoods(restaurantId) {
         }
         meal.stations = stations;
     } 
-    console.log(meals);
+    
     return meals;
 }
 

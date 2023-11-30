@@ -224,8 +224,3 @@ async function getUserMeals(restaurantId) {
     
     return userMeals;   
 }
-
-
-
-
-

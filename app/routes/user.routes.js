@@ -12,8 +12,23 @@ module.exports = (app, checkJwt) => {
 
     // Update the user's calorie goal
     router.put('/api/user/calorie_goal/', checkJwt, users.updateCalorieGoal)
+
+    // Update the user's protein goal
+    router.put('/api/user/protein_goal/', checkJwt, users.updateProteinGoal)
+
+    // Update the user's fat goal
+    router.put('/api/user/fat_goal/', checkJwt, users.updateFatGoal)
+
+    // Update the user's carbohydrates goal
+    router.put('/api/user/carbohydrate_goal/', checkJwt, users.updateCarbohydrateGoal)
+
+    // Update the user's satisfaction level
+    router.put('/api/user/satisfaction/', checkJwt, users.updateSatisfaction)
+
+    // Update the user's name
+    router.put('/api/user/name/', checkJwt, users.updateName)
     
-    // Get the number of calories that the user has consumed on a certain date
+    // Get the number of calories that the user has consumed on a certain date and the meal with those calories
     router.get('/api/user/calories/:date', checkJwt, users.getCalories)
 
     /////////////////////////
