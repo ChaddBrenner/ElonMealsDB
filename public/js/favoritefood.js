@@ -1,5 +1,5 @@
 async function addFavoriteFoodRequest(foodId) {
-    let response = await fetch("http://localhost:3000/api/user/favorite/" + foodId, {
+    let response = await fetch(API_URL + "/api/user/favorite/" + foodId, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -31,7 +31,7 @@ async function addFavoriteFood(foodId) {
 }
 
 async function removeFavoriteFoodRequest(foodId) {
-    let response = await fetch("http://localhost:3000/api/user/favorite/" + foodId, {
+    let response = await fetch(API_URL + "/api/user/favorite/" + foodId, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ async function removeFavoriteFood(foodId) {
 }
 
 async function getFavoriteFoodsRequest(restaurantId) {
-    let response = await fetch("http://localhost:3000/api/user/favorites/" + restaurantId, {
+    let response = await fetch(API_URL + "/api/user/favorites/" + restaurantId, {
         headers: {
             Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
         }

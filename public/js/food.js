@@ -1,5 +1,5 @@
 async function addFoodRequest(foodId, mealId) {
-    let response = await fetch("http://localhost:3000/api/user/meal/food", {
+    let response = await fetch(API_URL + "/api/user/meal/food", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ async function addFood(foodId, mealId) {
 }
 
 async function removeFoodRequest(foodId, mealId) {
-    let response = await fetch("http://localhost:3000/api/user/meal/food", {
+    let response = await fetch(API_URL + "/api/user/meal/food", {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ async function removeFood(foodId, mealId) {
 }
 
 async function updateFood(foodId, mealId, quantity) {
-    let response = await fetch("http://localhost:3000/api/user/meal/food", {
+    let response = await fetch(API_URL + "/api/user/meal/food", {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',

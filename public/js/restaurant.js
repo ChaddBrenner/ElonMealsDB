@@ -2,9 +2,13 @@ const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 const restaurantId = urlParams.get('id');
 
-// The Auth0 client, initialized in configureClient()
+// Variables used throughout the files that need to be accessed by multiple functions
 let auth0Client = null;
 var userMeals = [];
+// Map of food id to food object
+// Scope so that we can access it in the food link event listener
+var foodMap = new Map();
+let meals = [];
 
 /**
  * Starts the authentication flow
@@ -54,7 +58,7 @@ const configureClient = async () => {
     clientId: "Q5vXLbd5NoMtXFAiPjjXHuC0POe4Cqdf",
     authorizationParams: {
         redirect_uri: window.location.href,
-        audience: 'http://localhost:3000', 
+        audience: API_URL, 
         scope: 'openid profile email',
     }
   });
@@ -62,10 +66,16 @@ const configureClient = async () => {
 
 // Will run when page finishes loading
 window.onload = async () => {
+    // Get the restaurant data from the api
     let foods = await getFoods(restaurantId);
+
+    // Display the foods
     await displayFoods(foods);
+
+    // Configure the Auth0 client
     await configureClient();
 
+    // Get the name and basic information of the restaurant
     let restaurant = await getRestaurantRequest(restaurantId);
     document.getElementById("restaurant-name").innerText = restaurant.name;
 
@@ -73,6 +83,7 @@ window.onload = async () => {
 
     if (isAuthenticated) {
         console.log("> User is authenticated");
+        // Get the user's meals and favorite foods
         await getFavoriteFoods(restaurantId);
         userMeals = await getUserMeals(restaurantId);
         updateNutrition();
@@ -94,14 +105,9 @@ window.onload = async () => {
     }
 };
 
-
-// Map of food id to food object
-// Scope so that we can access it in the food link event listener
-var foodMap = new Map();
-let meals = [];
-
+// Get the meals, stations, and foods for the given restaurant
 async function getFoods(restaurantId) {
-    meals = await fetch("http://localhost:3000/api/meals/restaurant/" + restaurantId);
+    meals = await fetch(API_URL + "/api/meals/restaurant/" + restaurantId);
     if (meals.status == 404) {
         return [];
     }
@@ -109,7 +115,7 @@ async function getFoods(restaurantId) {
     meals = await meals.json();
 
     for (let meal of meals) {
-        let stations = await fetch("http://localhost:3000/api/stations/meal/" + meal.id);
+        let stations = await fetch(API_URL + "/api/stations/meal/" + meal.id);
         if (stations.status == 404) {
             continue;
         }
@@ -117,7 +123,7 @@ async function getFoods(restaurantId) {
         stations = await stations.json();
 
         for (let station of stations) {
-            let foods = await fetch("http://localhost:3000/api/foods/station/" + station.id);
+            let foods = await fetch(API_URL + "/api/foods/station/" + station.id);
             if (foods.status == 404) {
                 continue;
             }
@@ -135,6 +141,7 @@ async function getFoods(restaurantId) {
     return meals;
 }
 
+// Check to see if a meal is currently happening
 function isActive(meal) {
     let currTime = new Date();
 
@@ -159,6 +166,7 @@ function isActive(meal) {
     return false;
 }
 
+// Switch which meal is currently being displayed
 function openTab(mealId) {
     let stationList = document.getElementsByClassName('station');
 
@@ -183,6 +191,7 @@ function openTab(mealId) {
     }
 }
 
+// Open the food description panel and dynamically fill it with the food's information
 function openFood(foodId) {
     document.getElementById("food-description-panel").classList.remove("hidden");
     let food = foodMap.get(parseInt(foodId));
@@ -250,17 +259,18 @@ function openFood(foodId) {
     document.getElementById("table-protein").innerText = food.protein.toFixed(2);
 }
 
+// Close the food description panel
 function closeFoodDescription() {
     document.getElementById("food-description-panel").classList.add("hidden");
 }
 
+// Convert military time to standard time
 function convertTime(time) {
     time = time.split(':'); // convert to array
 
     // fetch
     var hours = Number(time[0]);
     var minutes = Number(time[1]);
-    var seconds = Number(time[2]);
 
     // calculate
     var timeValue;
@@ -274,13 +284,12 @@ function convertTime(time) {
     }
     
     timeValue += (minutes < 10) ? ":0" + minutes : ":" + minutes;  // get minutes
-    // timeValue += (seconds < 10) ? ":0" + seconds : ":" + seconds;  // get seconds
     timeValue += (hours >= 12) ? " P.M." : " A.M.";  // get AM/PM
 
     return timeValue;
 }
 
-
+// Create the button to add a meal to the user's meals
 function createMealSelectorButton(meal) {
     let mealButton = document.createElement("button");
     mealButton.classList.add("tab-button");
@@ -321,6 +330,7 @@ function createMealSelectorButton(meal) {
     return mealButton;
 }
 
+// Create the div for the station
 function createStationDiv(station, meal) {
     let stationDiv = document.createElement("div");
     stationDiv.classList.add("station");
@@ -339,6 +349,7 @@ function createStationDiv(station, meal) {
     return stationDiv;
 }
 
+// Create the list for the food
 function createFoodList() {
     let foodList = document.createElement("ul");
     foodList.classList.add("food-list");
@@ -346,6 +357,7 @@ function createFoodList() {
     return foodList;
 }
 
+// Create the div for the food
 function createFoodDiv(food, station) {
     let foodDiv = document.createElement("div");
     foodDiv.classList.add("food-div");
@@ -356,6 +368,7 @@ function createFoodDiv(food, station) {
     return foodDiv;
 }
 
+// Create the button to add a food to the user's meals
 function createFoodButton(food, station, meal) {
     let foodButton = document.createElement("button");
     foodButton.classList.add("food-button");
@@ -368,6 +381,7 @@ function createFoodButton(food, station, meal) {
     return foodButton;
 }
 
+// Create the button to add a food to the user's favorite foods
 function createFoodFavoriteButton(food, station) {
     let foodFavoriteButton = document.createElement("button");
     foodFavoriteButton.classList.add("food-favorite-button");
@@ -380,6 +394,7 @@ function createFoodFavoriteButton(food, station) {
     return foodFavoriteButton;
 }
 
+// Create the link to open the food description panel
 function createFoodLink(food) {
     let foodLink = document.createElement("a");
     foodLink.setAttribute("href", "#");
@@ -390,6 +405,7 @@ function createFoodLink(food) {
     return foodLink;
 }
 
+// Create the food item to add to the food list
 function createFoodItem(food, station, meal) {
     let foodItem = document.createElement("li");
     foodItem.classList.add("food-item");
@@ -431,6 +447,7 @@ function createFoodItem(food, station, meal) {
     return foodItem;
 }
 
+// Display the foods
 async function displayFoods(foods) {
     let mealSelector = document.getElementById("meal-selector");
     for (let meal of foods) {
@@ -468,12 +485,14 @@ async function displayFoods(foods) {
     }
 }
 
+// Open the popup to add a food to the user's meals
 function editMeal() {
     let foodPopup = document.getElementById("food-popup");
     foodPopup.classList.remove("hidden");
     updateNutrition();
 }
 
+// Add a food to the user's meals popup
 function addNutritionItem(foodIndiv) {
     // Add the nutrition of the food to the total nutrition
     let food = foodMap.get(parseInt(foodIndiv.id));
@@ -545,12 +564,14 @@ function addNutritionItem(foodIndiv) {
     document.getElementById("popup-list").appendChild(foodItem);
 }
 
+
+// Remove a food from the user's meals popup
 function removeNutritionItem(foodIndiv) {
     let foodItem = document.querySelector("li[data-food-id='" + foodIndiv.id + "']");
     foodItem.remove();
 }
 
-
+// Update the nutrition of the user's meals popup
 function updateNutrition() {
     let nutrition = {
         calories: 0,
@@ -600,7 +621,7 @@ function updateNutrition() {
     document.getElementById('calorie-counter-number').innerText = nutrition.calories;
 }
 
-
+// Close the popup to add a food to the user's meals
 document.getElementById("close-popup").addEventListener("click", (e) => {
     document.getElementById("food-popup").classList.add("hidden");
 });

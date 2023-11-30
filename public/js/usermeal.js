@@ -1,9 +1,11 @@
+// Request the restaurant's meals from the server
 async function getRestaurantRequest(restaurantId) {
-    let response = await fetch("http://localhost:3000/api/restaurants/" + restaurantId);
+    let response = await fetch(API_URL + "/api/restaurants/" + restaurantId);
     response = await response.json();
     return response;
 }
 
+// Format the date to be YYYY-MM-DD HH:MM:SS to be compatible with the API
 function formatDate(date) {
     // Padding function to add leading zeros if necessary
     const pad = (num) => num.toString().padStart(2, '0');
@@ -19,6 +21,7 @@ function formatDate(date) {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+// Get the datetime to use for the user meal when adding it to the database
 function getDate(userMeal, restaurantDate) {
     let dateOpen = new Date(restaurantDate + " " + userMeal.time_open);
     let dateClosed = new Date(restaurantDate + " " + userMeal.time_closed);
@@ -46,8 +49,9 @@ function getDate(userMeal, restaurantDate) {
     
 }
 
+// Add a user meal to the database
 async function addUserMealRequest(userMealName, date, mealId) {
-    let response = await fetch("http://localhost:3000/api/user/meal", {
+    let response = await fetch(API_URL + "/api/user/meal", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -63,6 +67,7 @@ async function addUserMealRequest(userMealName, date, mealId) {
     return response;
 }
 
+// Update the UI to show that the meal has been added
 function addUserMealUI(mealId) {
     let mealButton = document.querySelector("button[meal-id='" + mealId + "']");
     mealButton.classList.add("adding-meal");
@@ -72,6 +77,7 @@ function addUserMealUI(mealId) {
     mealSelector[0].classList.remove("hidden");
 }
 
+// Add a user meal to the database and update the UI
 async function addUserMeal(mealId) {
     // Get the restaurant id from the url parameters
     let urlParams = new URLSearchParams(window.location.search);
@@ -100,13 +106,11 @@ async function addUserMeal(mealId) {
         addUserMealUI(mealId);
         userMeals.push({id: mealId, foodItems: []});
     }
-    else {
-        // alert("Failed to create meal!");
-    }
 }
 
+// Remove a food item from the database
 async function removeUserMealRequest(mealId) {
-    let response = await fetch("http://localhost:3000/api/user/meal/", {
+    let response = await fetch(API_URL + "/api/user/meal/", {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
@@ -120,6 +124,7 @@ async function removeUserMealRequest(mealId) {
     return response;
 }
 
+// Update the UI to show that the meal has been removed
 function removeUserMealUI(mealId) {
     let mealButton = document.querySelector("button[meal-id='" + mealId + "']");
     mealButton.classList.remove("adding-meal");
@@ -128,6 +133,7 @@ function removeUserMealUI(mealId) {
     mealSelector[0].classList.add("hidden");
 }
 
+// Remove a user meal from the database and update the UI
 async function removeUserMeal(mealId) {
     // Check userMeals to see if there are any food items
     // If there are, remove them
@@ -158,8 +164,9 @@ async function removeUserMeal(mealId) {
     }
 }
 
+// get the user meals from the database for the given restaurant
 async function getUserMealsRequest(restaurantId) {
-    let userMeals = await fetch("http://localhost:3000/api/user/meals/restaurant/" + restaurantId, {
+    let userMeals = await fetch(API_URL + "/api/user/meals/restaurant/" + restaurantId, {
         headers: {
             Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
         }
@@ -168,6 +175,7 @@ async function getUserMealsRequest(restaurantId) {
     return userMeals;
 }
 
+// Update the UI to show that the meal has been added
 function getUserMealsUI(userMeals) {
     for (let userMeal of userMeals) {
         let mealButton = document.querySelector("button[meal-id='" + userMeal.id + "']");
@@ -179,8 +187,9 @@ function getUserMealsUI(userMeals) {
     
 }
 
+// Get the food items for the given user meal
 async function getUserMealFoodRequest(userMeal) {
-    let foodItems = await fetch("http://localhost:3000/api/user/meal/" + userMeal.id, {
+    let foodItems = await fetch(API_URL + "/api/user/meal/" + userMeal.id, {
         headers: {
             Authorization: `Bearer ${await auth0Client.getTokenSilently()}`,
         }
@@ -189,6 +198,7 @@ async function getUserMealFoodRequest(userMeal) {
     return foodItems;
 }
 
+// Update the UI to show that the food item has been added
 function getUserMealFoodUI(foodItems, userMeal) {
     for (let foodItem of foodItems) {
         let foodButtons = document.querySelectorAll("button[data-food-id='" + foodItem.id + "'][meal-id='" + userMeal.id + "'].food-button");
@@ -200,6 +210,7 @@ function getUserMealFoodUI(foodItems, userMeal) {
     }
 }
 
+// Get the user meals for the given restaurant and update the UI
 async function getUserMeals(restaurantId) {
     let userMeals = await getUserMealsRequest(restaurantId);
     userMeals = await userMeals.json();

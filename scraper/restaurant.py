@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
+
 
 RESTAURANT_URL = 'https://www.elondining.com/menu-hours/?date='
 

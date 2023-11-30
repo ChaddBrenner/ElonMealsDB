@@ -1,3 +1,4 @@
 from insert_database import reset_db
 
-reset_db()
+if __name__ == "__main__":
+    reset_db()
