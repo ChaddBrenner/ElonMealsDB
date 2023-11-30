@@ -54,11 +54,13 @@ window.onload = async () => {
     if (location.search.includes("state=") && 
         (location.search.includes("code=") || 
         location.search.includes("error="))) {
-      await auth0Client.handleRedirectCallback();
-      window.history.replaceState({}, document.title, "/");
+    await auth0Client.handleRedirectCallback();
+    window.history.replaceState({}, document.title, "/");
     }
 
     const isAuthenticated = await auth0Client.isAuthenticated();
+
+
 
     if (isAuthenticated) {
         console.log("> User is authenticated");
@@ -466,7 +468,7 @@ async function appendRestaurants() {
         }
 
         let mealRedirect = document.createElement('a');
-        mealRedirect.href = `/restaurant.html?id=${restaurant.id}`;
+        mealRedirect.href = `restaurant.html?id=${restaurant.id}`;
         mealRedirect.classList.add('restaurant-link');
         mealRedirect.appendChild(restaurantDiv);
 

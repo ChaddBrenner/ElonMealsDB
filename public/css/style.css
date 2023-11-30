@@ -177,7 +177,7 @@ a {
 /* Nutrition */
 .nutrition-row {
     margin: 20px;
-    display: flex;
+    /* display: flex; */
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
