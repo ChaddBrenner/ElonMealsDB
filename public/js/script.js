@@ -1,4 +1,3 @@
-
 // The Auth0 client, initialized in configureClient()
 let auth0Client = null;
 var userMeals = [];
@@ -41,7 +40,7 @@ const configureClient = async () => {
     clientId: "Q5vXLbd5NoMtXFAiPjjXHuC0POe4Cqdf",
     authorizationParams: {
         redirect_uri: window.location.href,
-        audience: 'http://localhost:3000', 
+        audience: API_URL, 
         scope: 'openid profile email',
     }
   });
@@ -64,6 +63,7 @@ window.onload = async () => {
     if (isAuthenticated) {
         console.log("> User is authenticated");
 
+        // Update the UI elements to reflect the user's authentication status
         document.getElementById("logout").classList.remove("hidden");
 
         document.getElementById('nutrition-row').classList.remove('hidden');
@@ -77,10 +77,11 @@ window.onload = async () => {
 
         document.getElementById('settings-button').classList.remove('hidden');
 
-        
+        // Get the user's favorites
+        // Display them in the table
         const accessToken = await auth0Client.getTokenSilently();
 
-        let response = await fetch('http://localhost:3000/api/user/favorites', {
+        let response = await fetch(API_URL + '/api/user/favorites', {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -113,12 +114,14 @@ window.onload = async () => {
             favoriteList.appendChild(favoriteRow);
         }
 
+
+        // Get the user's meals today and display them in the table
         let currDate = new Date();
         // Make to EST
         currDate.setHours(currDate.getHours() - 4);
         currDate = currDate.toISOString().substring(0,10);
-
-        response = await fetch('http://localhost:3000/api/user/calories/' + currDate, {
+        
+        response = await fetch(API_URL + '/api/user/calories/' + currDate, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -127,7 +130,6 @@ window.onload = async () => {
         });
 
         let mealToday = await response.json();
-        
 
         let mealsTodayList = document.getElementById('meals-today-list');
 
@@ -163,9 +165,8 @@ window.onload = async () => {
         totalCarbs = Math.round(totalCarbs);
         totalProteins = Math.round(totalProteins);
 
-        
-
-        response = await fetch('http://localhost:3000/api/user', {
+        // Get the user's goals and update the progress bars and settings form
+        response = await fetch(API_URL + '/api/user', {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -292,17 +293,20 @@ window.onload = async () => {
     }
 };
 
+// Open the settings panel when the settings button is clicked
 function openSettings() {
     document.getElementById('settings-panel').classList.remove('hidden');
 }
 
+// Close the settings panel when the close button is clicked
 function closeSettings() {
     document.getElementById('settings-panel').classList.add('hidden');
 }
 
+// Update the user's goals
 async function updateGoal(type, value) {
     const accessToken = await auth0Client.getTokenSilently();
-    let response = await fetch(`http://localhost:3000/api/user/${type}_goal/`, {
+    await fetch(API_URL + `/api/user/${type}_goal/`, {
         method: 'PUT',
         headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -312,9 +316,10 @@ async function updateGoal(type, value) {
     });
 }
 
+// Update the user's satisfaction level
 async function updateSatisfaction(value) {
     const accessToken = await auth0Client.getTokenSilently();
-    let response = await fetch(`http://localhost:3000/api/user/satisfaction/`, {
+    await fetch(API_URL + `/api/user/satisfaction/`, {
         method: 'PUT',
         headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -324,9 +329,10 @@ async function updateSatisfaction(value) {
     });
 }
 
+// Update the user's name
 async function updateName(value) {
     const accessToken = await auth0Client.getTokenSilently();
-    let response = await fetch(`http://localhost:3000/api/user/name/`, {
+    await fetch(API_URL + `/api/user/name/`, {
         method: 'PUT',
         headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -336,6 +342,7 @@ async function updateName(value) {
     });
 }
 
+// Get the restaurants and their information from the API for today
 async function getRestaurants() {
     let outputObjs = [];
 
@@ -344,14 +351,14 @@ async function getRestaurants() {
     currDate.setHours(currDate.getHours() - 4);
     currDate = currDate.toISOString().substring(0,10);
 
-    let restaurantResponse = await fetch('http://localhost:3000/api/restaurants/date/' + currDate);
+    let restaurantResponse = await fetch(API_URL + '/api/restaurants/date/' + currDate);
     restaurantResponse = await restaurantResponse.json();
     let currentTime = new Date();
 
     let mealRequests = [];
 
     for (restaurant of restaurantResponse) {
-        mealRequests.push(fetch(`http://localhost:3000/api/meals/restaurant/${restaurant.id}`));
+        mealRequests.push(fetch(API_URL + `/api/meals/restaurant/${restaurant.id}`));
     }
 
     let mealResponses = await Promise.all(mealRequests);
@@ -365,7 +372,7 @@ async function getRestaurants() {
 
         let isClosed = true;
 
-        for (meal of meals) {   
+        for (let meal of meals) {   
             let time_open = new Date()
             time_open.setHours(meal.time_open.substring(0,2));
             time_open.setMinutes(meal.time_open.substring(3,5));
@@ -400,6 +407,7 @@ async function getRestaurants() {
     return outputObjs;
 }
 
+// Append the data from the API to the page
 async function appendRestaurants() {
     let restaurants = await getRestaurants();
     
@@ -416,7 +424,7 @@ async function appendRestaurants() {
     let rows = document.getElementsByClassName('row');
 
     let counter = 0;
-    for (restaurant of restaurants) {
+    for (let restaurant of restaurants) {
         let restaurantDiv = document.createElement('div');
         restaurantDiv.classList.add('dining-hall');
 
@@ -456,16 +464,6 @@ async function appendRestaurants() {
             
             restaurantDiv.appendChild(mealHours);
         }
-        // let diningHallHours = document.createElement('p');
-
-        // let time_open = diningHall.time_open.toLocaleTimeString();
-        // time_open = time_open.substring(0, time_open.length - 6);
-        // diningHallHours.classList.add('hours');
-
-        // let time_closed = diningHall.time_closed.toLocaleTimeString();
-        // time_closed = time_closed.substring(0, time_closed.length - 6);
-
-        // diningHallHours.innerText = `Open ${time_open} - ${time_closed}`;
 
         let mealRedirect = document.createElement('a');
         mealRedirect.href = `/restaurant.html?id=${restaurant.id}`;
