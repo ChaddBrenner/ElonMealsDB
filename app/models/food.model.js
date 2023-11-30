@@ -114,4 +114,36 @@ Food.findNumberOfFavorites = (id, result) => {
   });
 };
 
+Food.findNumberOfFoodsByDate = (date, result) => {
+  // Sanitize the id to prevent SQL injection
+  if (!clense.isDate(date)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+
+  date = clense.escape(date);
+
+  sql.query(`SELECT COUNT(DISTINCT f.id) FROM restaurant r
+  INNER JOIN meal m ON r.id = m.restaurant_id
+  INNER JOIN station s ON m.id = s.meal_id
+  INNER JOIN station_food sf ON sf.station_id = s.id
+  INNER JOIN food f ON f.id = sf.food_id
+  WHERE r.date = ${date}`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    if (res.length) {
+      console.log("found number of foods: ", res);
+      result(null, {'count': res[0]["COUNT(DISTINCT f.id)"]});
+      return;
+    }
+
+    // not found Food with the id
+    result({ kind: "not_found" }, null);
+  });
+};
+
 module.exports = Food;

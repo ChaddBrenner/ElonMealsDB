@@ -12,5 +12,8 @@ module.exports = app => {
     // Retrieve the number of favorites for a food
     router.get('/favorite/:id', foods.findNumberOfFavorites)
 
+    // Retrieve the number of foods being served on a certain date
+    router.get('/date/:date', foods.findNumberOfFoodsByDate)
+
     app.use('/api/foods', router);
 };

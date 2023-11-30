@@ -33,7 +33,120 @@ exports.updateCalorieGoal = (req, res) => {
                 message: "Error retrieving User"
             });
         } else {
-            User.updateCalorieGoal(req.auth.sub, req.body.calories_goal, (err, data) => {
+            User.updateCalorieGoal(req.auth.sub, req.body.value, (err, data) => {
+                if (err) {
+                    console.log("error: ", err);
+                    res.status(500).send({
+                        message: "Error updating User"
+                    });
+                } else {
+                    res.send(data);
+                }
+            });
+        }
+    });
+}
+
+// Update the user's calorie goal
+exports.updateProteinGoal = (req, res) => {
+    User.checkLogin(req.auth.sub, (err) => {
+        if (err) {
+            console.log("error: ", err);
+            res.status(500).send({
+                message: "Error retrieving User"
+            });
+        } else {
+            User.updateProteinGoal(req.auth.sub, req.body.value, (err, data) => {
+                if (err) {
+                    console.log("error: ", err);
+                    res.status(500).send({
+                        message: "Error updating User"
+                    });
+                } else {
+                    res.send(data);
+                }
+            });
+        }
+    });
+}
+
+// Update the user's calorie goal
+exports.updateFatGoal = (req, res) => {
+    User.checkLogin(req.auth.sub, (err) => {
+        if (err) {
+            console.log("error: ", err);
+            res.status(500).send({
+                message: "Error retrieving User"
+            });
+        } else {
+            User.updateFatGoal(req.auth.sub, req.body.value, (err, data) => {
+                if (err) {
+                    console.log("error: ", err);
+                    res.status(500).send({
+                        message: "Error updating User"
+                    });
+                } else {
+                    res.send(data);
+                }
+            });
+        }
+    });
+}
+
+// Update the user's calorie goal
+exports.updateCarbohydrateGoal = (req, res) => {
+    User.checkLogin(req.auth.sub, (err) => {
+        if (err) {
+            console.log("error: ", err);
+            res.status(500).send({
+                message: "Error retrieving User"
+            });
+        } else {
+            User.updateCarbohydrateGoal(req.auth.sub, req.body.value, (err, data) => {
+                if (err) {
+                    console.log("error: ", err);
+                    res.status(500).send({
+                        message: "Error updating User"
+                    });
+                } else {
+                    res.send(data);
+                }
+            });
+        }
+    });
+}
+
+exports.updateSatisfaction = (req, res) => {
+    User.checkLogin(req.auth.sub, (err) => {
+        if (err) {
+            console.log("error: ", err);
+            res.status(500).send({
+                message: "Error retrieving User"
+            });
+        } else {
+            User.updateSatisfaction(req.auth.sub, req.body.value, (err, data) => {
+                if (err) {
+                    console.log("error: ", err);
+                    res.status(500).send({
+                        message: "Error updating User"
+                    });
+                } else {
+                    res.send(data);
+                }
+            });
+        }
+    });
+}
+
+exports.updateName = (req, res) => {
+    User.checkLogin(req.auth.sub, (err) => {
+        if (err) {
+            console.log("error: ", err);
+            res.status(500).send({
+                message: "Error retrieving User"
+            });
+        } else {
+            User.updateName(req.auth.sub, req.body.value, (err, data) => {
                 if (err) {
                     console.log("error: ", err);
                     res.status(500).send({

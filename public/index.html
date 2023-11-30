@@ -5,17 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What's Open?</title>
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            /* background-color: #FF8080; */
-            background-color: #f4f4f4;
-            /* background-color: #282828; */
-            /* background: linear-gradient(#FF5F6D, #FFC371); */
-            padding: 0px;
-            margin: 0px;
-        }
-
         .header {
             text-align: center;
             font-size: 24px;
@@ -24,9 +15,6 @@
 
         .dining-hall {
             background-color: #ffffff;
-            /* margin-bottom: 10px; */
-            /* margin: 10px; */
-            /* padding: 10px; */
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 2px;
@@ -47,41 +35,49 @@
         }
 
         .diningHallList {
-            /* max-width: 600px;
-            margin: auto;
-            margin-left: 0px;
-            margin-right: 0px; */
-            position: absolute;
-            top: 50%;
-            transform: translate(0, -50%);
-            /* padding: 0px;     */
+            margin: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+
+        .nutrition-row {
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+
+        .nutrition-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .nutrition-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
         }
 
         .closed {
-            /* Make it look like the button is grayed out */
-            /* Add a outer border to make it look like a clickable element */
             color: #999;
-            /* border: 1px solid #999; */
-            /* Add a inner border to make it look like a clickable element */
             border-radius: 5px;
-            /* padding: 5px;/ */
-            /* margin: 5px; */
-
-            /* Make it look like the button is grayed out */
-            /* background-color: #f4f4f4; */
-
-            /* Add a inner vingette */
-            /* background-image: radial-gradient(circle, #f4f4f4 0%, #999 300%); */
         }
 
         .open {
-
             color: #999;
-            /* border: 1px solid #999; */
             border-radius: 5px;
-            /* padding: 5px; */
-            /* margin: 5px; */
-            /* background-color: #f4f4f4; */
+
         }
 
         .hours {
@@ -100,10 +96,6 @@
 
         .row {
             display: flex;
-            /* grid-template-columns: repeat(3, 1fr); */
-            /* justify-content: space-evenly;
-            height: 150px;  
-            box-sizing: border-box; */
             margin-bottom: 10px;
             gap: 10px;
         }
@@ -114,20 +106,36 @@
         }
 
         .favorites {
-            position: absolute;
-            top: 95%;
-            transform: translate(0, -50%);
-            right: 20px;
-            padding: 10px;
-            margin: 10px;
-            /* padding: 0px;     */
+            margin: 20px;
+            margin-top: 0px;
+            margin-right: 10px;
+            padding: 20px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            width: 45vw;
+        }
+
+        .meals-today {
+            margin: 20px;
+            margin-top: 0px;
+            margin-left: 10px;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            width: 45vw;
+        }
+
+        .meals-today-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
 
         nav {
             background-color: white;
-            position: fixed;
             top: 0px;
             width: 100%;
             height: 50px;
@@ -150,49 +158,298 @@
             padding-right: 10px;
         }
 
+        .nav-center {
+            display: flex;
+            align-items: center;
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, 0);
+        }
+
         button {
             background: none;
             border: none;
             font-size: 20px;
             cursor: pointer;
         }
+
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 0px;
+            padding: 0px;
+        }
+
+
+        .task-progress p {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress {
+            -webkit-appearance: none;
+            appearance: none;
+            border: none;
+            border-radius: 10px;
+            height: 10px;
+        }
+
+        .progress::-webkit-progress-bar {
+            background-color: #f0f0f0;
+        }
+
+        .progress::-webkit-progress-bar,
+        .progress::-webkit-progress-value {
+            border-radius: 10px;
+        }
+
+        .progress::-moz-progress-bar {
+            border-radius: 10px;
+        }
+
+        .progress1::-webkit-progress-value {
+            background: #56b6ff;
+        }
+
+        .progress2::-webkit-progress-value {
+            background: #ffb453;
+        }
+
+        .progress3::-webkit-progress-value {
+            background: #3fff76;
+        }
+
+        .status {
+            background-color: white;
+            margin: 10px;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .over {
+            background-color: lightcoral;
+        }
+
+        .under {
+            background-color: lightgreen;
+        }
+
+        /* Make the settings panel on top of everything else and appear at the top of the page */
+        .settings-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40%;
+            height: 40%;
+            z-index: 1000;
+            background-color: green;
+        }
+
+        .settings-form {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            height: 100%;
+        }
+
+        .close-settings-button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        a {
+            font-size: 20px;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .settings-warning {
+            color: red;
+        }
+
+        @media screen and (max-width: 800px) {
+            .row {
+                flex-direction: column;
+            }
+
+            .dining-hall {
+                width: 100%;
+            }
+
+            .favorites {
+                width: 100%;
+            }
+
+            .meals-today {
+                width: 100%;
+            }
+
+            .nutrition-status {
+                flex-direction: column;
+            }
+
+            .details-row {
+                flex-direction: column;
+            }
+
+            .favorites {
+                width: 80%;
+                margin-left: 20px;
+                margin-right: 20px;
+            }
+
+            .meals-today {
+                width: 80%;
+                margin-left: 20px;
+                margin-right: 20px;
+            }
+
+            .status {
+                width: 85%;
+                height: 50px;
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+
+            .settings-panel {
+                width: 80%;
+                height: 80%;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <div class="settings-panel hidden" id="settings-panel">
+        <button class="close-settings-button" id="close-settings-button" onclick="closeSettings()">X</button>
+        <form id="settings-form" class="settings-form">
+            <label for="calorieGoal">Daily Calorie Goal:</label>
+            <input type="number" id="calorieGoal" name="calorieGoal" required>
+
+            <label for="fatGoal">Daily Fat Goal (grams):</label>
+            <input type="number" id="fatGoal" name="fatGoal" required>
+
+            <label for="carbGoal">Daily Carbohydrate Goal (grams):</label>
+            <input type="number" id="carbGoal" name="carbGoal" required>
+
+            <label for="proteinGoal">Daily Protein Goal (grams):</label>
+            <input type="number" id="proteinGoal" name="proteinGoal" required>
+
+            <label for="satisfaction">Satisfaction Level (1-10):</label>
+            <input type="range" id="satisfaction" name="satisfaction" min="1" max="10" required>
+
+            <label for="userName">Your Name:</label>
+            <input type="text" id="userName" name="userName" required>
+
+            <p class="settings-warning hidden" id="settings-warning">Please Enter Positive Numbers</p>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
     <nav>
         <div class="nav-left">
-            <a href="index.html" class="home-redirect">Home</a>
-            <p class="calorie-counter hidden" id="calorie-counter">Current Calories: <span id="calorie-counter-number"
-                    class="calorie-counter-number"></span></p>
+            <a href="/home.html">Home</a>
+            <button class="settings-button hidden" id="settings-button" onclick="openSettings()">Settings</button>
+        </div>
+        <div class="nav-center">
+            <h2>Dashboard</h2>
         </div>
         <div class="nav-right">
             <button id="login" class="login hidden" onclick="login()">Login</button>
             <button id="logout" class="logout hidden" onclick="logout()">Logout</button>
         </div>
     </nav>
-    <button id="login" class="login">Login</button>
-    <button id="logout" class="logout">Logout</button>
+    <div class="nutrition-row hidden" id="nutrition-row">
+        <div class="nutrition-header hidden" id="nutrition-header">
+            <h2>Nutrition</h2>
+        </div>
+        <div class="nutrition-status hidden" id="nutrition-status">
+            <div class="calories-status status" id="calories-status">
+                <div class="task-progress">
+                    <p>
+                        <span class="calories-goal" id="calories-goal"></span>
+                    </p>
+                    <progress class="progress" id="calories-progress" max="653" value="200"></progress>
+                </div>
+            </div>
+            <div class="fats-status status" id="fats-status">
+                <div class="task-progress">
+                    <p>
+                        <span class="fats-goal" id="fats-goal"></span>
+                    </p>
+                    <progress class="progress" id="fats-progress" max="653" value="300"></progress>
+                </div>
+            </div>
+            <div class="protiens-status status" id="proteins-status" data-aos="fade-left" data-aos-once="true">
+                <div class="task-progress">
+                    <p>
+                        <span class="proteins-goal" id="proteins-goal"></span>
+                    </p>
+                    <progress class="progress" max="653" id="proteins-progress" value="200"></progress>
+                </div>
+            </div>
+            <div class="carbohydrates-status status" id="carbohydrates-status" data-aos="fade-left"
+                data-aos-once="true">
+                <div class="task-progress">
+                    <p>
+                        <span class="carbohydrates-goal" id="carbohydrates-goal"></span>
+                    </p>
+                    <progress class="progress" id="carbohydrates-progress" max="653" value="200"></progress>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="diningHallList" id="diningHallList">
-        <div class="header">
-            <h1>What's Open?</h1>
+        <h2 class="dining-hall-header">What's Open?</h2>
+    </div>
+    <div class="details-row hidden" id="details-row">
+        <div class="favorites hidden" id="favorites">
+            <h2 class="favorites-header">Favorites Available Today</h2>
+            <table id="favorites-list">
+                <tr>
+                    <th>Food</th>
+                    <th>Restaurant</th>
+                </tr>
+            </table>
+        </div>
+        <div class="meals-today hidden" id="meals-today">
+            <h2 class="meals-today-header">Meals Today</h2>
+            <table class="meals-today-list" id="meals-today-list">
+                <tr>
+                    <th>Meal</th>
+                    <th>Calories</th>
+                </tr>
+            </table>
         </div>
     </div>
-    <div class="favorites" id="favorites">
-        <div class="favorites-header">
-            <h1>Favorites Available Today</h1>
-        </div>
-        <table id="favorites-list">
-            <tr>
-                <th>Food</th>
-                <th>Restaurant</th>
-            </tr>
-        </table>
+
+    <div class="update-user-form hidden">
+        <form action="updateUser.php" method="POST">
+            <label for="calories">Calories</label>
+            <input type="number" name="calories" id="calories">
+            <label for="fats">Fats</label>
+            <input type="number" name="fats" id="fats">
+            <label for="proteins">Proteins</label>
+            <input type="number" name="proteins" id="proteins">
+            <label for="carbohydrates">Carbohydrates</label>
+            <input type="number" name="carbohydrates" id="carbohydrates">
+            <input type="submit" value="Update">
+        </form>
     </div>
-
-
 </body>
-<!-- <script src="https://cdn.auth0.com/js/auth0-spa-js/1.2/auth0-spa-js.production.js"></script> -->
+
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
 <script src="js/script.js"></script>
 

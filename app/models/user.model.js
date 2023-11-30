@@ -7,7 +7,7 @@ const User = function(user) {
   this.id = user.id;
 };
 
-User.checkLogin = (id, error) => {
+User.checkLogin = async (id, error) => {
   // Sanitize the user to prevent SQL injection
   id = id.split('|')[1];
 
@@ -60,7 +60,7 @@ User.getUser = (id, result) => {
 
   id = clense.escape(id);
 
-  sql.query(`SELECT daily_calories_goal FROM user WHERE id = ${id}`, (err, res) => {
+  sql.query(`SELECT daily_calories_goal, daily_proteins_goal, daily_carbs_goal, daily_fats_goal, satisfaction_level, name FROM user WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -72,7 +72,7 @@ User.getUser = (id, result) => {
   });
 };
 
-User.updateCalorieGoal = (id, calories_goal, result) => {
+User.updateCalorieGoal = (id, calorie_goal, result) => {
   // Sanitize the id and calories goal to prevent SQL injection
   id = id.split('|')[1];
 
@@ -83,13 +83,13 @@ User.updateCalorieGoal = (id, calories_goal, result) => {
 
   id = clense.escape(id);
 
-  if (!clense.isNumber(calories_goal)) {
+  if (!clense.isNumber(calorie_goal)) {
     result({ kind: "not_found" }, null);
     return;
   }
-  calories_goal = clense.escape(calories_goal);
+  calorie_goal = clense.escape(calorie_goal);
 
-  sql.query(`UPDATE user SET daily_calories_goal = ${calories_goal} WHERE id = ${id}`, (err, res) => {
+  sql.query(`UPDATE user SET daily_calories_goal = ${calorie_goal} WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -100,6 +100,148 @@ User.updateCalorieGoal = (id, calories_goal, result) => {
     result(null, res);
   });
 };
+
+User.updateProteinGoal = (id, protein_goal, result) => {
+  // Sanitize the id and calories goal to prevent SQL injection
+  id = id.split('|')[1];
+
+  if (!clense.isNumber(id)) {
+      result({ kind: "not_found" }, null);
+      return;
+  }
+
+  id = clense.escape(id);
+
+  if (!clense.isNumber(protein_goal)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+  protein_goal = clense.escape(protein_goal);
+
+  sql.query(`UPDATE user SET daily_proteins_goal = ${protein_goal} WHERE id = ${id}`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    console.log("updated user: ", res);
+    result(null, res);
+  });
+};
+
+User.updateFatGoal = (id, fat_goal, result) => {
+  // Sanitize the id and calories goal to prevent SQL injection
+  id = id.split('|')[1];
+
+  if (!clense.isNumber(id)) {
+      result({ kind: "not_found" }, null);
+      return;
+  }
+
+  id = clense.escape(id);
+
+  if (!clense.isNumber(fat_goal)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+  fat_goal = clense.escape(fat_goal);
+
+  sql.query(`UPDATE user SET daily_fats_goal = ${fat_goal} WHERE id = ${id}`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    console.log("updated user: ", res);
+    result(null, res);
+  });
+};
+
+User.updateCarbohydrateGoal = (id, carbohydrate_goal, result) => {
+  // Sanitize the id and calories goal to prevent SQL injection
+  id = id.split('|')[1];
+
+  if (!clense.isNumber(id)) {
+      result({ kind: "not_found" }, null);
+      return;
+  }
+
+  id = clense.escape(id);
+
+  if (!clense.isNumber(carbohydrate_goal)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+  carbohydrate_goal = clense.escape(carbohydrate_goal);
+
+  sql.query(`UPDATE user SET daily_carbs_goal = ${carbohydrate_goal} WHERE id = ${id}`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    console.log("updated user: ", res);
+    result(null, res);
+  });
+};
+
+User.updateSatisfaction = (id, satisfaction_score, result) => {
+  // Sanitize the id and calories goal to prevent SQL injection
+  id = id.split('|')[1];
+
+  if (!clense.isNumber(id)) {
+      result({ kind: "not_found" }, null);
+      return;
+  }
+
+  id = clense.escape(id);
+
+  if (!clense.isNumber(satisfaction_score)) {
+    result({ kind: "not_found" }, null);
+    return;
+  }
+  satisfaction_score = clense.escape(satisfaction_score);
+
+  sql.query(`UPDATE user SET satisfaction_level = ${satisfaction_score} WHERE id = ${id}`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    console.log("updated user: ", res);
+    result(null, res);
+  });
+};
+
+User.updateName = (id, name, result) => {
+  // Sanitize the id and calories goal to prevent SQL injection
+  id = id.split('|')[1];
+
+  if (!clense.isNumber(id)) {
+      result({ kind: "not_found" }, null);
+      return;
+  }
+
+  id = clense.escape(id);
+
+  name = clense.escape(name);
+
+  sql.query(`UPDATE user SET name = ${name} WHERE id = ${id}`, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      return;
+    }
+
+    console.log("updated user: ", res);
+    result(null, res);
+  });
+};
+
 
 User.getCalories = (id, date, result) => {
   // Sanitize the id and date to prevent SQL injection
@@ -117,30 +259,26 @@ User.getCalories = (id, date, result) => {
     return;
   }
 
-  date = clense.escape(date);
-  
-  sql.query(`SELECT id FROM user WHERE id = ${id}`, (err, res) => {
+  // date = clense.escape(date);
+
+  let date_start = date.substring(0, 10) + ' 00:00:00';
+  let date_end = date.substring(0, 10) + ' 23:59:59';
+
+  date_start = clense.escape(date_start);
+  date_end = clense.escape(date_end);
+
+  sql.query(`SELECT name, SUM(quantity * f.calories) AS calories, SUM(quantity * f.protein) AS protein, SUM(quantity * f.total_carbohydrates) AS carbohydrates, SUM(quantity * f.total_fat) AS fats FROM user_meal um
+  INNER JOIN user_meal_has_food umhf ON umhf.user_meal_id = um.id
+  INNER JOIN food f ON f.id = umhf.food_id
+  WHERE um.user_id = ${id} AND time_period BETWEEN ${date_start} AND ${date_end}
+  GROUP BY um.id`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
       return;
-    } else {
-      const user_id = res[0].id;
-      sql.query(`SELECT SUM(f.calories) FROM user_meal um
-                  INNER JOIN user_meal_has_food umhf
-                    ON umhf.user_meal_id = um.id AND umhf.user_meal_user_id = um.user_id
-                  INNER JOIN food f
-                    ON f.id = umhf.food_id
-                  WHERE um.user_id = ${user_id} AND DATE(time_period) = DATE(${date});`, (err, res) => {
-        if (err) {
-          console.log("error: ", err);
-          result(err, null);
-          return;
-        }
-        console.log("found calories: ", res);
-        result(null, res);
-      });
     }
+    console.log("found calories: ", res);
+    result(null, res);
   });
 };
 
@@ -220,6 +358,8 @@ User.getFavorites = (id, result) => {
 
   sql.query(`SELECT id FROM user WHERE id = ${id}`, (err, res) => {
     let currDate = new Date();
+    // Set to EST
+    currDate.setHours(currDate.getHours() - 4);
     currDate = currDate.toISOString().substring(0,10);
     console.log(currDate);
     if (err) {

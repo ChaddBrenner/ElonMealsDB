@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elon University Calorie Counter</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            height: 100%;
+            background: url(images/background_image.jpeg) no-repeat center center fixed;
+            background-size: cover;
+            overflow: hidden;
+        }
+
+        html {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 0.5em;
+        }
+
+        p {
+            font-size: 1.2em;
+            margin-bottom: 1.5em;
+        }
+    </style>
+    <script>
+        let currDate = new Date();
+        // Make date EST
+        currDate.setHours(currDate.getHours() - 4);
+        currDate = currDate.toISOString().substring(0, 10);
+
+        let amountServed = fetch(`http://localhost:3000/api/foods/date/${currDate}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("amount-served").innerHTML = `Today, ${data.count} foods have been served.`;
+            });
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Welcome to Elon University's Calorie Counter</h1>
+        <p>Get insights into the nutritional value of meals at Elon University dining halls.</p>
+        <p id="amount-served"></p>
+        <a href="index.html" class="get-started-btn">Get Started</a>
+    </div>
+</body>
+
+</html>
