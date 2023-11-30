@@ -48,18 +48,8 @@
             padding-bottom: 5px;
         }
 
-        .gluten-free {
-            width: 15px;
-            height: 15px;
-            margin-left: 5px;
-        }
-
-        .vegan {
-            width: 15px;
-            height: 15px;
-            margin-left: 5px;
-        }
-
+        .gluten-free,
+        .vegan,
         .vegetarian {
             width: 15px;
             height: 15px;
@@ -102,52 +92,6 @@
             margin-bottom: 5px;
         }
 
-        @media screen and (max-width: 600px) {
-            .tab-button {
-                width: 100%;
-                height: 50px;
-            }
-
-            .meal-selector {
-                gap: 0px;
-                margin-bottom: 0px;
-            }
-
-            .active {
-                scale: 1.05;
-            }
-
-            .food-list {
-                column-count: 2;
-            }
-        }
-
-        .home-redirect {
-            text-decoration: none;
-            color: black;
-            font-size: 20px;
-            right: 10px;
-        }
-
-        .calorie-counter {
-            font-size: 20px;
-            padding-left: 10px;
-        }
-
-        .login {
-            text-decoration: none;
-            color: black;
-            font-size: 20px;
-            float: right;
-        }
-
-        .logout {
-            text-decoration: none;
-            color: black;
-            font-size: 20px;
-            float: right;
-        }
-
         .food-description-panel {
             position: fixed;
             width: 350px;
@@ -169,55 +113,6 @@
             border: 0px;
         }
 
-        .food-popup {
-            position: fixed;
-            width: 40%;
-            transition: all 300ms ease 0s;
-            height: 100%;
-            top: 0px;
-            right: 0px;
-            z-index: 1049;
-            background-color: #FFFFFF;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
-        }
-
-        .popup-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #CCCCCC;
-        }
-
-        .popup-header h2 {
-            margin: 0px;
-        }
-
-        #closePopup {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        #popup-list {
-            padding: 0px;
-            margin: 0px;
-            list-style-type: none;
-            overflow-y: scroll;
-            height: 45%;
-        }
-
-        #popup-list li {
-            padding: 10px;
-            border-bottom: 1px solid #CCCCCC;
-        }
-
-        .nutrition-info {
-            padding: 10px;
-            border-top: 1px solid #CCCCCC;
-        }
-
         .food-calories {
             font-weight: bold;
             text-align: right;
@@ -230,24 +125,6 @@
             flex-wrap: nowrap;
         }
 
-        .vegan {
-            width: 20px;
-            height: 20px;
-            margin-left: 5px;
-        }
-
-        .vegetarian {
-            width: 20px;
-            height: 20px;
-            margin-left: 5px;
-        }
-
-        .gluten-free {
-            width: 20px;
-            height: 20px;
-            margin-left: 5px;
-        }
-
         .food-link {
             text-decoration: underline;
             color: black;
@@ -258,79 +135,30 @@
             margin-right: 10px;
         }
 
-        button {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-        }
-
         nav {
-            background-color: white;
             position: fixed;
-            top: 0px;
-            width: 100%;
-            height: 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
         }
 
-        .nav-left {
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            padding-right: 10px;
-        }
-
-        .nav-center {
-            position: absolute;
-            left: 50%;
-            transform: translate(-50%, 0);
-        }
-
-        .food-short-name {
-            padding-left: 10px;
-        }
-
-        .food-full-name {
-            padding-left: 10px;
-        }
-
-        .food-dietary {
-            padding-left: 10px;
-        }
-
-        .food-per-serving {
-            padding-left: 10px;
-        }
-
-        .food-allergens-header {
+        .food-short-name,
+        .food-full-name,
+        .food-dietary,
+        .food-per-serving,
+        .food-allergens-header,
+        .food-allergens,
+        .food-nutrition {
             padding-left: 10px;
         }
 
         .food-allergens {
-            padding-left: 10px;
             padding-bottom: 10px;
         }
 
         .allergy-item {
             list-style-type: none;
-            padding-left: 10px;
         }
 
-        .food-nutrition {
-            padding-left: 10px;
-        }
 
-        @media screen and (max-width: 800px) {
+        @media screen and (max-width: 600px) {
             .food-description-panel {
                 width: 100%;
             }
@@ -369,6 +197,24 @@
 
             .calorie-counter {
                 display: none;
+            }
+
+            .tab-button {
+                width: 100%;
+                height: 50px;
+            }
+
+            .meal-selector {
+                gap: 0px;
+                margin-bottom: 0px;
+            }
+
+            .active {
+                scale: 1.05;
+            }
+
+            .tab-button {
+                height: 100px;
             }
         }
     </style>

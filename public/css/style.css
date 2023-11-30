@@ -31,3 +31,223 @@ html {
     transform: translateY(-50%);
     color: white;
 }
+
+/* Nav Bar */
+nav {
+    background-color: white;
+    top: 0px;
+    width: 100%;
+    height: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+
+.nav-left {
+    display: flex;
+    align-items: center;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    padding-right: 10px;
+}
+
+.nav-center {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
+/* Nav Bar Specifics */
+
+.home-redirect {
+    text-decoration: none;
+    color: black;
+    font-size: 20px;
+    right: 10px;
+}
+
+.calorie-counter {
+    font-size: 20px;
+    padding-left: 10px;
+}
+
+.login {
+    text-decoration: none;
+    color: black;
+    font-size: 20px;
+    float: right;
+}
+
+.logout {
+    text-decoration: none;
+    color: black;
+    font-size: 20px;
+    float: right;
+}
+
+
+button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+a {
+    font-size: 20px;
+    text-decoration: none;
+    color: #333;
+}
+
+/* Settings Panel */
+.settings-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40%;
+    height: 40%;
+    z-index: 1000;
+    background-color: green;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    height: 100%;
+}
+
+.close-settings-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.settings-warning {
+    color: red;
+}
+
+/* Progress Bar */
+.task-progress p {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress {
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    border-radius: 10px;
+    height: 10px;
+}
+
+.progress::-webkit-progress-bar {
+    background-color: #f0f0f0;
+}
+
+.progress::-webkit-progress-bar,
+.progress::-webkit-progress-value {
+    border-radius: 10px;
+}
+
+.progress::-moz-progress-bar {
+    border-radius: 10px;
+}
+
+/* Nutrition */
+.nutrition-row {
+    margin: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+.nutrition-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.nutrition-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.nutrition-info {
+    padding: 10px;
+    border-top: 1px solid #CCCCCC;
+}
+
+/* Restaurant Popup */
+.food-popup {
+    position: fixed;
+    width: 40%;
+    transition: all 300ms ease 0s;
+    height: 100%;
+    top: 0px;
+    right: 0px;
+    z-index: 1049;
+    background-color: #FFFFFF;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #CCCCCC;
+}
+
+.popup-header h2 {
+    margin: 0px;
+}
+
+#closePopup {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+#popup-list {
+    padding: 0px;
+    margin: 0px;
+    list-style-type: none;
+    overflow-y: scroll;
+    height: 45%;
+}
+
+#popup-list li {
+    padding: 10px;
+    border-bottom: 1px solid #CCCCCC;
+}
