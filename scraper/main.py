@@ -4,15 +4,17 @@ from restaurant import get_restaurants
 from food import get_food
 from meal import get_meals
 
-from datetime import datetime
+import datetime
 from tqdm import tqdm
 import json
 import time
 
 
 # Get current date
-curr_date = datetime.now().date()
+curr_date = datetime.datetime.now()
 
+# add 1 day to the date
+# curr_date += datetime.timedelta(days=1)
 
 def collect_data():
     restaurants = get_restaurants(curr_date)
@@ -47,7 +49,7 @@ def insert_data(data):
         restaurant_id = insert_restaurant((restaurant['name'], restaurant['url'], curr_date))
 
         for meal in tqdm(restaurant['hours'], position=1, leave=False, desc='Meals'):
-            meal_id = insert_meal((meal['name'], datetime.fromtimestamp(int(meal['open'])), datetime.fromtimestamp(int(meal['close'])), restaurant_id))
+            meal_id = insert_meal((meal['name'], datetime.datetime.fromtimestamp(int(meal['open'])), datetime.datetime.fromtimestamp(int(meal['close'])), restaurant_id))
 
             if 'meals' not in meal:
                 continue
