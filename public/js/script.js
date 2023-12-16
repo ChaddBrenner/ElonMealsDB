@@ -119,6 +119,11 @@ window.onload = async () => {
 
         // Get the user's meals today and display them in the table
         let currDate = new Date();
+        // Make currDate to 2023-11-27
+        currDate.setFullYear(2023);
+        currDate.setMonth(10);
+        currDate.setDate(27);
+
         // Make to EST
         currDate.setHours(currDate.getHours() - 4);
         currDate = currDate.toISOString().substring(0,10);
@@ -349,6 +354,9 @@ async function getRestaurants() {
     let outputObjs = [];
 
     let currDate = new Date();
+    currDate.setFullYear(2023);
+    currDate.setMonth(10);
+    currDate.setDate(27);
     // Make to EST
     currDate.setHours(currDate.getHours() - 4);
     currDate = currDate.toISOString().substring(0,10);
