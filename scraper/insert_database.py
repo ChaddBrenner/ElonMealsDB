@@ -156,9 +156,9 @@ def reset_db():
     cursor.execute(query)
     query = """DELETE FROM user_meal;"""
     cursor.execute(query)
-    query = """DELETE FROM user;"""
-    cursor.execute(query)
     query = """DELETE FROM user_favorite_food;"""
+    cursor.execute(query)
+    query = """DELETE FROM user;"""
     cursor.execute(query)
     query = """DELETE FROM station_food;"""
     cursor.execute(query)
