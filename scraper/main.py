@@ -11,8 +11,10 @@ import time
 
 
 # Get current date
-curr_date = datetime.datetime.now()
+# curr_date = datetime.datetime.now()
 
+# Set the date to 2023-11-27
+curr_date = datetime.datetime(2023, 11, 27)
 # add 1 day to the date
 # curr_date += datetime.timedelta(days=1)
 

@@ -144,6 +144,10 @@ async function getFoods(restaurantId) {
 // Check to see if a meal is currently happening
 function isActive(meal) {
     let currTime = new Date();
+    // Make currDate 2023-11-27
+    currTime.setFullYear(2023);
+    currTime.setMonth(10);
+    currTime.setDate(27);
 
     let timeOpen = new Date()
     timeOpen.setHours(meal.time_open.substring(0,2));
