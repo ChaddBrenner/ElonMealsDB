@@ -2,7 +2,7 @@
 
 This project is designed for public self-hosting with a read-only menu API and browser-local personal planning state.
 
-The latest repeatable audit notes are in [security-audit.md](security-audit.md).
+The latest repeatable audit notes are in [security-audit.md](security-audit.md). Production setup guidance is in [deployment.md](deployment.md).
 
 ## Public Attack Surface
 
@@ -45,7 +45,7 @@ The latest repeatable audit notes are in [security-audit.md](security-audit.md).
 
 ## Deployment Expectations
 
-Run this behind a TLS reverse proxy such as Caddy, nginx, Traefik, or Cloudflare Tunnel. Keep `.env` private, rotate default passwords before hosting, and avoid exposing the backend or database ports directly.
+Run this behind a TLS reverse proxy such as Caddy, nginx, Traefik, or Cloudflare Tunnel. Keep `.env` private, rotate default passwords before hosting, and avoid exposing the backend or database ports directly. See [deployment.md](deployment.md) for a concrete production checklist.
 
 ## Manual Abuse Checklist
 

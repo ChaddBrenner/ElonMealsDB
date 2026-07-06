@@ -50,7 +50,7 @@ flowchart LR
   Scheduler["optional scheduler profile"] -. "daily imports" .-> MySQL
 ```
 
-See [docs/architecture.md](docs/architecture.md) for the system design, [docs/sql-walkthrough.md](docs/sql-walkthrough.md) for runnable SQL examples, and [docs/demo-walkthrough.md](docs/demo-walkthrough.md) for a portfolio-ready demo path.
+See [docs/architecture.md](docs/architecture.md) for the system design, [docs/sql-walkthrough.md](docs/sql-walkthrough.md) for runnable SQL examples, [docs/demo-walkthrough.md](docs/demo-walkthrough.md) for a portfolio-ready demo path, and [docs/portfolio-case-study.md](docs/portfolio-case-study.md) for website-ready project copy.
 
 ## What This Shows
 
@@ -61,6 +61,8 @@ See [docs/architecture.md](docs/architecture.md) for the system design, [docs/sq
 - A production-style frontend with local favorites, a dated meal planner, nutrition goals, history, responsive tables, and a detail drawer.
 
 For a short reviewer walkthrough, use [docs/demo-walkthrough.md](docs/demo-walkthrough.md).
+
+For website or resume positioning, use [docs/portfolio-case-study.md](docs/portfolio-case-study.md).
 
 ## Scraper Imports
 
@@ -144,7 +146,7 @@ npm --workspace @elon-meals-db/frontend run dev
 
 ## Security
 
-Read [docs/security.md](docs/security.md) and the latest [security audit notes](docs/security-audit.md) before self-hosting. In short:
+Read [docs/deployment.md](docs/deployment.md), [docs/security.md](docs/security.md), and the latest [security audit notes](docs/security-audit.md) before self-hosting. In short:
 
 - Put the app behind HTTPS.
 - Change the passwords in `.env`.
