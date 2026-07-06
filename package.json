@@ -1,0 +1,25 @@
+{
+  "name": "elon-meals-db",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Dockerized Elon Dining menu intelligence app with a secure Express/MySQL API and React dashboard.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm --workspace @elon-meals-db/frontend run test:e2e",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "audit:deps": "npm audit --workspaces --omit=dev",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down --remove-orphans"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  }
+}

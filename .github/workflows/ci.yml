@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:e2e
+      - run: npm run build
+      - run: npm audit --workspaces --omit=dev
+
+  scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r scraper/requirements-dev.txt
+      - run: PYTHONPATH=scraper pytest scraper/tests
+      - run: pip-audit -r scraper/requirements.txt
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: docker compose config --quiet
+      - run: docker compose --profile scraper --profile scheduler build
+      - run: docker compose up -d --wait --wait-timeout 180
+      - run: curl -fsS http://localhost:8080/healthz
+      - run: curl -fsS http://localhost:8080/api/health
+      - run: curl -fsS http://localhost:8080/api/service-dates
+      - run: curl -fsS "http://localhost:8080/api/restaurants?date=2026-07-01"
+      - run: |
+          response="$(printf '{"bad"' | curl -sS -X POST http://localhost:8080/api/foods -H 'Content-Type: application/json' --data-binary @-)"
+          echo "$response"
+          echo "$response" | grep -q '"code":"bad_request"'
+      - run: |
+          docker compose exec -T backend node --input-type=module -e "import { pool } from './src/db.js'; try { await pool.query('DELETE FROM scraper_runs WHERE id = -1'); console.error('backend write unexpectedly succeeded'); process.exit(1); } catch (error) { if (error.code !== 'ER_TABLEACCESS_DENIED_ERROR') throw error; } finally { await pool.end(); }"
+      - if: always()
+        run: docker compose down --remove-orphans --volumes

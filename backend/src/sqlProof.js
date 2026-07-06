@@ -1,0 +1,42 @@
+export const sqlProof = [
+  {
+    title: 'Menu hierarchy',
+    route: 'GET /api/restaurants/:id/menu',
+    summary: 'Builds Restaurant -> Meal -> Station -> Food from normalized tables.',
+    sql: `SELECT m.id AS meal_id, s.id AS station_id, f.id AS food_id
+FROM meals m
+JOIN stations s ON s.meal_id = m.id
+JOIN station_foods sf ON sf.station_id = s.id
+JOIN foods f ON f.id = sf.food_id
+WHERE m.restaurant_id = ?`
+  },
+  {
+    title: 'Filtered food search',
+    route: 'GET /api/foods',
+    summary: 'Filters foods by date, dietary flags, allergens, calories, and protein.',
+    sql: `SELECT DISTINCT f.id, f.short_name, f.calories, f.protein
+FROM restaurants r
+JOIN meals m ON m.restaurant_id = r.id
+JOIN stations s ON s.meal_id = m.id
+JOIN station_foods sf ON sf.station_id = s.id
+JOIN foods f ON f.id = sf.food_id
+WHERE r.service_date = ?
+  AND f.vegan = ?
+  AND f.protein >= ?`
+  },
+  {
+    title: 'Coverage metrics',
+    route: 'GET /api/metrics/coverage',
+    summary: 'Counts distinct foods, stations, and dietary coverage for a service date.',
+    sql: `SELECT COUNT(DISTINCT r.id) AS restaurants,
+       COUNT(DISTINCT m.id) AS meals,
+       COUNT(DISTINCT s.id) AS stations,
+       COUNT(DISTINCT f.id) AS foods
+FROM restaurants r
+LEFT JOIN meals m ON m.restaurant_id = r.id
+LEFT JOIN stations s ON s.meal_id = m.id
+LEFT JOIN station_foods sf ON sf.station_id = s.id
+LEFT JOIN foods f ON f.id = sf.food_id
+WHERE r.service_date = ?`
+  }
+];
