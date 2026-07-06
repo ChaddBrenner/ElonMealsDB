@@ -33,6 +33,14 @@ Available imported service dates:
 curl "http://localhost:8080/api/service-dates"
 ```
 
+Recent scraper import audit trail:
+
+```bash
+curl "http://localhost:8080/api/import-runs?limit=6"
+```
+
+`limit` is optional and capped from `1` to `12`.
+
 Menu hierarchy for a restaurant:
 
 ```bash

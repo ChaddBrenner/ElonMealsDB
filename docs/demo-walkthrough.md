@@ -56,6 +56,7 @@ What to point out:
 
 - The UI exposes the normalized path: `Restaurants -> Meals -> Stations -> Foods`.
 - The panel displays current import status and indexed food counts from live API data.
+- The Data Freshness panel shows recent scraper import runs from `scraper_runs`, including failed or partial runs.
 - The SQL examples are served from `/api/sql-proof`, so the frontend is showing the backend contract instead of a static screenshot.
 
 API proof:
@@ -63,6 +64,7 @@ API proof:
 ```bash
 curl -fsS http://localhost:8080/api/sql-proof
 curl -fsS "http://localhost:8080/api/metrics/coverage"
+curl -fsS "http://localhost:8080/api/import-runs?limit=6"
 ```
 
 ## 4. Prove The Relational Model Directly

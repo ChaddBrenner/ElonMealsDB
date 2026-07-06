@@ -11,6 +11,7 @@ import {
   getCoverageMetrics,
   getRestaurantMenu,
   listFoods,
+  listImportRuns,
   listRestaurants,
   listServiceDates
 } from './repositories/menuRepository.js';
@@ -18,6 +19,7 @@ import {
   dateSchema,
   foodFilterSchema,
   idSchema,
+  importRunLimitSchema,
   parseOrThrow
 } from './validation.js';
 import { sqlProof } from './sqlProof.js';
@@ -81,6 +83,11 @@ export function createApp() {
 
   router.get('/service-dates', asyncHandler(async (_req, res) => {
     res.json({ dates: await listServiceDates() });
+  }));
+
+  router.get('/import-runs', asyncHandler(async (req, res) => {
+    const limit = parseOrThrow(importRunLimitSchema, req.query.limit ?? undefined);
+    res.json({ runs: await listImportRuns(limit) });
   }));
 
   router.get('/restaurants/:id/menu', asyncHandler(async (req, res) => {

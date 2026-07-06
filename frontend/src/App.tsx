@@ -28,6 +28,7 @@ import {
 import {
   getCoverageMetrics,
   getFoods,
+  getImportRuns,
   getMenu,
   getRestaurants,
   getServiceDates,
@@ -42,7 +43,7 @@ import {
   type LocalProfile,
   type PlannedMeal
 } from './localProfile';
-import type { CoverageMetrics, Food, Meal, MenuResponse, RestaurantSummary, ServiceDateSummary } from './types';
+import type { CoverageMetrics, Food, Meal, MenuResponse, RestaurantSummary, ScraperRun, ServiceDateSummary } from './types';
 import type { SqlProofExample } from './types';
 
 const safeSearch = /^[a-zA-Z0-9\s.'&()/,+-]{0,80}$/;
@@ -65,6 +66,7 @@ export function App() {
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<number | null>(null);
   const [menu, setMenu] = useState<MenuResponse | null>(null);
   const [metrics, setMetrics] = useState<CoverageMetrics | null>(null);
+  const [importRuns, setImportRuns] = useState<ScraperRun[]>([]);
   const [sqlProofExamples, setSqlProofExamples] = useState<SqlProofExample[]>([]);
   const [allFoods, setAllFoods] = useState<Food[]>([]);
   const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
@@ -142,12 +144,14 @@ export function App() {
 
   useEffect(() => {
     let active = true;
-    getSqlProof()
-      .then((response) => {
-        if (active) setSqlProofExamples(response.examples);
-      })
-      .catch(() => {
-        if (active) setSqlProofExamples([]);
+    Promise.allSettled([
+      getSqlProof(),
+      getImportRuns()
+    ])
+      .then(([sqlProofResult, importRunsResult]) => {
+        if (!active) return;
+        setSqlProofExamples(sqlProofResult.status === 'fulfilled' ? sqlProofResult.value.examples : []);
+        setImportRuns(importRunsResult.status === 'fulfilled' ? importRunsResult.value.runs : []);
       });
 
     return () => {
@@ -493,6 +497,7 @@ export function App() {
               <StatusRow label="Menu coverage" value={`${metrics?.foods ?? 0} foods`} />
               <StatusRow label="Available dates" value={String(availableDates.length)} />
             </div>
+            <ImportRunList runs={importRuns} />
           </section>
 
           <section className="panel" id="favorites">
@@ -734,6 +739,30 @@ function StatusRow({ label, value }: { label: string; value: string }) {
     <div className="status-row">
       <span>{label}</span>
       <strong>{value}</strong>
+    </div>
+  );
+}
+
+function ImportRunList({ runs }: { runs: ScraperRun[] }) {
+  const shownRuns = runs.slice(0, 4);
+
+  return (
+    <div className="import-run-list" aria-label="Recent import runs">
+      <div className="import-run-title">
+        <strong>Import Activity</strong>
+        <span>{shownRuns.length ? `${shownRuns.length} recent runs` : 'No recorded runs'}</span>
+      </div>
+      {shownRuns.length ? shownRuns.map((run) => (
+        <div className="import-run-row" key={run.id}>
+          <div>
+            <strong>{formatShortDate(run.target_date)}</strong>
+            <span>{formatFullImportTime(run.started_at)} - {run.foods_count} foods</span>
+          </div>
+          <Badge tone={run.status === 'success' ? 'green' : run.status === 'partial' ? 'gold' : 'red'}>
+            {run.status}
+          </Badge>
+        </div>
+      )) : <EmptyState text="Scraper imports will appear here after the first run." />}
     </div>
   );
 }

@@ -100,18 +100,21 @@ export type CoverageMetrics = {
   vegetarian_items: number;
   gluten_free_items: number;
   avg_calories: number;
-  scraperRun: {
-    id: number;
-    source_url: string;
-    target_date: string;
-    started_at: string;
-    finished_at: string;
-    status: string;
-    restaurants_count: number;
-    meals_count: number;
-    foods_count: number;
-  } | null;
+  scraperRun: ScraperRun | null;
   topProtein: Food[];
+};
+
+export type ScraperRun = {
+  id: number;
+  source_url: string;
+  target_date: string;
+  started_at: string;
+  finished_at: string | null;
+  status: 'success' | 'failed' | 'partial' | string;
+  restaurants_count: number;
+  meals_count: number;
+  foods_count: number;
+  error_message?: string | null;
 };
 
 export type SqlProofExample = {
