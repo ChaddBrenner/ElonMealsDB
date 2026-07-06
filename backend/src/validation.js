@@ -7,6 +7,7 @@ export const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value)
 }, 'Invalid calendar date');
 
 export const idSchema = z.coerce.number().int().positive().max(2147483647);
+export const importRunLimitSchema = z.coerce.number().int().min(1).max(12).default(6);
 
 const optionalBoolean = z
   .enum(['true', 'false'])

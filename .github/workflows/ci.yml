@@ -47,6 +47,7 @@ jobs:
       - run: curl -fsS http://localhost:8080/healthz
       - run: curl -fsS http://localhost:8080/api/health
       - run: curl -fsS http://localhost:8080/api/service-dates
+      - run: curl -fsS "http://localhost:8080/api/import-runs?limit=6"
       - run: curl -fsS "http://localhost:8080/api/restaurants?date=2026-07-01"
       - run: |
           response="$(printf '{"bad"' | curl -sS -X POST http://localhost:8080/api/foods -H 'Content-Type: application/json' --data-binary @-)"

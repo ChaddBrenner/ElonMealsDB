@@ -70,9 +70,12 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page.getByRole('heading', { name: "Plan meals around today's dining options." })).toBeVisible();
   await expect(page.getByLabel('Restaurant')).toHaveValue(String(restaurantId));
   await expect(page.getByText('Data Freshness')).toBeVisible();
+  await expect(page.getByText('Import Activity')).toBeVisible();
+  await expect(page.getByText('4 recent runs')).toBeVisible();
+  await expect(page.getByLabel('Recent import runs').getByText('Jul 6', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'System Proof' })).toBeVisible();
   await expect(page.getByText('GET /api/restaurants/:id/menu')).toBeVisible();
-  await expect(page.getByText('3 foods')).toBeVisible();
+  await expect(page.getByText('3 foods', { exact: true })).toBeVisible();
 
   await page.getByLabel('Search foods').fill('Tofu');
   await expect(page.getByRole('button', { name: 'Ginger Tofu Bowl' })).toBeVisible();
@@ -135,6 +138,18 @@ async function mockApi(page: Page) {
           foods: 3,
           lastImportedAt: '2026-07-06T13:15:00.000Z'
         }]
+      });
+      return;
+    }
+
+    if (url.pathname === '/api/import-runs') {
+      await json(route, {
+        runs: [
+          importRun({ id: 1, target_date: serviceDate, started_at: '2026-07-06T13:15:00.000Z', finished_at: '2026-07-06T13:15:04.000Z', status: 'success', foods_count: 3 }),
+          importRun({ id: 2, target_date: '2026-07-05', started_at: '2026-07-05T19:15:00.000Z', finished_at: '2026-07-05T19:15:05.000Z', status: 'success', foods_count: 4 }),
+          importRun({ id: 3, target_date: '2026-07-05', started_at: '2026-07-05T09:15:00.000Z', finished_at: '2026-07-05T09:15:02.000Z', status: 'failed', foods_count: 0, error_message: 'menu-hours unavailable' }),
+          importRun({ id: 4, target_date: '2026-07-04', started_at: '2026-07-04T13:15:00.000Z', finished_at: '2026-07-04T13:15:03.000Z', status: 'partial', foods_count: 2 })
+        ]
       });
       return;
     }
@@ -281,6 +296,35 @@ async function json(route: Route, body: unknown) {
     body: JSON.stringify(body)
   });
 }
+
+function importRun(overrides: Partial<ImportRunFixture>): ImportRunFixture {
+  return {
+    id: 0,
+    source_url: 'https://www.elondining.com/menu-hours/',
+    target_date: serviceDate,
+    started_at: '2026-07-06T13:15:00.000Z',
+    finished_at: '2026-07-06T13:15:04.000Z',
+    status: 'success',
+    restaurants_count: 1,
+    meals_count: 1,
+    foods_count: 3,
+    error_message: null,
+    ...overrides
+  };
+}
+
+type ImportRunFixture = {
+  id: number;
+  source_url: string;
+  target_date: string;
+  started_at: string;
+  finished_at: string | null;
+  status: string;
+  restaurants_count: number;
+  meals_count: number;
+  foods_count: number;
+  error_message?: string | null;
+};
 
 type FoodFixture = {
   id: number;

@@ -85,6 +85,18 @@ describe('security and validation middleware', () => {
     expect(response.status).toBe(400);
   });
 
+  it('rejects unsafe import run limits before query execution', async () => {
+    const response = await request(app).get('/api/import-runs?limit=999');
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe('bad_request');
+  });
+
+  it('rejects nonnumeric import run limits before query execution', async () => {
+    const response = await request(app).get('/api/import-runs?limit=1%20OR%201=1');
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe('bad_request');
+  });
+
   it('rejects unknown routes with structured JSON', async () => {
     const response = await request(app).get('/api/not-real');
     expect(response.status).toBe(404);

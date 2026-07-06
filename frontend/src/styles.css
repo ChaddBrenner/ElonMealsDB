@@ -725,6 +725,52 @@ button:focus-visible {
   text-align: right;
 }
 
+.import-run-list {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+
+.import-run-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.import-run-title strong {
+  font-size: 13px;
+}
+
+.import-run-title span,
+.import-run-row span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.import-run-row {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+}
+
+.import-run-row div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.import-run-row strong {
+  line-height: 1.2;
+}
+
 .system-panel {
   grid-column: span 2;
 }

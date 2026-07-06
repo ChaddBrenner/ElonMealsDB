@@ -50,6 +50,27 @@ export async function listServiceDates() {
   `);
 }
 
+export async function listImportRuns(limit = 6) {
+  const safeLimit = Math.min(12, Math.max(1, Number.parseInt(String(limit), 10) || 6));
+  // MySQL rejects a bound placeholder for LIMIT here; the route validates 1-12 and this layer clamps again.
+  return query(`
+    SELECT
+      id,
+      source_url,
+      DATE_FORMAT(target_date, '%Y-%m-%d') AS target_date,
+      started_at,
+      finished_at,
+      status,
+      restaurants_count,
+      meals_count,
+      foods_count,
+      error_message
+    FROM scraper_runs
+    ORDER BY started_at DESC, id DESC
+    LIMIT ${safeLimit}
+  `);
+}
+
 export async function listRestaurants(date) {
   const serviceDate = await resolveServiceDate(date);
   const rows = await query(`
