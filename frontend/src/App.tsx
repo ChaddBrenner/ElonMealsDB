@@ -101,8 +101,9 @@ export function App() {
 
   const tableFoods = activeFilters ? filteredFoods : menuFoods;
   const historyMeals = useMemo(() => [...profile.meals].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 8), [profile.meals]);
-  const dateHelper = date === easternDateInput() ? 'Current service date' : 'Latest imported menu';
   const activeDateSummary = availableDates.find((item) => item.serviceDate === date);
+  const latestImportedDate = availableDates[0]?.serviceDate || '';
+  const dateHelper = getDateHelper(date, activeDateSummary);
   const latestImport = availableDates
     .map((item) => item.lastImportedAt)
     .filter((value): value is string => Boolean(value))
@@ -156,6 +157,18 @@ export function App() {
 
   useEffect(() => {
     if (!date) return;
+    setRestaurants([]);
+    setSelectedRestaurantId(null);
+    setMenu(null);
+    setActiveMealId(null);
+    setSelectedFood(null);
+    setMetrics(null);
+    setAllFoods([]);
+    setFilteredFoods([]);
+  }, [date]);
+
+  useEffect(() => {
+    if (!date) return;
     let active = true;
     setLoading(true);
     setError(null);
@@ -185,6 +198,11 @@ export function App() {
             ? current
             : restaurantsResponse.restaurants[0]?.id || null
         ));
+        if (!restaurantsResponse.restaurants.length) {
+          setMenu(null);
+          setActiveMealId(null);
+          setSelectedFood(null);
+        }
       })
       .catch((caught: Error) => active && setError(caught.message))
       .finally(() => active && setLoading(false));
@@ -195,11 +213,18 @@ export function App() {
   }, [date, query, vegan, vegetarian, glutenFree, minProtein, maxCalories, allergenFree]);
 
   useEffect(() => {
-    if (!selectedRestaurantId) return;
+    if (!selectedRestaurantId) {
+      setMenu(null);
+      setActiveMealId(null);
+      return;
+    }
     let active = true;
+    setMenu(null);
+    setActiveMealId(null);
     getMenu(selectedRestaurantId)
       .then((response) => {
         if (!active) return;
+        if (date && response.restaurant.service_date !== date) return;
         setMenu(response);
         setActiveMealId(response.meals[0]?.id || null);
       })
@@ -208,7 +233,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [selectedRestaurantId]);
+  }, [selectedRestaurantId, date]);
 
   function updateProfile(patch: Partial<LocalProfile>) {
     setProfile((current) => ({
@@ -330,10 +355,11 @@ export function App() {
               value={selectedRestaurantId || ''}
               onChange={(event) => setSelectedRestaurantId(Number(event.target.value))}
               aria-label="Restaurant"
+              disabled={!restaurants.length}
             >
-              {restaurants.map((restaurant) => (
+              {restaurants.length ? restaurants.map((restaurant) => (
                 <option value={restaurant.id} key={restaurant.id}>{restaurant.name}</option>
-              ))}
+              )) : <option value="">No restaurants imported</option>}
             </select>
           </label>
           <label className="search-field">
@@ -372,61 +398,72 @@ export function App() {
         <section className="planner-grid">
           <section className="panel menu-panel" id="menu">
             <PanelHeader
-              title={menu?.restaurant.name || selectedRestaurant?.name || 'Menu'}
-              subtitle={activeMeal ? `${activeMeal.name} ${formatTime(activeMeal.time_open)} - ${formatTime(activeMeal.time_closed)}` : 'Choose a meal window'}
+              title={selectedRestaurant?.name || (loading ? 'Loading menu' : 'No menu imported')}
+              subtitle={selectedRestaurant && activeMeal ? `${activeMeal.name} ${formatTime(activeMeal.time_open)} - ${formatTime(activeMeal.time_closed)}` : getMenuSubtitle(date, loading)}
               icon={<Soup size={18} />}
             />
-            <div className="meal-tabs" role="tablist" aria-label="Meals">
-              {menu?.meals.map((meal) => (
-                <button
-                  key={meal.id}
-                  className={meal.id === activeMealId ? 'selected' : ''}
-                  type="button"
-                  onClick={() => setActiveMealId(meal.id)}
-                >
-                  <span>{meal.name}</span>
-                  <small>{formatTime(meal.time_open)} - {formatTime(meal.time_closed)}</small>
-                </button>
-              ))}
-            </div>
-            <div className="menu-layout">
-              <div className="station-rail">
-                <h2>Stations</h2>
-                {activeMeal?.stations.map((station) => (
-                  <div className="station-row" key={station.id}>
-                    <span>{station.name}</span>
-                    <Badge tone="neutral">{station.foods.length}</Badge>
+            {selectedRestaurant ? (
+              <>
+                <div className="meal-tabs" role="tablist" aria-label="Meals">
+                  {menu?.meals.map((meal) => (
+                    <button
+                      key={meal.id}
+                      className={meal.id === activeMealId ? 'selected' : ''}
+                      type="button"
+                      onClick={() => setActiveMealId(meal.id)}
+                    >
+                      <span>{meal.name}</span>
+                      <small>{formatTime(meal.time_open)} - {formatTime(meal.time_closed)}</small>
+                    </button>
+                  ))}
+                </div>
+                <div className="menu-layout">
+                  <div className="station-rail">
+                    <h2>Stations</h2>
+                    {activeMeal?.stations.map((station) => (
+                      <div className="station-row" key={station.id}>
+                        <span>{station.name}</span>
+                        <Badge tone="neutral">{station.foods.length}</Badge>
+                      </div>
+                    ))}
+                    {!loading && !activeMeal?.stations.length && <EmptyState text="No stations for this meal." />}
                   </div>
-                ))}
-                {!activeMeal?.stations.length && <EmptyState text="No stations for this meal." />}
-              </div>
-              <div className="food-workspace">
-                <FilterBar
-                  vegan={vegan}
-                  vegetarian={vegetarian}
-                  glutenFree={glutenFree}
-                  minProtein={minProtein}
-                  maxCalories={maxCalories}
-                  allergenFree={allergenFree}
-                  onVegan={setVegan}
-                  onVegetarian={setVegetarian}
-                  onGlutenFree={setGlutenFree}
-                  onMinProtein={setMinProtein}
-                  onMaxCalories={setMaxCalories}
-                  onAllergenFree={setAllergenFree}
-                />
-                {loading ? <LoadingState /> : (
-                  <FoodTable
-                    foods={tableFoods}
-                    favoriteIds={favoriteIds}
-                    busy={busy}
-                    onSelect={setSelectedFood}
-                    onFavorite={toggleFavorite}
-                    onAdd={addFoodToPlan}
-                  />
-                )}
-              </div>
-            </div>
+                  <div className="food-workspace">
+                    <FilterBar
+                      vegan={vegan}
+                      vegetarian={vegetarian}
+                      glutenFree={glutenFree}
+                      minProtein={minProtein}
+                      maxCalories={maxCalories}
+                      allergenFree={allergenFree}
+                      onVegan={setVegan}
+                      onVegetarian={setVegetarian}
+                      onGlutenFree={setGlutenFree}
+                      onMinProtein={setMinProtein}
+                      onMaxCalories={setMaxCalories}
+                      onAllergenFree={setAllergenFree}
+                    />
+                    {loading || !menu ? <LoadingState /> : (
+                      <FoodTable
+                        foods={tableFoods}
+                        favoriteIds={favoriteIds}
+                        busy={busy}
+                        onSelect={setSelectedFood}
+                        onFavorite={toggleFavorite}
+                        onAdd={addFoodToPlan}
+                      />
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <NoMenuState
+                date={date}
+                latestDate={latestImportedDate}
+                loading={loading}
+                onUseLatest={setDate}
+              />
+            )}
           </section>
 
           <MealPlanPanel
@@ -600,6 +637,30 @@ function SystemStat({ label, value }: { label: string; value: string }) {
     <div className="system-stat">
       <span>{label}</span>
       <strong>{value}</strong>
+    </div>
+  );
+}
+
+function NoMenuState({ date, latestDate, loading, onUseLatest }: {
+  date: string;
+  latestDate: string;
+  loading: boolean;
+  onUseLatest: (date: string) => void;
+}) {
+  if (loading) return <LoadingState />;
+
+  return (
+    <div className="no-menu-state">
+      <div className="no-menu-icon"><CalendarDays size={22} /></div>
+      <div>
+        <h3>No restaurants imported for {date ? formatShortDate(date) : 'this date'}.</h3>
+        <p>Choose an imported service date to browse menus, nutrition details, favorites, and meal planning.</p>
+      </div>
+      {latestDate && latestDate !== date && (
+        <button className="secondary-button" type="button" onClick={() => onUseLatest(latestDate)}>
+          Use latest imported date
+        </button>
+      )}
     </div>
   );
 }
@@ -829,7 +890,7 @@ function FoodTable(props: {
             <tr key={`${food.id}-${food.restaurantId || 'all'}-${food.stationName || food.mealName || 'food'}`}>
               <td data-label="Food">
                 <button className="link-button strong" type="button" onClick={() => props.onSelect(food)}>{food.shortName}</button>
-                <small>{food.restaurantName || food.fullName}</small>
+                <small>{formatFoodContext(food)}</small>
               </td>
               <td data-label="Station">{food.stationName || food.mealName || '-'}</td>
               <td data-label="Dietary"><Dietary food={food} /></td>
@@ -1009,6 +1070,18 @@ function Fact({ label, value }: { label: string; value: string }) {
   return <div><span>{label}</span><strong>{value}</strong></div>;
 }
 
+function getDateHelper(date: string, activeDateSummary: ServiceDateSummary | undefined) {
+  if (!date) return 'Loading menu dates';
+  if (!activeDateSummary) return 'No imported menu for this date';
+  if (date === easternDateInput()) return 'Current service date';
+  return `${activeDateSummary.restaurants} restaurants imported`;
+}
+
+function getMenuSubtitle(date: string, loading: boolean) {
+  if (loading) return 'Fetching restaurants and foods';
+  return date ? `No restaurants found for ${formatShortDate(date)}` : 'Choose a service date';
+}
+
 function LoadingState() {
   return <div className="empty"><Loader2 size={18} className="spin" /> Loading menu data...</div>;
 }
@@ -1095,6 +1168,11 @@ function formatHourMinute(hour24: number, minute: number) {
 
 function formatAllergen(value: string) {
   return value.replace('_', ' ');
+}
+
+function formatFoodContext(food: Food) {
+  const primary = food.restaurantName || food.fullName;
+  return food.stationName ? `${primary} - ${food.stationName}` : primary;
 }
 
 function round(value: number) {

@@ -1,6 +1,7 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
 
 const serviceDate = '2026-07-06';
+const emptyDate = '2026-07-08';
 const restaurantId = 101;
 const mealId = 201;
 
@@ -98,9 +99,31 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   expect(consoleErrors).toEqual([]);
 });
 
+test('date changes with no imported menu clear stale restaurant state', async ({ page }) => {
+  await mockApi(page);
+  await page.goto('/');
+
+  await expect(page.getByRole('heading', { name: 'Lakeside Dining Hall' })).toBeVisible();
+
+  await page.getByLabel('Date').fill(emptyDate);
+
+  await expect(page.getByRole('heading', { name: 'No menu imported' })).toBeVisible();
+  await expect(page.getByText('No restaurants imported for Jul 8.')).toBeVisible();
+  await expect(page.getByLabel('Restaurant')).toBeDisabled();
+  await expect(page.getByRole('heading', { name: 'Lakeside Dining Hall' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Use latest imported date' }).click();
+
+  await expect(page.getByLabel('Restaurant')).toBeEnabled();
+  await expect(page.getByRole('heading', { name: 'Lakeside Dining Hall' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ginger Tofu Bowl' })).toBeVisible();
+});
+
 async function mockApi(page: Page) {
   await page.route('**/api/**', async (route) => {
     const url = new URL(route.request().url());
+    const requestedDate = url.searchParams.get('date') || serviceDate;
+    const hasMenuForDate = requestedDate !== emptyDate;
 
     if (url.pathname === '/api/service-dates') {
       await json(route, {
@@ -117,6 +140,11 @@ async function mockApi(page: Page) {
     }
 
     if (url.pathname === '/api/restaurants') {
+      if (!hasMenuForDate) {
+        await json(route, { restaurants: [] });
+        return;
+      }
+
       await json(route, {
         restaurants: [{
           id: restaurantId,
@@ -159,6 +187,23 @@ async function mockApi(page: Page) {
     }
 
     if (url.pathname === '/api/metrics/coverage') {
+      if (!hasMenuForDate) {
+        await json(route, {
+          serviceDate: requestedDate,
+          restaurants: 0,
+          meals: 0,
+          stations: 0,
+          foods: 0,
+          vegan_items: 0,
+          vegetarian_items: 0,
+          gluten_free_items: 0,
+          avg_calories: null,
+          scraperRun: null,
+          topProtein: []
+        });
+        return;
+      }
+
       await json(route, {
         serviceDate,
         restaurants: 1,
@@ -186,6 +231,11 @@ async function mockApi(page: Page) {
     }
 
     if (url.pathname === '/api/foods') {
+      if (!hasMenuForDate) {
+        await json(route, { foods: [] });
+        return;
+      }
+
       const query = (url.searchParams.get('q') || '').toLowerCase();
       const foods = [tofuBowl, chickenPlate, yogurtParfait]
         .filter((item) => !query || `${item.shortName} ${item.fullName} ${item.ingredients}`.toLowerCase().includes(query))
