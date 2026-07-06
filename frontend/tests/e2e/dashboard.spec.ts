@@ -77,6 +77,17 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page.getByText('GET /api/restaurants/:id/menu')).toBeVisible();
   await expect(page.getByText('3 foods', { exact: true })).toBeVisible();
 
+  const systemLink = page.locator('a[href="#system"]');
+  await systemLink.click();
+  await expect(page).toHaveURL(/#system$/);
+  await expect(systemLink).toHaveClass(/active/);
+  await page.waitForFunction(() => {
+    const element = document.querySelector('#system');
+    if (!element) return false;
+    const top = element.getBoundingClientRect().top;
+    return top >= 70 && top < 170;
+  });
+
   await page.getByLabel('Search foods').fill('Tofu');
   await expect(page.getByRole('button', { name: 'Ginger Tofu Bowl' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Campus Chicken Plate' })).toHaveCount(0);

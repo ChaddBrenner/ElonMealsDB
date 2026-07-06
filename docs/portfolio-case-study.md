@@ -94,6 +94,10 @@ Mobile:
 
 ![ElonMealsDB mobile dashboard](screenshots/dashboard-mobile.png)
 
+System proof and import audit trail:
+
+![ElonMealsDB system proof and import history](screenshots/dashboard-system-proof.png)
+
 ## Verification
 
 Local verification commands used on this branch:
