@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import {
   CalendarDays,
   Check,
@@ -58,8 +58,21 @@ const allergenOptions = [
   ['tree_nut', 'Tree nut']
 ] as const;
 
+const navigationItems = [
+  { id: 'planner', label: 'Planner', Icon: Utensils },
+  { id: 'menu', label: 'Menu', Icon: Soup },
+  { id: 'favorites', label: 'Favorites', Icon: Star },
+  { id: 'history', label: 'History', Icon: History },
+  { id: 'system', label: 'System', Icon: Database },
+  { id: 'settings', label: 'Settings', Icon: Settings2 }
+] as const;
+
+type NavigationSection = typeof navigationItems[number]['id'];
+
 export function App() {
   const [profile, setProfile] = useState<LocalProfile>(() => loadLocalProfile());
+  const [activeSection, setActiveSection] = useState<NavigationSection>('planner');
+  const [pendingSection, setPendingSection] = useState<NavigationSection | null>(null);
   const [date, setDate] = useState('');
   const [availableDates, setAvailableDates] = useState<ServiceDateSummary[]>([]);
   const [restaurants, setRestaurants] = useState<RestaurantSummary[]>([]);
@@ -118,6 +131,36 @@ export function App() {
   useEffect(() => {
     saveLocalProfile(profile);
   }, [profile]);
+
+  useEffect(() => {
+    function updateActiveSection() {
+      if (pendingSection) {
+        setActiveSection(pendingSection);
+        return;
+      }
+
+      const offset = window.innerWidth <= 760 ? 28 : 110;
+      let current: NavigationSection = 'planner';
+
+      for (const item of navigationItems) {
+        const element = document.getElementById(item.id);
+        if (element && element.getBoundingClientRect().top <= offset) {
+          current = item.id;
+        }
+      }
+
+      setActiveSection(current);
+    }
+
+    updateActiveSection();
+    window.addEventListener('scroll', updateActiveSection, { passive: true });
+    window.addEventListener('resize', updateActiveSection);
+
+    return () => {
+      window.removeEventListener('scroll', updateActiveSection);
+      window.removeEventListener('resize', updateActiveSection);
+    };
+  }, [pendingSection]);
 
   useEffect(() => {
     let active = true;
@@ -239,6 +282,20 @@ export function App() {
     };
   }, [selectedRestaurantId, date]);
 
+  useEffect(() => {
+    if (!pendingSection) return;
+
+    const timers = [0, 160, 520, 1000].map((delay) => window.setTimeout(() => {
+      scrollToSection(pendingSection, delay === 0 ? 'smooth' : 'auto');
+    }, delay));
+    const done = window.setTimeout(() => setPendingSection(null), 1200);
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      window.clearTimeout(done);
+    };
+  }, [pendingSection, loading, menu, metrics, importRuns.length, restaurants.length, filteredFoods.length]);
+
   function updateProfile(patch: Partial<LocalProfile>) {
     setProfile((current) => ({
       ...current,
@@ -318,6 +375,23 @@ export function App() {
     setProfile(createDefaultProfile());
   }
 
+  function navigateToSection(event: MouseEvent<HTMLAnchorElement>, sectionId: NavigationSection) {
+    event.preventDefault();
+    window.history.replaceState(null, '', `#${sectionId}`);
+    setPendingSection(sectionId);
+    setActiveSection(sectionId);
+    scrollToSection(sectionId);
+  }
+
+  function scrollToSection(sectionId: NavigationSection, behavior: ScrollBehavior = 'smooth') {
+    const element = document.getElementById(sectionId);
+    if (!element) return;
+
+    const topOffset = window.innerWidth <= 760 ? 0 : 92;
+    const top = Math.max(0, element.getBoundingClientRect().top + window.scrollY - topOffset);
+    window.scrollTo({ top, behavior });
+  }
+
   return (
     <div className="product-shell">
       <aside className="app-sidebar" aria-label="Primary navigation">
@@ -329,12 +403,16 @@ export function App() {
           </div>
         </div>
         <nav>
-          <a className="active" href="#planner"><Utensils size={18} /> Planner</a>
-          <a href="#menu"><Soup size={18} /> Menu</a>
-          <a href="#favorites"><Star size={18} /> Favorites</a>
-          <a href="#history"><History size={18} /> History</a>
-          <a href="#system"><Database size={18} /> System</a>
-          <a href="#settings"><Settings2 size={18} /> Settings</a>
+          {navigationItems.map(({ id, label, Icon }) => (
+            <a
+              className={activeSection === id ? 'active' : undefined}
+              href={`#${id}`}
+              key={id}
+              onClick={(event) => navigateToSection(event, id)}
+            >
+              <Icon size={18} /> {label}
+            </a>
+          ))}
         </nav>
         <div className="profile-card">
           <CircleUserRound size={28} />
