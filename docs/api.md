@@ -39,7 +39,7 @@ Recent scraper import audit trail:
 curl "http://localhost:8080/api/import-runs?limit=6"
 ```
 
-`limit` is optional and capped from `1` to `12`.
+`limit` is optional and capped from `1` to `12`. In `scraper_runs`, `foods_count` records imported food appearances across stations/meals. Use coverage metrics for distinct food counts.
 
 Menu hierarchy for a restaurant:
 
