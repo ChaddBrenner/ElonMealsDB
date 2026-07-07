@@ -98,6 +98,7 @@ export function App() {
 
   const selectedRestaurant = restaurants.find((restaurant) => restaurant.id === selectedRestaurantId) || restaurants[0] || null;
   const activeMeal = menu?.meals.find((meal) => meal.id === activeMealId) || menu?.meals[0] || null;
+  const mealTabLabels = useMemo(() => buildMealTabLabels(menu?.meals || []), [menu?.meals]);
   const todayMeals = useMemo(() => profile.meals.filter((meal) => meal.date === date), [profile.meals, date]);
   const totals = useMemo(() => calculateTotals(todayMeals), [todayMeals]);
   const favoriteIds = useMemo(() => new Set(profile.favoriteFoods.map((favorite) => favorite.foodId)), [profile.favoriteFoods]);
@@ -481,23 +482,26 @@ export function App() {
           <section className="panel menu-panel" id="menu">
             <PanelHeader
               title={selectedRestaurant?.name || (loading ? 'Loading menu' : 'No menu imported')}
-              subtitle={selectedRestaurant && activeMeal ? `${activeMeal.name} ${formatTime(activeMeal.time_open)} - ${formatTime(activeMeal.time_closed)}` : getMenuSubtitle(date, loading)}
+              subtitle={selectedRestaurant && activeMeal ? formatMealSubtitle(activeMeal) : getMenuSubtitle(date, loading)}
               icon={<Soup size={18} />}
             />
             {selectedRestaurant ? (
               <>
                 <div className="meal-tabs" role="tablist" aria-label="Meals">
-                  {menu?.meals.map((meal) => (
-                    <button
-                      key={meal.id}
-                      className={meal.id === activeMealId ? 'selected' : ''}
-                      type="button"
-                      onClick={() => setActiveMealId(meal.id)}
-                    >
-                      <span>{meal.name}</span>
-                      <small>{formatTime(meal.time_open)} - {formatTime(meal.time_closed)}</small>
-                    </button>
-                  ))}
+                  {menu?.meals.map((meal) => {
+                    const tabLabel = mealTabLabels.get(meal.id) || defaultMealTabLabel(meal);
+                    return (
+                      <button
+                        key={meal.id}
+                        className={meal.id === activeMealId ? 'selected' : ''}
+                        type="button"
+                        onClick={() => setActiveMealId(meal.id)}
+                      >
+                        <span>{tabLabel.primary}</span>
+                        <small>{tabLabel.secondary}</small>
+                      </button>
+                    );
+                  })}
                 </div>
                 <div className="menu-layout">
                   <div className="station-rail">
@@ -882,7 +886,7 @@ function MealPlanPanel(props: {
             <div className="planned-meal-header">
               <div>
                 <strong>{meal.mealName}</strong>
-                <span>{meal.restaurantName} - {formatTime(meal.timeOpen)}</span>
+                <span>{meal.restaurantName} - {formatPlannedMealWindow(meal)}</span>
               </div>
               <button className="icon-button" type="button" onClick={() => props.onRemoveMeal(meal.id)} aria-label={`Remove ${meal.mealName}`}>
                 <Trash2 size={15} />
@@ -1227,10 +1231,62 @@ function resolveFoodSnapshot(food: Food, allFoods: Food[]) {
   return allFoods.find((item) => item.id === food.id) || food;
 }
 
+type MealTabLabel = {
+  primary: string;
+  secondary: string;
+};
+
+function buildMealTabLabels(meals: Meal[]) {
+  const nameCounts = meals.reduce((counts, meal) => {
+    const name = meal.name.trim().toLowerCase();
+    counts.set(name, (counts.get(name) || 0) + 1);
+    return counts;
+  }, new Map<string, number>());
+
+  return new Map(meals.map((meal) => {
+    const hasDuplicateName = (nameCounts.get(meal.name.trim().toLowerCase()) || 0) > 1;
+    return [meal.id, hasDuplicateName ? {
+      primary: formatMealWindow(meal),
+      secondary: meal.name || 'Meal window'
+    } : defaultMealTabLabel(meal)] as const;
+  }));
+}
+
+function defaultMealTabLabel(meal: Meal): MealTabLabel {
+  return {
+    primary: meal.name || 'Meal window',
+    secondary: formatMealWindow(meal)
+  };
+}
+
+function formatMealSubtitle(meal: Meal) {
+  const stationCount = meal.stations.length;
+  return `${meal.name || 'Meal window'} | ${formatMealWindow(meal)} | ${stationCount} ${stationCount === 1 ? 'station' : 'stations'}`;
+}
+
+function formatMealWindow(meal: Pick<Meal, 'time_open' | 'time_closed'>) {
+  return formatTimeRange(meal.time_open, meal.time_closed);
+}
+
+function formatPlannedMealWindow(meal: PlannedMeal) {
+  return formatTimeRange(meal.timeOpen, meal.timeClosed);
+}
+
 function formatTime(value: string) {
   const parts = parseServiceDateTime(value);
   if (parts) return formatHourMinute(parts.hour, parts.minute);
   return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(value));
+}
+
+function formatTimeRange(start: string, end: string) {
+  const startText = formatTime(start);
+  const endText = formatTime(end);
+  const startParts = startText.match(/^(.+) (AM|PM)$/);
+  const endParts = endText.match(/^(.+) (AM|PM)$/);
+  if (startParts && endParts && startParts[2] === endParts[2]) {
+    return `${startParts[1]} - ${endParts[1]} ${endParts[2]}`;
+  }
+  return `${startText} - ${endText}`;
 }
 
 function formatShortDate(value: string) {
