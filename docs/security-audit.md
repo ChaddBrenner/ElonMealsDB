@@ -13,10 +13,10 @@ PYTHONPATH=scraper .venv/bin/pytest scraper/tests
 npm audit --workspaces --omit=dev
 .venv/bin/pip-audit -r scraper/requirements.txt
 docker compose config --quiet
-docker compose --profile scraper --profile scheduler build
+docker compose --profile scraper build
 docker compose up -d --build --wait --wait-timeout 180
 docker compose --profile scraper run --rm scraper
-docker compose --profile scheduler up -d --build
+docker compose up -d --build
 docker compose exec -T backend node --input-type=module -e "import { pool } from './src/db.js'; try { await pool.query('DELETE FROM scraper_runs WHERE id = -1'); process.exit(1); } catch { process.exit(0); } finally { await pool.end(); }"
 docker compose ps
 git ls-files --cached --others --exclude-standard
@@ -32,11 +32,11 @@ Results:
 - `pip-audit -r scraper/requirements.txt` reported no known vulnerabilities for the current pinned scraper dependencies.
 - Docker app services built and ran healthy.
 - One-shot scraper import refreshed MySQL from live Elon Dining data.
-- Scheduler profile imported current and next-day live menu data, then waited for the next configured run time. Scheduler tests verify failed dates are recorded and subsequent dates continue.
+- Scheduler service imported current and next-day live menu data, then waited for the next configured run time. Scheduler tests verify failed dates are recorded and subsequent dates continue.
 - Backend connected through the read-only `elon_api` DB account; a write attempt failed with `ER_TABLEACCESS_DENIED_ERROR`.
 - MySQL grants were checked: `elon_api` has `SELECT, SHOW VIEW`; `elon_scraper` has `SELECT, INSERT, UPDATE, DELETE`.
-- `docker compose ps` showed only `frontend` publishing a host port: `8080`.
-- Fresh-copy publish rehearsal passed from the Git-tracked source set in a temporary directory with a new Compose project and MySQL volume. The app built, seeded data, reported healthy services, served `/healthz`, returned `/api/service-dates`, returned `/api/sql-proof`, and published only the frontend host port.
+- `docker compose ps` showed only `frontend` publishing a host port, loopback-bound by default at `127.0.0.1:8080`.
+- Fresh-copy publish rehearsal passed from the Git-tracked source set in a temporary directory with a new Compose project and MySQL volume. The app built, seeded data, reported healthy services, served `/healthz`, returned `/api/service-dates`, returned `/api/sql-proof`, and published only the loopback-bound frontend host port.
 - The tracked-file list excludes `.env`, `.venv`, `node_modules`, build output, test output, and local Playwright artifacts.
 
 ## Manual Abuse Checks

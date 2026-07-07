@@ -18,7 +18,7 @@ http://localhost:8080
 
 What to point out:
 
-- The only published container port is the frontend on `8080`.
+- The only published container port is the frontend on loopback-bound `127.0.0.1:8080`.
 - The frontend proxies `/api` to the backend over the private Compose network.
 - MySQL is internal-only and is not exposed to the host.
 
@@ -139,8 +139,8 @@ docker compose --profile scraper run --rm scraper
 Recurring scheduler:
 
 ```bash
-docker compose --profile scheduler up -d scraper-scheduler
-docker compose --profile scheduler logs --tail=80 scraper-scheduler
+docker compose up -d --build
+docker compose logs --tail=80 scraper-scheduler
 ```
 
 What to point out:
@@ -199,7 +199,7 @@ npm run build
 PYTHONPATH=scraper .venv/bin/pytest scraper/tests
 npm audit --workspaces --omit=dev
 .venv/bin/pip-audit -r scraper/requirements.txt
-docker compose --profile scraper --profile scheduler config --quiet
+docker compose --profile scraper config --quiet
 docker compose up -d --build --wait --wait-timeout 180
 curl -fsS http://localhost:8080/healthz
 curl -fsS http://localhost:8080/api/service-dates

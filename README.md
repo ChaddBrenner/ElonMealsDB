@@ -14,6 +14,8 @@ docker compose up --build
 
 Open `http://localhost:8080`.
 
+The frontend is bound to `127.0.0.1:8080` by default so it is ready to sit behind a local HTTPS reverse proxy. Change `FRONTEND_BIND` only if you intentionally want Docker to listen on another host interface.
+
 On first run, the dashboard chooses today's imported menu when available and otherwise falls back to the newest bundled sample date. Run the scraper import below to refresh MySQL with live Elon Dining data.
 
 ![ElonMealsDB dashboard](docs/screenshots/dashboard-desktop.png)
@@ -51,7 +53,7 @@ flowchart LR
   Frontend --> Backend["backend Express API"]
   Backend --> MySQL["mysql"]
   Scraper["optional scraper profile"] -. "reviewed import path" .-> MySQL
-  Scheduler["optional scheduler profile"] -. "daily imports" .-> MySQL
+  Scheduler["default scheduler service"] -. "daily imports" .-> MySQL
 ```
 
 See [docs/architecture.md](docs/architecture.md) for the system design, [docs/sql-walkthrough.md](docs/sql-walkthrough.md) for runnable SQL examples, [docs/demo-walkthrough.md](docs/demo-walkthrough.md) for a portfolio-ready demo path, and [docs/portfolio-case-study.md](docs/portfolio-case-study.md) for website-ready project copy.
@@ -76,17 +78,18 @@ The scraper is an explicit private job, not a public web action. Run a one-shot 
 docker compose --profile scraper run --rm scraper
 ```
 
-Run the recurring scheduler container. This is the Docker equivalent of a cron job: it travels with the Compose stack, runs privately on the internal network, and uses the scraper database account instead of exposing any public import endpoint.
+The recurring scheduler starts with the normal Compose stack. This is the Docker equivalent of a cron job: it travels with the app, runs privately on the internal network, and uses the scraper database account instead of exposing any public import endpoint.
 
 ```bash
-docker compose --profile scheduler up -d scraper-scheduler
+docker compose up -d --build
 ```
 
-By default it imports today and tomorrow at `05:15` and `15:15` America/New_York time. Adjust `.env` with:
+By default it imports once at container startup, then imports today and tomorrow at `05:15` and `15:15` America/New_York time. Adjust `.env` with:
 
 ```bash
 SCRAPER_RUN_TIMES=05:15,15:15
 SCRAPER_DAYS_AHEAD=1
+SCRAPER_RUN_ON_START=true
 ```
 
 The scheduler records failed import attempts in `scraper_runs` and keeps running, so transient Elon Dining or network issues do not permanently stop future scheduled imports. One-shot `import-db` still exits nonzero after recording the failure.
@@ -94,8 +97,8 @@ The scheduler records failed import attempts in `scraper_runs` and keeps running
 Check the current scheduler state:
 
 ```bash
-docker compose --profile scheduler logs --tail=80 scraper-scheduler
-docker compose --profile scheduler ps
+docker compose logs --tail=80 scraper-scheduler
+docker compose ps scraper-scheduler
 ```
 
 For local parser development:
@@ -135,7 +138,7 @@ npm run build
 PYTHONPATH=scraper pytest scraper/tests
 npm audit --workspaces --omit=dev
 pip-audit -r scraper/requirements.txt
-docker compose --profile scraper --profile scheduler build
+docker compose --profile scraper build
 docker compose up -d --wait --wait-timeout 180
 curl -fsS http://localhost:8080/healthz
 curl -fsS http://localhost:8080/api/service-dates

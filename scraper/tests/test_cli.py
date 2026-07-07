@@ -91,3 +91,21 @@ def test_unexpected_import_errors_are_recorded_and_wrapped(monkeypatch):
         "database socket closed",
         "https://www.elondining.com/menu-hours/?date=2026-07-01",
     )]
+
+
+def test_env_bool_reads_scheduler_startup_flag(monkeypatch):
+    monkeypatch.setenv("SCRAPER_RUN_ON_START", "true")
+    assert cli.env_bool("SCRAPER_RUN_ON_START", False) is True
+
+    monkeypatch.setenv("SCRAPER_RUN_ON_START", "0")
+    assert cli.env_bool("SCRAPER_RUN_ON_START", True) is False
+
+    monkeypatch.delenv("SCRAPER_RUN_ON_START")
+    assert cli.env_bool("SCRAPER_RUN_ON_START", True) is True
+
+
+def test_env_bool_rejects_ambiguous_scheduler_startup_flag(monkeypatch):
+    monkeypatch.setenv("SCRAPER_RUN_ON_START", "sometimes")
+
+    with pytest.raises(ImporterError, match="SCRAPER_RUN_ON_START must be true or false"):
+        cli.env_bool("SCRAPER_RUN_ON_START", False)

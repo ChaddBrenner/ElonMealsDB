@@ -17,7 +17,7 @@ Campus dining data is useful but awkward to explore when menus, nutrition detail
 - A normalized MySQL schema for restaurants, meals, stations, foods, station-food relationships, and scraper run metadata.
 - A secure read-only Express API with validated inputs, parameterized queries, CORS allowlisting, rate limiting, Helmet, structured errors, and no stack traces in responses.
 - A Python scraper/importer that parses current Elon Dining embedded menu/nutrition data and upserts it into MySQL.
-- A Docker Compose deployment with frontend, backend, MySQL, optional one-shot scraper, and optional recurring scheduler profiles.
+- A Docker Compose deployment with frontend, backend, MySQL, private one-shot scraper, and recurring scheduler service.
 - A React/Vite dashboard with restaurant/date selection, menu tabs, station coverage, food search, dietary/allergen filters, nutrition drawer, favorites, local meal planning, history, and nutrition goals.
 - A System Proof panel that shows normalized data lineage, import status, indexed foods, and SQL-backed API examples from the backend.
 - Public-facing docs for architecture, API usage, SQL walkthroughs, deployment, security, and a reviewer demo script.
@@ -30,7 +30,7 @@ flowchart LR
   Frontend --> Backend["Express API"]
   Backend --> MySQL["MySQL"]
   Scraper["scraper job"] -. "private import" .-> MySQL
-  Scheduler["scheduler profile"] -. "twice daily import" .-> MySQL
+  Scheduler["scheduler service"] -. "twice daily import" .-> MySQL
 ```
 
 Personal meal-planning state stays in browser storage. The public backend serves only menu and nutrition data, which keeps the server-side attack surface small and makes the API safe to expose behind a reverse proxy.
@@ -61,7 +61,7 @@ Personal meal-planning state stays in browser storage. The public backend serves
 - Added Compose services for frontend, backend, MySQL, one-shot scraper, and recurring scraper scheduler.
 - Kept MySQL internal-only with a named volume.
 - Used non-root runtime users, health checks, dropped Linux capabilities, `no-new-privileges`, and read-only filesystems where practical.
-- Added a scheduler profile that imports today and tomorrow on configured America/New_York times.
+- Added a scheduler service that imports today and tomorrow on configured America/New_York times.
 
 ### Frontend Product Work
 
@@ -110,7 +110,7 @@ npm run build
 PYTHONPATH=scraper .venv/bin/pytest scraper/tests
 npm audit --workspaces --omit=dev
 .venv/bin/pip-audit -r scraper/requirements.txt
-docker compose --profile scraper --profile scheduler config --quiet
+docker compose --profile scraper config --quiet
 ```
 
 GitHub Actions also runs `node`, `scraper`, and `docker` jobs on pull requests. The Docker job builds images, starts Compose, checks health/API routes, checks malformed JSON handling, and verifies that the backend database user cannot write.

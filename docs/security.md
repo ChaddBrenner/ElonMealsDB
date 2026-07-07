@@ -6,11 +6,11 @@ The latest repeatable audit notes are in [security-audit.md](security-audit.md).
 
 ## Public Attack Surface
 
-- `frontend` exposes port `8080`.
+- `frontend` exposes `127.0.0.1:8080` by default for a same-host HTTPS reverse proxy.
 - `backend` is only reachable inside the Compose network through `/api`.
 - `mysql` has no host port mapping.
 - `scraper` only runs through the explicit `scraper` Compose profile.
-- `scraper-scheduler` only runs through the explicit `scheduler` Compose profile.
+- `scraper-scheduler` runs by default but stays private on the internal Compose network.
 
 ## Input Policy
 
@@ -45,7 +45,7 @@ The latest repeatable audit notes are in [security-audit.md](security-audit.md).
 
 ## Deployment Expectations
 
-Run this behind a TLS reverse proxy such as Caddy, nginx, Traefik, or Cloudflare Tunnel. Keep `.env` private, rotate default passwords before hosting, and avoid exposing the backend or database ports directly. See [deployment.md](deployment.md) for a concrete production checklist.
+Run this behind a TLS reverse proxy such as Caddy, nginx, Traefik, or Cloudflare Tunnel. Keep `.env` private, rotate default passwords before hosting, and avoid exposing the backend or database ports directly. Leave `FRONTEND_BIND=127.0.0.1` unless another private proxy topology requires a broader bind. See [deployment.md](deployment.md) for a concrete production checklist.
 
 ## Manual Abuse Checklist
 
@@ -55,6 +55,6 @@ Run this behind a TLS reverse proxy such as Caddy, nginx, Traefik, or Cloudflare
 - Try oversized JSON bodies.
 - Confirm `/api/sql-proof` only returns fixed examples.
 - Confirm no endpoint runs scraper imports.
-- Confirm recurring imports are run only by `docker compose --profile scheduler up -d scraper-scheduler`.
-- Confirm `docker compose ps` shows only frontend has a host port.
+- Confirm recurring imports run as the private `scraper-scheduler` service and no public route can trigger them.
+- Confirm `docker compose ps` shows only frontend has a host port and that it is loopback-bound by default.
 - Confirm the backend DB user cannot write: `docker compose exec -T backend node -e "import('./src/db.js').then(async ({pool}) => { try { await pool.query('DELETE FROM scraper_runs WHERE id = -1'); process.exit(1); } catch { process.exit(0); } })"`.

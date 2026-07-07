@@ -80,7 +80,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "${FRONTEND_BIND:-127.0.0.1}:${FRONTEND_PORT:-8080}:8080"
     networks:
       - internal
     read_only: true
@@ -126,8 +126,6 @@ services:
   scraper-scheduler:
     build:
       context: ./scraper
-    profiles:
-      - scheduler
     command:
       - python
       - -m
@@ -137,7 +135,6 @@ services:
       - ${SCRAPER_RUN_TIMES:-05:15,15:15}
       - --days-ahead
       - ${SCRAPER_DAYS_AHEAD:-1}
-      - --run-on-start
     restart: unless-stopped
     environment:
       DB_HOST: mysql
@@ -145,6 +142,7 @@ services:
       DB_NAME: ${MYSQL_DATABASE:-elon_meals}
       DB_USER: ${MYSQL_SCRAPER_USER:-elon_scraper}
       DB_PASSWORD: ${MYSQL_SCRAPER_PASSWORD:?MYSQL_SCRAPER_PASSWORD is required}
+      SCRAPER_RUN_ON_START: ${SCRAPER_RUN_ON_START:-true}
     depends_on:
       mysql:
         condition: service_healthy
@@ -157,6 +155,11 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; os.kill(1, 0)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 networks:
   internal:
