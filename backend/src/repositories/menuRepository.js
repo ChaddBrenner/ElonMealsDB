@@ -274,6 +274,59 @@ export async function getCoverageMetrics(date) {
   };
 }
 
+export async function getStationMetrics(date) {
+  const serviceDate = await resolveServiceDate(date);
+  const rows = await query(`
+    SELECT
+      DATE_FORMAT(r.service_date, '%Y-%m-%d') AS service_date,
+      r.id AS restaurant_id,
+      r.name AS restaurant_name,
+      m.id AS meal_id,
+      m.name AS meal_name,
+      m.time_open AS meal_time_open,
+      m.time_closed AS meal_time_closed,
+      s.id AS station_id,
+      s.name AS station_name,
+      COUNT(DISTINCT f.id) AS food_count,
+      ROUND(AVG(f.calories), 1) AS avg_calories,
+      ROUND(AVG(f.protein), 1) AS avg_protein,
+      COUNT(DISTINCT CASE WHEN f.vegan THEN f.id END) AS vegan_items,
+      COUNT(DISTINCT CASE WHEN f.vegetarian THEN f.id END) AS vegetarian_items,
+      COUNT(DISTINCT CASE WHEN f.gluten_free THEN f.id END) AS gluten_free_items
+    FROM restaurants r
+    JOIN meals m ON m.restaurant_id = r.id
+    JOIN stations s ON s.meal_id = m.id
+    JOIN station_foods sf ON sf.station_id = s.id
+    JOIN foods f ON f.id = sf.food_id
+    WHERE r.service_date = :serviceDate
+    GROUP BY r.service_date, r.id, m.id, s.id
+    HAVING food_count > 0
+    ORDER BY avg_protein DESC, food_count DESC, restaurant_name ASC, meal_name ASC, station_name ASC
+    LIMIT 12
+  `, { serviceDate });
+
+  return {
+    serviceDate,
+    stations: rows.map((row) => ({
+      serviceDate: row.service_date,
+      restaurantId: row.restaurant_id,
+      restaurantName: row.restaurant_name,
+      mealId: row.meal_id,
+      mealName: row.meal_name,
+      mealTimeOpen: row.meal_time_open,
+      mealTimeClosed: row.meal_time_closed,
+      stationId: row.station_id,
+      stationName: row.station_name,
+      foodCount: Number(row.food_count || 0),
+      avgCalories: Number(row.avg_calories || 0),
+      avgProtein: Number(row.avg_protein || 0),
+      veganItems: Number(row.vegan_items || 0),
+      vegetarianItems: Number(row.vegetarian_items || 0),
+      glutenFreeItems: Number(row.gluten_free_items || 0)
+    }))
+  };
+}
+
 function parseAllergenFree(value) {
   if (!value) return [];
   return value

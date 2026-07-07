@@ -61,10 +61,10 @@ See [docs/architecture.md](docs/architecture.md) for the system design, [docs/sq
 ## What This Shows
 
 - Normalized relational design for restaurants, meals, stations, foods, and scraper run metadata.
-- SQL joins, aggregates, nutrition ranking, and import audit trails across the full menu hierarchy.
+- SQL joins, aggregates, station-level nutrition comparison, nutrition ranking, and import audit trails across the full menu hierarchy.
 - Secure API defaults: request validation, rate limits, parameterized queries, structured errors, no stack traces in responses.
 - Docker-first deployment with private DB networking and non-root application containers.
-- A production-style frontend with imported-date browsing, local favorites, a dated meal planner, nutrition insights, history, responsive tables, and a detail drawer.
+- A production-style frontend with imported-date browsing, local favorites, a dated meal planner, station comparison, nutrition insights, history, responsive tables, and a detail drawer.
 
 For a short reviewer walkthrough, use [docs/demo-walkthrough.md](docs/demo-walkthrough.md).
 

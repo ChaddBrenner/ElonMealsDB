@@ -10,6 +10,7 @@ import { ApiError, asyncHandler, badRequest, bodyParserError, notFound } from '.
 import {
   getCoverageMetrics,
   getRestaurantMenu,
+  getStationMetrics,
   listFoods,
   listImportRuns,
   listRestaurants,
@@ -103,6 +104,11 @@ export function createApp() {
   router.get('/metrics/coverage', asyncHandler(async (req, res) => {
     const date = req.query.date ? parseOrThrow(dateSchema, req.query.date) : undefined;
     res.json(await getCoverageMetrics(date));
+  }));
+
+  router.get('/metrics/stations', asyncHandler(async (req, res) => {
+    const date = req.query.date ? parseOrThrow(dateSchema, req.query.date) : undefined;
+    res.json(await getStationMetrics(date));
   }));
 
   router.get('/sql-proof', (_req, res) => {

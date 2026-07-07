@@ -117,6 +117,24 @@ export type ScraperRun = {
   error_message?: string | null;
 };
 
+export type StationMetric = {
+  serviceDate: string;
+  restaurantId: number;
+  restaurantName: string;
+  mealId: number;
+  mealName: string;
+  mealTimeOpen: string;
+  mealTimeClosed: string;
+  stationId: number;
+  stationName: string;
+  foodCount: number;
+  avgCalories: number;
+  avgProtein: number;
+  veganItems: number;
+  vegetarianItems: number;
+  glutenFreeItems: number;
+};
+
 export type SqlProofExample = {
   title: string;
   route: string;
