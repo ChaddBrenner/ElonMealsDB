@@ -148,6 +148,11 @@ process.stdin.on('end', () => {
   curl -fsS http://localhost:8080/healthz >/dev/null
   curl -fsS http://localhost:8080/api/ready >/dev/null
   curl -fsS http://localhost:8080/api/service-dates >/dev/null
+  missing_asset_status="$(curl -sS -o /dev/null -w "%{http_code}" http://localhost:8080/assets/__missing-public-verifier__.js || true)"
+  if [[ "$missing_asset_status" != "404" ]]; then
+    echo "missing frontend assets must return 404, not the SPA fallback" >&2
+    exit 1
+  fi
   compose_cmd ps --services --status running | grep -qx scraper-scheduler
   compose_cmd logs scraper-scheduler | grep -q "next scheduled import"
 
