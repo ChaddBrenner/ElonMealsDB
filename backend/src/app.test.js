@@ -91,6 +91,12 @@ describe('security and validation middleware', () => {
     expect(response.body.error.code).toBe('bad_request');
   });
 
+  it('rejects invalid station metric dates before query execution', async () => {
+    const response = await request(app).get('/api/metrics/stations?date=2026-02-31');
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe('bad_request');
+  });
+
   it('rejects nonnumeric import run limits before query execution', async () => {
     const response = await request(app).get('/api/import-runs?limit=1%20OR%201=1');
     expect(response.status).toBe(400);

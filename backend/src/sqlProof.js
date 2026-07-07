@@ -38,5 +38,22 @@ LEFT JOIN stations s ON s.meal_id = m.id
 LEFT JOIN station_foods sf ON sf.station_id = s.id
 LEFT JOIN foods f ON f.id = sf.food_id
 WHERE r.service_date = ?`
+  },
+  {
+    title: 'Station nutrition comparison',
+    route: 'GET /api/metrics/stations',
+    summary: 'Ranks stations by average nutrition using grouped normalized menu rows.',
+    sql: `SELECT r.name AS restaurant, m.name AS meal, s.name AS station,
+       COUNT(DISTINCT f.id) AS food_count,
+       ROUND(AVG(f.calories), 1) AS avg_calories,
+       ROUND(AVG(f.protein), 1) AS avg_protein
+FROM restaurants r
+JOIN meals m ON m.restaurant_id = r.id
+JOIN stations s ON s.meal_id = m.id
+JOIN station_foods sf ON sf.station_id = s.id
+JOIN foods f ON f.id = sf.food_id
+WHERE r.service_date = ?
+GROUP BY r.service_date, r.id, m.id, s.id
+ORDER BY avg_protein DESC, food_count DESC`
   }
 ];

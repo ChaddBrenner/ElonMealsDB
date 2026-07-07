@@ -33,6 +33,7 @@ import {
   getMenu,
   getRestaurants,
   getServiceDates,
+  getStationMetrics,
   getSqlProof,
   type FoodFilters
 } from './api';
@@ -44,7 +45,7 @@ import {
   type LocalProfile,
   type PlannedMeal
 } from './localProfile';
-import type { CoverageMetrics, Food, Meal, MenuResponse, RestaurantSummary, ScraperRun, ServiceDateSummary } from './types';
+import type { CoverageMetrics, Food, Meal, MenuResponse, RestaurantSummary, ScraperRun, ServiceDateSummary, StationMetric } from './types';
 import type { SqlProofExample } from './types';
 
 const safeSearch = /^[a-zA-Z0-9\s.'&()/,+-]{0,80}$/;
@@ -80,6 +81,7 @@ export function App() {
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<number | null>(null);
   const [menu, setMenu] = useState<MenuResponse | null>(null);
   const [metrics, setMetrics] = useState<CoverageMetrics | null>(null);
+  const [stationMetrics, setStationMetrics] = useState<StationMetric[]>([]);
   const [importRuns, setImportRuns] = useState<ScraperRun[]>([]);
   const [sqlProofExamples, setSqlProofExamples] = useState<SqlProofExample[]>([]);
   const [allFoods, setAllFoods] = useState<Food[]>([]);
@@ -212,6 +214,7 @@ export function App() {
     setActiveMealId(null);
     setSelectedFood(null);
     setMetrics(null);
+    setStationMetrics([]);
     setAllFoods([]);
     setFilteredFoods([]);
   }, [date]);
@@ -233,13 +236,15 @@ export function App() {
     Promise.all([
       getRestaurants(date),
       getCoverageMetrics(date),
+      getStationMetrics(date),
       getFoods({ date }),
       getFoods(buildFilters(date, query, vegan, vegetarian, glutenFree, minProtein, maxCalories, allergenFree))
     ])
-      .then(([restaurantsResponse, metricsResponse, allFoodsResponse, filteredFoodsResponse]) => {
+      .then(([restaurantsResponse, metricsResponse, stationMetricsResponse, allFoodsResponse, filteredFoodsResponse]) => {
         if (!active) return;
         setRestaurants(restaurantsResponse.restaurants);
         setMetrics(metricsResponse);
+        setStationMetrics(stationMetricsResponse.stations);
         setAllFoods(allFoodsResponse.foods);
         setFilteredFoods(filteredFoodsResponse.foods);
         setSelectedRestaurantId((current) => (
@@ -585,6 +590,7 @@ export function App() {
           <NutritionInsightsPanel
             metrics={metrics}
             foods={allFoods}
+            stations={stationMetrics}
             onSelect={setSelectedFood}
           />
 
@@ -728,9 +734,10 @@ function ImportedDateList(props: {
   );
 }
 
-function NutritionInsightsPanel({ metrics, foods, onSelect }: {
+function NutritionInsightsPanel({ metrics, foods, stations, onSelect }: {
   metrics: CoverageMetrics | null;
   foods: Food[];
+  stations: StationMetric[];
   onSelect: (food: Food) => void;
 }) {
   const topProtein = (metrics?.topProtein || [])
@@ -751,6 +758,7 @@ function NutritionInsightsPanel({ metrics, foods, onSelect }: {
         <InsightStat label="Vegetarian" value={formatPercent(metrics?.vegetarian_items || 0, foodCount)} />
         <InsightStat label="Gluten free" value={formatPercent(metrics?.gluten_free_items || 0, foodCount)} />
       </div>
+      <StationCompare stations={stations} />
       <div className="protein-ranking" aria-label="Top protein foods">
         <div className="import-run-title">
           <strong>Top Protein</strong>
@@ -771,6 +779,50 @@ function NutritionInsightsPanel({ metrics, foods, onSelect }: {
   );
 }
 
+function StationCompare({ stations }: { stations: StationMetric[] }) {
+  const shownStations = stations.slice(0, 4);
+  const maxProtein = Math.max(1, ...shownStations.map((station) => station.avgProtein));
+  const stationNameCounts = shownStations.reduce((counts, station) => {
+    const name = station.stationName.toLowerCase();
+    counts.set(name, (counts.get(name) || 0) + 1);
+    return counts;
+  }, new Map<string, number>());
+
+  return (
+    <div className="station-compare" aria-label="Station nutrition comparison">
+      <div className="import-run-title">
+        <strong>Station Compare</strong>
+        <span>{shownStations.length ? 'Avg protein per item' : 'No station data'}</span>
+      </div>
+      {shownStations.length ? shownStations.map((station) => {
+        const protein = round(station.avgProtein);
+        const proteinWidth = Math.max(8, Math.round((station.avgProtein / maxProtein) * 100));
+        return (
+          <div className="station-metric-row" key={station.stationId}>
+            <div>
+              <strong>{formatStationMetricTitle(station, stationNameCounts)}</strong>
+              <small>{station.restaurantName} - {station.mealName}</small>
+            </div>
+            <div className="station-meter" aria-label={`${station.stationName} average protein ${protein} grams`}>
+              <span style={{ width: `${proteinWidth}%` }} />
+            </div>
+            <div className="station-metric-values">
+              <Badge tone="green">{protein} g</Badge>
+              <small>{station.foodCount} foods</small>
+            </div>
+          </div>
+        );
+      }) : <EmptyState text="Station comparison appears when menu data is available." />}
+    </div>
+  );
+}
+
+function formatStationMetricTitle(station: StationMetric, nameCounts: Map<string, number>) {
+  const hasDuplicateName = (nameCounts.get(station.stationName.toLowerCase()) || 0) > 1;
+  if (!hasDuplicateName) return station.stationName;
+  return `${station.stationName} - ${formatTimeRange(station.mealTimeOpen, station.mealTimeClosed)}`;
+}
+
 function InsightStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="insight-stat">
@@ -785,7 +837,7 @@ function SystemProofPanel({ examples, metrics, date }: {
   metrics: CoverageMetrics | null;
   date: string;
 }) {
-  const shownExamples = examples.slice(0, 3);
+  const shownExamples = examples.slice(0, 4);
   const importStatus = metrics?.scraperRun?.status || 'no import run';
   const uniqueFoods = metrics?.foods ?? 0;
 

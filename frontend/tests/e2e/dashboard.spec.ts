@@ -69,7 +69,7 @@ test('dashboard supports search, details, favorites, and local meal planning', a
 
   await expect(page).toHaveTitle('ElonMealsDB');
   await expect(page.getByRole('heading', { name: "Plan meals around today's dining options." })).toBeVisible();
-  await expect(page.getByLabel('Restaurant')).toHaveValue(String(restaurantId));
+  await expect(page.getByLabel('Restaurant', { exact: true })).toHaveValue(String(restaurantId));
   await expect(page.locator('.metric').filter({ hasText: 'Freshness' })).toContainText('Synced');
   await expect(page.locator('.metric').filter({ hasText: 'Freshness' })).toContainText('Updated');
   await expect(page.getByText('Data Freshness')).toBeVisible();
@@ -81,10 +81,14 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page.getByLabel('Recent import runs').getByText('Jul 6', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Nutrition Insights' })).toBeVisible();
   await expect(page.getByText('Average calories')).toBeVisible();
+  await expect(page.getByLabel('Station nutrition comparison').getByText('Station Compare')).toBeVisible();
+  await expect(page.getByLabel('Station nutrition comparison').getByText('Homestyle')).toBeVisible();
+  await expect(page.getByLabel('Station nutrition comparison').getByText('34 g')).toBeVisible();
   await expect(page.getByLabel('Top protein foods').getByText('Campus Chicken Plate')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'System Proof' })).toBeVisible();
   await expect(page.getByText('Unique foods')).toBeVisible();
   await expect(page.getByText('GET /api/restaurants/:id/menu')).toBeVisible();
+  await expect(page.getByText('GET /api/metrics/stations')).toBeVisible();
   await expect(page.locator('.status-list').getByText('3 foods', { exact: true })).toBeVisible();
   await expect(page.locator('.meal-tabs button').filter({ hasText: '11:00 AM - 2:00 PM' })).toContainText('Summer Break');
   await expect(page.locator('.meal-tabs button').filter({ hasText: '5:30 - 6:30 PM' })).toContainText('Summer Break');
@@ -136,12 +140,12 @@ test('date changes with no imported menu clear stale restaurant state', async ({
 
   await expect(page.getByRole('heading', { name: 'No menu imported' })).toBeVisible();
   await expect(page.getByText('No restaurants imported for Jul 8.')).toBeVisible();
-  await expect(page.getByLabel('Restaurant')).toBeDisabled();
+  await expect(page.getByLabel('Restaurant', { exact: true })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Lakeside Dining Hall' })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Use latest imported date' }).click();
 
-  await expect(page.getByLabel('Restaurant')).toBeEnabled();
+  await expect(page.getByLabel('Restaurant', { exact: true })).toBeEnabled();
   await expect(page.getByRole('heading', { name: 'Lakeside Dining Hall' })).toBeVisible();
   await expect(page.locator('.food-table').getByRole('button', { name: 'Ginger Tofu Bowl', exact: true })).toBeVisible();
 });
@@ -278,6 +282,51 @@ async function mockApi(page: Page) {
       return;
     }
 
+    if (url.pathname === '/api/metrics/stations') {
+      if (!hasMenuForDate) {
+        await json(route, { serviceDate: requestedDate, stations: [] });
+        return;
+      }
+
+      await json(route, {
+        serviceDate,
+        stations: [{
+          serviceDate,
+          restaurantId,
+          restaurantName: 'Lakeside Dining Hall',
+          mealId,
+          mealName: 'Summer Break',
+          mealTimeOpen: `${serviceDate}T11:00:00.000Z`,
+          mealTimeClosed: `${serviceDate}T14:00:00.000Z`,
+          stationId: 302,
+          stationName: 'Homestyle',
+          foodCount: 1,
+          avgCalories: 520,
+          avgProtein: 34,
+          veganItems: 0,
+          vegetarianItems: 0,
+          glutenFreeItems: 0
+        }, {
+          serviceDate,
+          restaurantId,
+          restaurantName: 'Lakeside Dining Hall',
+          mealId,
+          mealName: 'Summer Break',
+          mealTimeOpen: `${serviceDate}T11:00:00.000Z`,
+          mealTimeClosed: `${serviceDate}T14:00:00.000Z`,
+          stationId: 301,
+          stationName: 'Global Greens',
+          foodCount: 2,
+          avgCalories: 275,
+          avgProtein: 16,
+          veganItems: 1,
+          vegetarianItems: 2,
+          glutenFreeItems: 1
+        }]
+      });
+      return;
+    }
+
     if (url.pathname === '/api/foods') {
       if (!hasMenuForDate) {
         await json(route, { foods: [] });
@@ -308,6 +357,12 @@ async function mockApi(page: Page) {
             route: 'GET /api/foods',
             summary: 'Filters foods by date, dietary flags, allergens, calories, and protein.',
             sql: 'SELECT DISTINCT f.id, f.short_name\\nFROM restaurants r\\nJOIN meals m ON m.restaurant_id = r.id'
+          },
+          {
+            title: 'Station nutrition comparison',
+            route: 'GET /api/metrics/stations',
+            summary: 'Ranks stations by average nutrition using grouped normalized menu rows.',
+            sql: 'SELECT r.name AS restaurant, m.name AS meal, s.name AS station\\nFROM restaurants r\\nJOIN meals m ON m.restaurant_id = r.id'
           }
         ]
       });

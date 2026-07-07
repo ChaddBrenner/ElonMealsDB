@@ -1,4 +1,4 @@
-import type { CoverageMetrics, Food, MenuResponse, RestaurantSummary, ScraperRun, ServiceDateSummary, SqlProofExample } from './types';
+import type { CoverageMetrics, Food, MenuResponse, RestaurantSummary, ScraperRun, ServiceDateSummary, SqlProofExample, StationMetric } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -46,6 +46,10 @@ export function getImportRuns(limit = 6) {
 
 export function getCoverageMetrics(date: string) {
   return request<CoverageMetrics>(`/metrics/coverage?date=${encodeURIComponent(date)}`);
+}
+
+export function getStationMetrics(date: string) {
+  return request<{ serviceDate: string; stations: StationMetric[] }>(`/metrics/stations?date=${encodeURIComponent(date)}`);
 }
 
 export function getMenu(restaurantId: number) {

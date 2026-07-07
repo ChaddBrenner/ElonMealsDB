@@ -66,6 +66,14 @@ Supported food filters:
 | `maxCalories` | Optional integer `0`-`2000` |
 | `allergenFree` | Optional comma list: `egg`, `shellfish`, `soy`, `peanut`, `wheat`, `tree_nut`, `milk`, `sesame`, `fish` |
 
+Station-level nutrition comparison:
+
+```bash
+curl "http://localhost:8080/api/metrics/stations?date=2026-07-01"
+```
+
+This endpoint groups the normalized restaurant, meal, station, station-food, and food tables by station. It returns food counts, average calories, average protein, and dietary coverage for the top station rows on the selected service date.
+
 SQL proof examples:
 
 ```bash

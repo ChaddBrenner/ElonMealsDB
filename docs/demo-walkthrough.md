@@ -58,6 +58,7 @@ What to point out:
 - The panel displays current import status and indexed food counts from live API data.
 - The Data Freshness panel shows imported service dates and recent scraper import runs from `scraper_runs`, including failed or partial runs.
 - The Nutrition Insights panel shows aggregate dietary coverage and top-protein foods backed by SQL ranking queries.
+- Station Compare shows station-level averages from a grouped SQL aggregate across restaurants, meals, stations, station-food rows, and foods.
 - The dashboard distinguishes distinct menu foods from scraper food appearances, which demonstrates the many-to-many station-food model.
 - The SQL examples are served from `/api/sql-proof`, so the frontend is showing the backend contract instead of a static screenshot.
 

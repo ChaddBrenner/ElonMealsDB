@@ -104,6 +104,33 @@ LIMIT 5;
 
 Review point: this is the same data shape a user needs for meal planning, but expressed as a SQL-backed ranking problem.
 
+## Station Nutrition Comparison
+
+This aggregate backs `/api/metrics/stations` and the dashboard's Station Compare panel:
+
+```sql
+SELECT
+  r.name AS restaurant,
+  m.name AS meal,
+  s.name AS station,
+  COUNT(DISTINCT f.id) AS food_count,
+  ROUND(AVG(f.calories), 1) AS avg_calories,
+  ROUND(AVG(f.protein), 1) AS avg_protein,
+  COUNT(DISTINCT CASE WHEN f.vegan THEN f.id END) AS vegan_items,
+  COUNT(DISTINCT CASE WHEN f.gluten_free THEN f.id END) AS gluten_free_items
+FROM restaurants r
+JOIN meals m ON m.restaurant_id = r.id
+JOIN stations s ON s.meal_id = m.id
+JOIN station_foods sf ON sf.station_id = s.id
+JOIN foods f ON f.id = sf.food_id
+WHERE r.service_date = '2026-07-01'
+GROUP BY r.service_date, r.id, m.id, s.id
+ORDER BY avg_protein DESC, food_count DESC, restaurant, meal, station
+LIMIT 12;
+```
+
+Review point: this turns the normalized many-to-many model into a station-level decision aid without exposing arbitrary grouping, ordering, or SQL controls to public users.
+
 ## Import Freshness And Audit Trail
 
 The scraper and scheduler write every successful import, and scheduled failures are recorded as `failed` rows:

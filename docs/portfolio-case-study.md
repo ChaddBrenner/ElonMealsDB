@@ -6,7 +6,7 @@ ElonMealsDB is a self-hosted dining planner that turns Elon Dining menu data int
 
 ## Short Website Summary
 
-Built a Dockerized full-stack dining planner with a React/Vite frontend, Express API, MySQL relational schema, Python scraper, and private scheduled import job. The app supports menu search, imported-date browsing, dietary filters, nutrition insights, nutrition details, favorites, local meal planning, data freshness indicators, and an in-app SQL proof panel while keeping public backend traffic read-only and personal planning data in browser storage.
+Built a Dockerized full-stack dining planner with a React/Vite frontend, Express API, MySQL relational schema, Python scraper, and private scheduled import job. The app supports menu search, imported-date browsing, dietary filters, station-level nutrition comparison, nutrition insights, nutrition details, favorites, local meal planning, data freshness indicators, and an in-app SQL proof panel while keeping public backend traffic read-only and personal planning data in browser storage.
 
 ## Problem
 
@@ -41,7 +41,7 @@ Personal meal-planning state stays in browser storage. The public backend serves
 
 - Modeled menu data as relational tables instead of storing page-shaped JSON.
 - Joined restaurants, meals, stations, station-food rows, and foods for menu rendering.
-- Added aggregate endpoints for coverage, dietary counts, average calories, and top-protein foods.
+- Added aggregate endpoints for coverage, dietary counts, station comparison, average calories, and top-protein foods.
 - Distinguished distinct foods from station/meal food appearances in the UI and audit trail.
 - Kept scraper run metadata separate from menu facts so data freshness is auditable.
 - Included reviewer-ready SQL examples in `docs/sql-walkthrough.md` and in `/api/sql-proof`.
