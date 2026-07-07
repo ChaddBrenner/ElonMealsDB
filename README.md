@@ -24,10 +24,6 @@ Mobile view:
 
 ![ElonMealsDB mobile dashboard](docs/screenshots/dashboard-mobile.png)
 
-SQL and import proof:
-
-![ElonMealsDB system proof](docs/screenshots/dashboard-system-proof.png)
-
 Useful checks:
 
 ```bash

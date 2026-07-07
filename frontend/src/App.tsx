@@ -1,25 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { MouseEvent, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import {
   BarChart3,
   CalendarDays,
   Check,
   ChevronRight,
-  CircleUserRound,
-  Database,
-  Filter,
-  GitBranch,
   History,
   Leaf,
   Loader2,
-  MapPin,
   Minus,
-  PanelRightOpen,
   Plus,
   RotateCcw,
   Search,
   Settings2,
-  ShieldCheck,
   Soup,
   Star,
   Trash2,
@@ -29,12 +22,10 @@ import {
 import {
   getCoverageMetrics,
   getFoods,
-  getImportRuns,
   getMenu,
   getRestaurants,
   getServiceDates,
   getStationMetrics,
-  getSqlProof,
   type FoodFilters
 } from './api';
 import {
@@ -45,8 +36,7 @@ import {
   type LocalProfile,
   type PlannedMeal
 } from './localProfile';
-import type { CoverageMetrics, Food, Meal, MenuResponse, RestaurantSummary, ScraperRun, ServiceDateSummary, StationMetric } from './types';
-import type { SqlProofExample } from './types';
+import type { CoverageMetrics, Food, Meal, MenuResponse, RestaurantSummary, ServiceDateSummary, StationMetric } from './types';
 
 const safeSearch = /^[a-zA-Z0-9\s.'&()/,+-]{0,80}$/;
 const allergenOptions = [
@@ -60,21 +50,8 @@ const allergenOptions = [
   ['tree_nut', 'Tree nut']
 ] as const;
 
-const navigationItems = [
-  { id: 'planner', label: 'Planner', Icon: Utensils },
-  { id: 'menu', label: 'Menu', Icon: Soup },
-  { id: 'favorites', label: 'Favorites', Icon: Star },
-  { id: 'history', label: 'History', Icon: History },
-  { id: 'system', label: 'System', Icon: Database },
-  { id: 'settings', label: 'Settings', Icon: Settings2 }
-] as const;
-
-type NavigationSection = typeof navigationItems[number]['id'];
-
 export function App() {
   const [profile, setProfile] = useState<LocalProfile>(() => loadLocalProfile());
-  const [activeSection, setActiveSection] = useState<NavigationSection>('planner');
-  const [pendingSection, setPendingSection] = useState<NavigationSection | null>(null);
   const [date, setDate] = useState('');
   const [availableDates, setAvailableDates] = useState<ServiceDateSummary[]>([]);
   const [restaurants, setRestaurants] = useState<RestaurantSummary[]>([]);
@@ -82,12 +59,11 @@ export function App() {
   const [menu, setMenu] = useState<MenuResponse | null>(null);
   const [metrics, setMetrics] = useState<CoverageMetrics | null>(null);
   const [stationMetrics, setStationMetrics] = useState<StationMetric[]>([]);
-  const [importRuns, setImportRuns] = useState<ScraperRun[]>([]);
-  const [sqlProofExamples, setSqlProofExamples] = useState<SqlProofExample[]>([]);
   const [allFoods, setAllFoods] = useState<Food[]>([]);
   const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [activeMealId, setActiveMealId] = useState<number | null>(null);
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(null);
   const [query, setQuery] = useState('');
   const [vegan, setVegan] = useState(false);
   const [vegetarian, setVegetarian] = useState(false);
@@ -104,6 +80,7 @@ export function App() {
   const mealTabLabels = useMemo(() => buildMealTabLabels(menu?.meals || []), [menu?.meals]);
   const todayMeals = useMemo(() => profile.meals.filter((meal) => meal.date === date), [profile.meals, date]);
   const totals = useMemo(() => calculateTotals(todayMeals), [todayMeals]);
+  const plannedItemCount = useMemo(() => todayMeals.reduce((count, meal) => count + meal.foods.reduce((sum, food) => sum + food.quantity, 0), 0), [todayMeals]);
   const favoriteIds = useMemo(() => new Set(profile.favoriteFoods.map((favorite) => favorite.foodId)), [profile.favoriteFoods]);
   const activeFilters = Boolean(query || vegan || vegetarian || glutenFree || minProtein || maxCalories || allergenFree.length);
 
@@ -111,6 +88,7 @@ export function App() {
     if (!activeMeal || !selectedRestaurant) return [];
     return activeMeal.stations.flatMap((station) => station.foods.map((food) => ({
       ...food,
+      stationId: station.id,
       stationName: station.name,
       mealName: activeMeal.name,
       restaurantId: selectedRestaurant.id,
@@ -118,53 +96,16 @@ export function App() {
     })));
   }, [activeMeal, selectedRestaurant]);
 
-  const tableFoods = activeFilters ? filteredFoods : menuFoods;
+  const sourceFoods = activeFilters ? filteredFoods : menuFoods;
+  const tableFoods = useMemo(() => selectedStationId
+    ? sourceFoods.filter((food) => food.stationId === selectedStationId)
+    : sourceFoods, [sourceFoods, selectedStationId]);
   const historyMeals = useMemo(() => [...profile.meals].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 8), [profile.meals]);
-  const activeDateSummary = availableDates.find((item) => item.serviceDate === date);
   const latestImportedDate = availableDates[0]?.serviceDate || '';
-  const dateHelper = getDateHelper(date, activeDateSummary);
-  const latestImport = availableDates
-    .map((item) => item.lastImportedAt)
-    .filter((value): value is string => Boolean(value))
-    .sort((a, b) => b.localeCompare(a))[0] || null;
-  const freshnessSummary = getFreshnessSummary(latestImport, availableDates.length);
-  const coverageLabel = activeDateSummary
-    ? `${activeDateSummary.meals} meals, ${activeDateSummary.stations} stations`
-    : dateHelper;
 
   useEffect(() => {
     saveLocalProfile(profile);
   }, [profile]);
-
-  useEffect(() => {
-    function updateActiveSection() {
-      if (pendingSection) {
-        setActiveSection(pendingSection);
-        return;
-      }
-
-      const offset = window.innerWidth <= 760 ? 28 : 110;
-      let current: NavigationSection = 'planner';
-
-      for (const item of navigationItems) {
-        const element = document.getElementById(item.id);
-        if (element && element.getBoundingClientRect().top <= offset) {
-          current = item.id;
-        }
-      }
-
-      setActiveSection(current);
-    }
-
-    updateActiveSection();
-    window.addEventListener('scroll', updateActiveSection, { passive: true });
-    window.addEventListener('resize', updateActiveSection);
-
-    return () => {
-      window.removeEventListener('scroll', updateActiveSection);
-      window.removeEventListener('resize', updateActiveSection);
-    };
-  }, [pendingSection]);
 
   useEffect(() => {
     let active = true;
@@ -190,28 +131,12 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    let active = true;
-    Promise.allSettled([
-      getSqlProof(),
-      getImportRuns()
-    ])
-      .then(([sqlProofResult, importRunsResult]) => {
-        if (!active) return;
-        setSqlProofExamples(sqlProofResult.status === 'fulfilled' ? sqlProofResult.value.examples : []);
-        setImportRuns(importRunsResult.status === 'fulfilled' ? importRunsResult.value.runs : []);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
     if (!date) return;
     setRestaurants([]);
     setSelectedRestaurantId(null);
     setMenu(null);
     setActiveMealId(null);
+    setSelectedStationId(null);
     setSelectedFood(null);
     setMetrics(null);
     setStationMetrics([]);
@@ -281,6 +206,7 @@ export function App() {
         if (date && response.restaurant.service_date !== date) return;
         setMenu(response);
         setActiveMealId(response.meals[0]?.id || null);
+        setSelectedStationId(null);
       })
       .catch((caught: Error) => active && setError(caught.message));
 
@@ -290,18 +216,8 @@ export function App() {
   }, [selectedRestaurantId, date]);
 
   useEffect(() => {
-    if (!pendingSection) return;
-
-    const timers = [0, 160, 520, 1000].map((delay) => window.setTimeout(() => {
-      scrollToSection(pendingSection, delay === 0 ? 'smooth' : 'auto');
-    }, delay));
-    const done = window.setTimeout(() => setPendingSection(null), 1200);
-
-    return () => {
-      timers.forEach((timer) => window.clearTimeout(timer));
-      window.clearTimeout(done);
-    };
-  }, [pendingSection, loading, menu, metrics, importRuns.length, restaurants.length, filteredFoods.length]);
+    setSelectedStationId(null);
+  }, [activeMealId]);
 
   function updateProfile(patch: Partial<LocalProfile>) {
     setProfile((current) => ({
@@ -382,64 +298,23 @@ export function App() {
     setProfile(createDefaultProfile());
   }
 
-  function navigateToSection(event: MouseEvent<HTMLAnchorElement>, sectionId: NavigationSection) {
-    event.preventDefault();
-    window.history.replaceState(null, '', `#${sectionId}`);
-    setPendingSection(sectionId);
-    setActiveSection(sectionId);
-    scrollToSection(sectionId);
-  }
-
-  function scrollToSection(sectionId: NavigationSection, behavior: ScrollBehavior = 'smooth') {
-    const element = document.getElementById(sectionId);
-    if (!element) return;
-
-    const topOffset = window.innerWidth <= 760 ? 0 : 92;
-    const top = Math.max(0, element.getBoundingClientRect().top + window.scrollY - topOffset);
-    window.scrollTo({ top, behavior });
-  }
-
   return (
     <div className="product-shell">
-      <aside className="app-sidebar" aria-label="Primary navigation">
-        <div className="brand">
-          <div className="brand-mark">E</div>
-          <div>
-            <strong>ElonMealsDB</strong>
-            <span>Dining planner</span>
-          </div>
-        </div>
-        <nav>
-          {navigationItems.map(({ id, label, Icon }) => (
-            <a
-              className={activeSection === id ? 'active' : undefined}
-              href={`#${id}`}
-              key={id}
-              onClick={(event) => navigateToSection(event, id)}
-            >
-              <Icon size={18} /> {label}
-            </a>
-          ))}
-        </nav>
-        <div className="profile-card">
-          <CircleUserRound size={28} />
-          <div>
-            <span>Planner profile</span>
-            <strong>{profile.name || 'My dining plan'}</strong>
-            <small>This browser</small>
-          </div>
-        </div>
-      </aside>
-
       <main>
         <header className="topbar">
+          <div className="brand compact-brand">
+            <div className="brand-mark">E</div>
+            <div>
+              <strong>ElonMealsDB</strong>
+              <span>Dining planner</span>
+            </div>
+          </div>
           <label className="field date-field">
-            <span><CalendarDays size={16} /> Date</span>
+            <span><CalendarDays size={15} /> Date</span>
             <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
-            <small>{date ? dateHelper : 'Loading menu dates'}</small>
           </label>
           <label className="field location-field">
-            <span><MapPin size={16} /> Restaurant</span>
+            <span>Restaurant</span>
             <select
               value={selectedRestaurantId || ''}
               onChange={(event) => setSelectedRestaurantId(Number(event.target.value))}
@@ -471,18 +346,14 @@ export function App() {
           </div>
         )}
 
-        <section className="workspace-summary" id="planner">
-          <div className="summary-copy">
-            <h1>Plan meals around today&apos;s dining options.</h1>
-            <p>Browse menus, save favorites, build meals, and track nutrition goals in one focused planning workspace.</p>
-          </div>
-          <div className="summary-metrics">
-            <Metric label="Restaurants" value={metrics?.restaurants} helper={`${metrics?.foods ?? 0} dishes indexed`} />
-            <Metric label="Planned" value={round(totals.calories)} helper={`${todayMeals.length} meals today`} />
-            <Metric label="Favorites" value={profile.favoriteFoods.length} helper="Quick picks" />
-            <Metric label="Freshness" value={freshnessSummary.value} helper={freshnessSummary.helper} />
-          </div>
-        </section>
+        <PlanSummaryBar
+          profile={profile}
+          totals={totals}
+          itemCount={plannedItemCount}
+          mealsCount={todayMeals.length}
+          date={date}
+          onClearDay={clearToday}
+        />
 
         <section className="planner-grid">
           <section className="panel menu-panel" id="menu">
@@ -509,43 +380,36 @@ export function App() {
                     );
                   })}
                 </div>
-                <div className="menu-layout">
-                  <div className="station-rail">
-                    <h2>Stations</h2>
-                    {activeMeal?.stations.map((station) => (
-                      <div className="station-row" key={station.id}>
-                        <span>{station.name}</span>
-                        <Badge tone="neutral">{station.foods.length}</Badge>
-                      </div>
-                    ))}
-                    {!loading && !activeMeal?.stations.length && <EmptyState text="No stations for this meal." />}
-                  </div>
-                  <div className="food-workspace">
-                    <FilterBar
-                      vegan={vegan}
-                      vegetarian={vegetarian}
-                      glutenFree={glutenFree}
-                      minProtein={minProtein}
-                      maxCalories={maxCalories}
-                      allergenFree={allergenFree}
-                      onVegan={setVegan}
-                      onVegetarian={setVegetarian}
-                      onGlutenFree={setGlutenFree}
-                      onMinProtein={setMinProtein}
-                      onMaxCalories={setMaxCalories}
-                      onAllergenFree={setAllergenFree}
+                <StationFilter
+                  stations={activeMeal?.stations || []}
+                  selectedStationId={selectedStationId}
+                  onSelect={setSelectedStationId}
+                />
+                <div className="food-workspace">
+                  <FilterBar
+                    vegan={vegan}
+                    vegetarian={vegetarian}
+                    glutenFree={glutenFree}
+                    minProtein={minProtein}
+                    maxCalories={maxCalories}
+                    allergenFree={allergenFree}
+                    onVegan={setVegan}
+                    onVegetarian={setVegetarian}
+                    onGlutenFree={setGlutenFree}
+                    onMinProtein={setMinProtein}
+                    onMaxCalories={setMaxCalories}
+                    onAllergenFree={setAllergenFree}
+                  />
+                  {loading || !menu ? <LoadingState /> : (
+                    <FoodTable
+                      foods={tableFoods}
+                      favoriteIds={favoriteIds}
+                      busy={busy}
+                      onSelect={setSelectedFood}
+                      onFavorite={toggleFavorite}
+                      onAdd={addFoodToPlan}
                     />
-                    {loading || !menu ? <LoadingState /> : (
-                      <FoodTable
-                        foods={tableFoods}
-                        favoriteIds={favoriteIds}
-                        busy={busy}
-                        onSelect={setSelectedFood}
-                        onFavorite={toggleFavorite}
-                        onAdd={addFoodToPlan}
-                      />
-                    )}
-                  </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -559,9 +423,7 @@ export function App() {
           </section>
 
           <MealPlanPanel
-            profile={profile}
             meals={todayMeals}
-            totals={totals}
             date={date}
             onQuantity={updatePlannedQuantity}
             onRemoveFood={removePlannedFood}
@@ -571,22 +433,6 @@ export function App() {
         </section>
 
         <section className="lower-grid">
-          <SystemProofPanel
-            examples={sqlProofExamples}
-            metrics={metrics}
-            date={date}
-          />
-
-          <DataFreshnessPanel
-            activeDate={date}
-            dates={availableDates}
-            coverageLabel={coverageLabel}
-            latestImport={latestImport}
-            foodCount={metrics?.foods ?? 0}
-            runs={importRuns}
-            onDateSelect={setDate}
-          />
-
           <NutritionInsightsPanel
             metrics={metrics}
             foods={allFoods}
@@ -640,17 +486,6 @@ export function App() {
               <GoalInput label="Protein" value={profile.dailyProteinsGoal} min={10} max={400} onChange={(value) => updateProfile({ dailyProteinsGoal: value })} />
               <GoalInput label="Carbs" value={profile.dailyCarbsGoal} min={10} max={800} onChange={(value) => updateProfile({ dailyCarbsGoal: value })} />
               <GoalInput label="Fat" value={profile.dailyFatsGoal} min={10} max={400} onChange={(value) => updateProfile({ dailyFatsGoal: value })} />
-              <label className="field satisfaction-field">
-                <span>Satisfaction</span>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={profile.satisfactionLevel}
-                  onChange={(event) => updateProfile({ satisfactionLevel: Number(event.target.value) })}
-                />
-                <small>{profile.satisfactionLevel} / 10</small>
-              </label>
             </div>
             <div className="settings-actions">
               <button className="secondary-button" type="button" onClick={resetLocalProfile}>
@@ -673,105 +508,41 @@ export function App() {
   );
 }
 
-function DataFreshnessPanel(props: {
-  activeDate: string;
-  dates: ServiceDateSummary[];
-  coverageLabel: string;
-  latestImport: string | null;
-  foodCount: number;
-  runs: ScraperRun[];
-  onDateSelect: (date: string) => void;
-}) {
-  return (
-    <section className="panel status-panel">
-      <PanelHeader title="Data Freshness" subtitle={props.coverageLabel} icon={<CalendarDays size={18} />} />
-      <div className="status-list">
-        <StatusRow label="Service date" value={props.activeDate || '-'} />
-        <StatusRow label="Last import" value={props.latestImport ? formatFullImportTime(props.latestImport) : 'Awaiting scheduler'} />
-        <StatusRow label="Import path" value={props.latestImport || props.runs.length ? 'Private scheduler' : 'Seeded database'} />
-        <StatusRow label="Menu coverage" value={`${props.foodCount} foods`} />
-        <StatusRow label="Available dates" value={String(props.dates.length)} />
-      </div>
-      <ImportedDateList
-        dates={props.dates}
-        activeDate={props.activeDate}
-        onSelect={props.onDateSelect}
-      />
-      <ImportRunList runs={props.runs} />
-    </section>
-  );
-}
-
-function ImportedDateList(props: {
-  dates: ServiceDateSummary[];
-  activeDate: string;
-  onSelect: (date: string) => void;
-}) {
-  const shownDates = props.dates.slice(0, 6);
-
-  return (
-    <div className="date-option-list" aria-label="Imported menu dates">
-      <div className="import-run-title">
-        <strong>Imported Dates</strong>
-        <span>{shownDates.length ? 'Choose a service date' : 'No imported dates'}</span>
-      </div>
-      {shownDates.length ? (
-        <div className="date-options">
-          {shownDates.map((item) => (
-            <button
-              className={item.serviceDate === props.activeDate ? 'selected' : ''}
-              type="button"
-              key={item.serviceDate}
-              onClick={() => props.onSelect(item.serviceDate)}
-            >
-              <strong>{formatShortDate(item.serviceDate)}</strong>
-              <span>{item.foods} foods</span>
-            </button>
-          ))}
-        </div>
-      ) : <EmptyState text="Imported service dates will appear here." />}
-    </div>
-  );
-}
-
 function NutritionInsightsPanel({ metrics, foods, stations, onSelect }: {
   metrics: CoverageMetrics | null;
   foods: Food[];
   stations: StationMetric[];
   onSelect: (food: Food) => void;
 }) {
-  const topProtein = (metrics?.topProtein || [])
-    .map((food) => resolveFoodSnapshot(food, foods))
-    .slice(0, 4);
   const foodCount = Math.max(1, metrics?.foods || 0);
+  const proteinEfficiency = foods
+    .filter((food) => food.calories > 0 && food.protein > 0)
+    .map((food) => ({ food, score: (food.protein / food.calories) * 100 }))
+    .sort((a, b) => b.score - a.score || b.food.protein - a.food.protein)
+    .slice(0, 5);
 
   return (
     <section className="panel nutrition-panel">
       <PanelHeader
         title="Nutrition Insights"
-        subtitle="SQL-backed aggregate and ranking data"
+        subtitle="Station fit, dietary coverage, and high-value protein choices"
         icon={<BarChart3 size={18} />}
       />
-      <div className="insight-grid">
-        <InsightStat label="Average calories" value={metrics?.avg_calories == null ? '-' : String(round(metrics.avg_calories))} />
-        <InsightStat label="Vegan" value={formatPercent(metrics?.vegan_items || 0, foodCount)} />
-        <InsightStat label="Vegetarian" value={formatPercent(metrics?.vegetarian_items || 0, foodCount)} />
-        <InsightStat label="Gluten free" value={formatPercent(metrics?.gluten_free_items || 0, foodCount)} />
-      </div>
+      <DietaryCoverage metrics={metrics} foodCount={foodCount} />
       <StationCompare stations={stations} />
-      <div className="protein-ranking" aria-label="Top protein foods">
+      <div className="protein-ranking" aria-label="Protein efficiency leaderboard">
         <div className="import-run-title">
-          <strong>Top Protein</strong>
-          <span>{topProtein.length ? 'Per serving' : 'No ranking data'}</span>
+          <strong>Protein Efficiency</strong>
+          <span>{proteinEfficiency.length ? 'Grams per 100 calories' : 'No ranking data'}</span>
         </div>
-        {topProtein.length ? topProtein.map((food, index) => (
+        {proteinEfficiency.length ? proteinEfficiency.map(({ food, score }, index) => (
           <button className="protein-row" type="button" key={food.id} onClick={() => onSelect(food)}>
             <span>{index + 1}</span>
             <div>
               <strong>{food.shortName}</strong>
               <small>{formatFoodContext(food)}</small>
             </div>
-            <Badge tone="green">{round(food.protein)} g</Badge>
+            <Badge tone="green">{round(score)} g</Badge>
           </button>
         )) : <EmptyState text="Nutrition rankings will appear when menu data is available." />}
       </div>
@@ -779,9 +550,44 @@ function NutritionInsightsPanel({ metrics, foods, stations, onSelect }: {
   );
 }
 
+function DietaryCoverage({ metrics, foodCount }: { metrics: CoverageMetrics | null; foodCount: number }) {
+  const rows = [
+    { label: 'Vegetarian', value: metrics?.vegetarian_items || 0 },
+    { label: 'Vegan', value: metrics?.vegan_items || 0 },
+    { label: 'Gluten free', value: metrics?.gluten_free_items || 0 }
+  ];
+
+  return (
+    <div className="coverage-panel" aria-label="Dietary coverage">
+      <div className="coverage-headline">
+        <div>
+          <span>Average calories</span>
+          <strong>{metrics?.avg_calories == null ? '-' : round(metrics.avg_calories)}</strong>
+        </div>
+        <div>
+          <span>Foods indexed</span>
+          <strong>{metrics?.foods ?? 0}</strong>
+        </div>
+      </div>
+      <div className="coverage-bars">
+        {rows.map((row) => (
+          <div className="coverage-row" key={row.label}>
+            <span>{row.label}</span>
+            <div className="coverage-track" aria-label={`${row.label} ${formatPercent(row.value, foodCount)}`}>
+              <span style={{ width: formatPercent(row.value, foodCount) }} />
+            </div>
+            <strong>{formatPercent(row.value, foodCount)}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function StationCompare({ stations }: { stations: StationMetric[] }) {
-  const shownStations = stations.slice(0, 4);
+  const shownStations = [...stations].sort((a, b) => b.avgProtein - a.avgProtein || a.avgCalories - b.avgCalories).slice(0, 6);
   const maxProtein = Math.max(1, ...shownStations.map((station) => station.avgProtein));
+  const maxCalories = Math.max(1, ...shownStations.map((station) => station.avgCalories));
   const stationNameCounts = shownStations.reduce((counts, station) => {
     const name = station.stationName.toLowerCase();
     counts.set(name, (counts.get(name) || 0) + 1);
@@ -789,25 +595,40 @@ function StationCompare({ stations }: { stations: StationMetric[] }) {
   }, new Map<string, number>());
 
   return (
-    <div className="station-compare" aria-label="Station nutrition comparison">
+    <div className="station-compare" aria-label="Station best fit matrix">
       <div className="import-run-title">
-        <strong>Station Compare</strong>
-        <span>{shownStations.length ? 'Avg protein per item' : 'No station data'}</span>
+        <strong>Station Best Fit</strong>
+        <span>{shownStations.length ? 'Protein, calories, and diet coverage' : 'No station data'}</span>
       </div>
       {shownStations.length ? shownStations.map((station) => {
         const protein = round(station.avgProtein);
         const proteinWidth = Math.max(8, Math.round((station.avgProtein / maxProtein) * 100));
+        const calorieWidth = Math.max(8, Math.round((station.avgCalories / maxCalories) * 100));
+        const vegetarianShare = Math.round((station.vegetarianItems / Math.max(1, station.foodCount)) * 100);
+        const glutenFreeShare = Math.round((station.glutenFreeItems / Math.max(1, station.foodCount)) * 100);
         return (
           <div className="station-metric-row" key={station.stationId}>
-            <div>
+            <div className="station-metric-title">
               <strong>{formatStationMetricTitle(station, stationNameCounts)}</strong>
               <small>{station.restaurantName} - {station.mealName}</small>
             </div>
-            <div className="station-meter" aria-label={`${station.stationName} average protein ${protein} grams`}>
-              <span style={{ width: `${proteinWidth}%` }} />
+            <div className="station-metric-cell">
+              <span>Protein</span>
+              <div className="station-meter" aria-label={`${station.stationName} average protein ${protein} grams`}>
+                <span style={{ width: `${proteinWidth}%` }} />
+              </div>
+              <strong>{protein} g</strong>
             </div>
-            <div className="station-metric-values">
-              <Badge tone="green">{protein} g</Badge>
+            <div className="station-metric-cell">
+              <span>Calories</span>
+              <div className="station-meter gold" aria-label={`${station.stationName} average calories ${round(station.avgCalories)}`}>
+                <span style={{ width: `${calorieWidth}%` }} />
+              </div>
+              <strong>{round(station.avgCalories)}</strong>
+            </div>
+            <div className="station-metric-tags">
+              <Badge tone="green">{vegetarianShare}% veg</Badge>
+              <Badge tone="gold">{glutenFreeShare}% GF</Badge>
               <small>{station.foodCount} foods</small>
             </div>
           </div>
@@ -821,82 +642,6 @@ function formatStationMetricTitle(station: StationMetric, nameCounts: Map<string
   const hasDuplicateName = (nameCounts.get(station.stationName.toLowerCase()) || 0) > 1;
   if (!hasDuplicateName) return station.stationName;
   return `${station.stationName} - ${formatTimeRange(station.mealTimeOpen, station.mealTimeClosed)}`;
-}
-
-function InsightStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="insight-stat">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function SystemProofPanel({ examples, metrics, date }: {
-  examples: SqlProofExample[];
-  metrics: CoverageMetrics | null;
-  date: string;
-}) {
-  const shownExamples = examples.slice(0, 4);
-  const importStatus = metrics?.scraperRun?.status || 'no import run';
-  const uniqueFoods = metrics?.foods ?? 0;
-
-  return (
-    <section className="panel system-panel" id="system">
-      <PanelHeader
-        title="System Proof"
-        subtitle="Relational joins, API contracts, and import evidence"
-        icon={<Database size={18} />}
-      />
-      <div className="system-overview">
-        <div className="lineage-card">
-          <span className="system-label"><GitBranch size={15} /> Normalized Path</span>
-          <div className="lineage">
-            <span>Restaurants</span>
-            <ChevronRight size={15} />
-            <span>Meals</span>
-            <ChevronRight size={15} />
-            <span>Stations</span>
-            <ChevronRight size={15} />
-            <span>Foods</span>
-          </div>
-        </div>
-        <div className="system-stats">
-          <SystemStat label="Service date" value={date || '-'} />
-          <SystemStat label="Import status" value={importStatus} />
-          <SystemStat label="Unique foods" value={String(uniqueFoods)} />
-          <SystemStat label="API examples" value={String(shownExamples.length)} />
-        </div>
-      </div>
-      <div className="sql-proof-list">
-        {shownExamples.length ? shownExamples.map((example) => (
-          <article className="sql-proof-item" key={example.title}>
-            <div className="sql-proof-heading">
-              <div>
-                <strong>{example.title}</strong>
-                <span>{example.summary}</span>
-              </div>
-              <code>{example.route}</code>
-            </div>
-            <pre><code>{example.sql}</code></pre>
-          </article>
-        )) : <EmptyState text="SQL examples are available when the backend is reachable." />}
-        <div className="system-note">
-          <ShieldCheck size={16} />
-          <span>Public requests use the read-only API database account; scheduled imports use a separate writer account.</span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SystemStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="system-stat">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
 }
 
 function NoMenuState({ date, latestDate, loading, onUseLatest }: {
@@ -977,49 +722,6 @@ function upsertPlannedFood(profile: LocalProfile, date: string, restaurant: Rest
   };
 }
 
-function Metric({ label, value, helper }: { label: string; value?: ReactNode; helper: string }) {
-  return (
-    <div className="metric">
-      <span>{label}</span>
-      <strong>{value ?? '-'}</strong>
-      <small>{helper}</small>
-    </div>
-  );
-}
-
-function StatusRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="status-row">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function ImportRunList({ runs }: { runs: ScraperRun[] }) {
-  const shownRuns = runs.slice(0, 4);
-
-  return (
-    <div className="import-run-list" aria-label="Recent import runs">
-      <div className="import-run-title">
-        <strong>Import Activity</strong>
-        <span>{shownRuns.length ? `${shownRuns.length} recent runs` : 'No recorded runs'}</span>
-      </div>
-      {shownRuns.length ? shownRuns.map((run) => (
-        <div className="import-run-row" key={run.id}>
-          <div>
-            <strong>{formatShortDate(run.target_date)}</strong>
-            <span>{formatFullImportTime(run.started_at)} - {run.foods_count} food appearances</span>
-          </div>
-          <Badge tone={run.status === 'success' ? 'green' : run.status === 'partial' ? 'gold' : 'red'}>
-            {run.status}
-          </Badge>
-        </div>
-      )) : <EmptyState text="Scheduled imports will appear here after the first run." />}
-    </div>
-  );
-}
-
 function PanelHeader({ title, subtitle, icon }: { title: string; subtitle: string; icon: ReactNode }) {
   return (
     <div className="panel-header">
@@ -1032,10 +734,45 @@ function PanelHeader({ title, subtitle, icon }: { title: string; subtitle: strin
   );
 }
 
-function MealPlanPanel(props: {
+function PlanSummaryBar(props: {
   profile: LocalProfile;
-  meals: PlannedMeal[];
   totals: MacroTotals;
+  itemCount: number;
+  mealsCount: number;
+  date: string;
+  onClearDay: () => void;
+}) {
+  return (
+    <section className="plan-summary-bar" aria-label="Today's Plan">
+      <div className="plan-summary-title">
+        <div>
+          <span>Today&apos;s Plan</span>
+          <strong>{formatShortDate(props.date)}</strong>
+        </div>
+        <Badge tone={props.itemCount ? 'green' : 'neutral'}>
+          {formatSelectedCount(props.itemCount)} selected
+        </Badge>
+      </div>
+      <div className="plan-summary-goals">
+        <Goal label="Calories" value={props.totals.calories} max={props.profile.dailyCaloriesGoal} />
+        <Goal label="Protein" value={props.totals.protein} max={props.profile.dailyProteinsGoal} unit="g" />
+        <Goal label="Carbs" value={props.totals.carbs} max={props.profile.dailyCarbsGoal} unit="g" />
+        <Goal label="Fat" value={props.totals.fat} max={props.profile.dailyFatsGoal} unit="g" />
+      </div>
+      <div className="plan-summary-actions">
+        <span>{props.mealsCount} {pluralize(props.mealsCount, 'meal')} planned</span>
+        {props.mealsCount > 0 && (
+          <button className="secondary-button compact" type="button" onClick={props.onClearDay}>
+            <Trash2 size={14} /> Clear
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MealPlanPanel(props: {
+  meals: PlannedMeal[];
   date: string;
   onQuantity: (mealId: string, foodId: number, quantity: number) => void;
   onRemoveFood: (mealId: string, foodId: number) => void;
@@ -1044,13 +781,7 @@ function MealPlanPanel(props: {
 }) {
   return (
     <aside className="panel plan-panel">
-      <PanelHeader title="Today's Plan" subtitle={formatShortDate(props.date)} icon={<PanelRightOpen size={18} />} />
-      <div className="macro-grid">
-        <Goal label="Calories" value={props.totals.calories} max={props.profile.dailyCaloriesGoal} />
-        <Goal label="Protein" value={props.totals.protein} max={props.profile.dailyProteinsGoal} unit="g" />
-        <Goal label="Carbs" value={props.totals.carbs} max={props.profile.dailyCarbsGoal} unit="g" />
-        <Goal label="Fat" value={props.totals.fat} max={props.profile.dailyFatsGoal} unit="g" />
-      </div>
+      <PanelHeader title="Selected Foods" subtitle={formatShortDate(props.date)} icon={<Utensils size={18} />} />
       <div className="planned-meals">
         {props.meals.length ? props.meals.map((meal) => (
           <div className="planned-meal" key={meal.id}>
@@ -1105,7 +836,6 @@ function FilterBar(props: {
 }) {
   return (
     <div className="filters" aria-label="Food filters">
-      <div className="filter-title"><Filter size={16} /> Filters</div>
       <Toggle active={props.vegan} onClick={() => props.onVegan(!props.vegan)} icon={<Leaf size={15} />} label="Vegan" />
       <Toggle active={props.vegetarian} onClick={() => props.onVegetarian(!props.vegetarian)} icon={<Leaf size={15} />} label="Vegetarian" />
       <Toggle active={props.glutenFree} onClick={() => props.onGlutenFree(!props.glutenFree)} icon={<Check size={15} />} label="Gluten free" />
@@ -1133,6 +863,42 @@ function FilterBar(props: {
       {props.allergenFree.map((allergen) => (
         <button className="chip" type="button" key={allergen} onClick={() => props.onAllergenFree(props.allergenFree.filter((item) => item !== allergen))}>
           {formatAllergen(allergen)} <X size={13} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function StationFilter(props: {
+  stations: Meal['stations'];
+  selectedStationId: number | null;
+  onSelect: (stationId: number | null) => void;
+}) {
+  const totalFoods = props.stations.reduce((sum, station) => sum + station.foods.length, 0);
+
+  if (!props.stations.length) {
+    return <div className="station-strip"><EmptyState text="No stations for this meal." /></div>;
+  }
+
+  return (
+    <div className="station-strip" aria-label="Station filters">
+      <button
+        className={props.selectedStationId === null ? 'selected' : undefined}
+        type="button"
+        onClick={() => props.onSelect(null)}
+      >
+        <span>All stations</span>
+        <Badge tone="neutral">{totalFoods}</Badge>
+      </button>
+      {props.stations.map((station) => (
+        <button
+          className={props.selectedStationId === station.id ? 'selected' : undefined}
+          type="button"
+          key={station.id}
+          onClick={() => props.onSelect(props.selectedStationId === station.id ? null : station.id)}
+        >
+          <span>{station.name}</span>
+          <Badge tone="neutral">{station.foods.length}</Badge>
         </button>
       ))}
     </div>
@@ -1352,27 +1118,6 @@ function Fact({ label, value }: { label: string; value: string }) {
   return <div><span>{label}</span><strong>{value}</strong></div>;
 }
 
-function getDateHelper(date: string, activeDateSummary: ServiceDateSummary | undefined) {
-  if (!date) return 'Loading menu dates';
-  if (!activeDateSummary) return 'No imported menu for this date';
-  if (date === easternDateInput()) return 'Current service date';
-  return `${activeDateSummary.restaurants} restaurants imported`;
-}
-
-function getFreshnessSummary(latestImport: string | null, dateCount: number) {
-  if (!latestImport) {
-    return {
-      value: 'Ready',
-      helper: dateCount ? `${dateCount} ${pluralize(dateCount, 'menu date')} indexed` : 'Waiting for scheduler'
-    };
-  }
-
-  return {
-    value: 'Synced',
-    helper: `Updated ${formatImportTime(latestImport)} · ${dateCount} ${pluralize(dateCount, 'menu date')}`
-  };
-}
-
 function getMenuSubtitle(date: string, loading: boolean) {
   if (loading) return 'Fetching restaurants and foods';
   return date ? `No restaurants found for ${formatShortDate(date)}` : 'Choose a service date';
@@ -1480,24 +1225,6 @@ function formatShortDate(value: string) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(year, month - 1, day));
 }
 
-function formatImportTime(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'America/New_York'
-  }).format(new Date(value));
-}
-
-function formatFullImportTime(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'America/New_York'
-  }).format(new Date(value));
-}
-
 function parseServiceDateTime(value: string) {
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
   if (!match) return null;
@@ -1521,6 +1248,10 @@ function formatAllergen(value: string) {
 function formatFoodContext(food: Food) {
   const primary = food.restaurantName || food.fullName;
   return food.stationName ? `${primary} - ${food.stationName}` : primary;
+}
+
+function formatSelectedCount(value: number) {
+  return Number.isInteger(value) ? String(value) : String(round(value));
 }
 
 function pluralize(count: number, singular: string) {
