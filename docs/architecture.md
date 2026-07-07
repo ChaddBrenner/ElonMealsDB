@@ -8,10 +8,10 @@ flowchart LR
   Frontend --> Backend["backend: Express API"]
   Backend --> MySQL["mysql: MySQL 8.4"]
   Scraper["scraper profile: explicit import job"] -. reviewed JSON .-> MySQL
-  Scheduler["scheduler profile: private recurring import"] -. scheduled import .-> MySQL
+  Scheduler["private scheduler service: recurring import"] -. scheduled import .-> MySQL
 ```
 
-The public API serves normalized dining data and metrics. Personal planning state lives in browser storage, so self-hosting does not require accounts, login secrets, or server-side user records. The scraper and scheduler are separate private Compose profiles so website users cannot trigger external fetches or imports.
+The public API serves normalized dining data and metrics. Personal planning state lives in browser storage, so self-hosting does not require accounts, login secrets, or server-side user records. The one-shot scraper is a private Compose profile, and the recurring scheduler is a private default service, so website users cannot trigger external fetches or imports.
 
 ## Data Model
 
@@ -52,7 +52,7 @@ The frontend asks `/api/service-dates` on startup. It selects the current Easter
 - `backend`: Read-only Express API using `mysql2/promise`, Zod validation, Helmet, rate limiting, CORS allowlisting, structured errors, and parameterized SQL. It connects as `MYSQL_API_USER`, which only has `SELECT`/`SHOW VIEW` grants.
 - `mysql`: MySQL 8.4 with schema and deterministic sample menu data loaded from `db/init`.
 - `scraper`: Optional Python CLI that fetches Elon Dining pages and upserts normalized menu data into MySQL as `MYSQL_SCRAPER_USER`. It is not part of the public request path.
-- `scraper-scheduler`: Optional long-running scheduler profile that runs the same import on configured America/New_York times with the same limited writer account.
+- `scraper-scheduler`: Long-running private scheduler service that runs the same import on configured America/New_York times with the same limited writer account.
 
 Import runs write operational metadata into `scraper_runs`. Successful imports record source URL, target date, counts, and timestamps. Failed scheduled imports also write a `failed` row with an error message and then keep the scheduler alive for the next configured run; one-shot imports still return a nonzero exit after recording the failed run.
 

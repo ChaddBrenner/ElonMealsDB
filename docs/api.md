@@ -72,9 +72,9 @@ SQL proof examples:
 curl "http://localhost:8080/api/sql-proof"
 ```
 
-Private scraper import:
+Private scraper operations:
 
 ```bash
 docker compose --profile scraper run --rm scraper
-docker compose --profile scheduler up -d scraper-scheduler
+docker compose logs --tail=80 scraper-scheduler
 ```

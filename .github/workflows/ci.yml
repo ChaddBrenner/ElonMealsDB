@@ -46,9 +46,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cp .env.example .env
+      - run: printf '\nSCRAPER_RUN_ON_START=false\n' >> .env
       - run: docker compose config --quiet
-      - run: docker compose --profile scraper --profile scheduler build
+      - run: docker compose --profile scraper build
       - run: docker compose up -d --wait --wait-timeout 180
+      - run: test "$(docker compose port frontend 8080)" = "127.0.0.1:8080"
+      - run: docker compose ps --services --status running | grep -qx scraper-scheduler
+      - run: docker compose logs scraper-scheduler | grep -q "next scheduled import"
       - run: curl -fsS http://localhost:8080/healthz
       - run: curl -fsS http://localhost:8080/api/health
       - run: curl -fsS http://localhost:8080/api/service-dates

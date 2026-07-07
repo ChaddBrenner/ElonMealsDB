@@ -1,6 +1,6 @@
 # Production Deployment
 
-ElonMealsDB is intended to run as a Docker Compose stack behind an HTTPS reverse proxy that you control. The included Compose file publishes only the frontend container to the host. The backend, MySQL database, scraper, and scheduler stay on the private Compose network.
+ElonMealsDB is intended to run as a Docker Compose stack behind an HTTPS reverse proxy that you control. The included Compose file publishes only the frontend container to the host, and it binds to `127.0.0.1:8080` by default. The backend, MySQL database, scraper, and scheduler stay on the private Compose network.
 
 ## Recommended Topology
 
@@ -10,12 +10,12 @@ flowchart LR
   Proxy --> Frontend["frontend:8080"]
   Frontend --> Backend["backend:9000 internal"]
   Backend --> MySQL["mysql internal"]
-  Scheduler["scraper-scheduler profile"] --> MySQL
+  Scheduler["scraper-scheduler service"] --> MySQL
 ```
 
 Use one of:
 
-- Caddy, nginx, Traefik, or Cloudflare Tunnel in front of `frontend:8080`.
+- Caddy, nginx, Traefik, or Cloudflare Tunnel in front of `127.0.0.1:8080`.
 - A private host firewall that allows only `80` and `443` from the internet.
 - Docker volumes or host backups for `mysql-data`.
 
@@ -40,8 +40,11 @@ MYSQL_ROOT_PASSWORD=<strong unique password>
 MYSQL_API_PASSWORD=<strong unique read-only API password>
 MYSQL_SCRAPER_PASSWORD=<strong unique scraper writer password>
 CORS_ORIGINS=https://your-domain.example
+FRONTEND_BIND=127.0.0.1
+FRONTEND_PORT=8080
 SCRAPER_RUN_TIMES=05:15,15:15
 SCRAPER_DAYS_AHEAD=1
+SCRAPER_RUN_ON_START=true
 ```
 
 Start the public app:
@@ -50,11 +53,7 @@ Start the public app:
 docker compose up -d --build --wait --wait-timeout 180
 ```
 
-Start scheduled imports:
-
-```bash
-docker compose --profile scheduler up -d scraper-scheduler
-```
+The scheduled importer starts with the default stack. It runs privately on the internal Compose network and is not reachable from the public frontend.
 
 Check the deployment:
 
@@ -97,6 +96,8 @@ server {
 
 The app expects the frontend origin to be the public origin. Set `CORS_ORIGINS` to that exact HTTPS origin.
 
+Keep `FRONTEND_BIND=127.0.0.1` when the reverse proxy runs on the same Docker host. Use a different bind address only when your network topology requires it and the host firewall allows only the intended proxy or private network to reach the port.
+
 ## Operating The Scheduler
 
 The scheduler runs inside the Compose network and uses `MYSQL_SCRAPER_USER`.
@@ -104,7 +105,7 @@ The scheduler runs inside the Compose network and uses `MYSQL_SCRAPER_USER`.
 View logs:
 
 ```bash
-docker compose --profile scheduler logs --tail=120 scraper-scheduler
+docker compose logs --tail=120 scraper-scheduler
 ```
 
 Run an immediate one-shot import:
@@ -118,6 +119,7 @@ Change import timing:
 ```bash
 SCRAPER_RUN_TIMES=05:15,15:15
 SCRAPER_DAYS_AHEAD=1
+SCRAPER_RUN_ON_START=true
 ```
 
 The schedule is interpreted in `America/New_York`.
@@ -126,9 +128,8 @@ The schedule is interpreted in `America/New_York`.
 
 ```bash
 git pull --ff-only
-docker compose --profile scraper --profile scheduler build
+docker compose --profile scraper build
 docker compose up -d --wait --wait-timeout 180
-docker compose --profile scheduler up -d scraper-scheduler
 ```
 
 If database usernames or passwords change after the MySQL volume already exists, re-apply grants without wiping data:
@@ -165,12 +166,12 @@ npm run build
 PYTHONPATH=scraper .venv/bin/pytest scraper/tests
 npm audit --workspaces --omit=dev
 .venv/bin/pip-audit -r scraper/requirements.txt
-docker compose --profile scraper --profile scheduler config --quiet
+docker compose --profile scraper config --quiet
 ```
 
 Manual checks:
 
-- Confirm `docker compose ps` shows only the frontend host port.
+- Confirm `docker compose ps` shows only the frontend host port, bound to `127.0.0.1:${FRONTEND_PORT:-8080}`.
 - Confirm `/api/ready` returns `{"status":"ready","database":true}`.
 - Confirm `/api/sql-proof` returns fixed examples.
 - Confirm the backend DB user cannot write.

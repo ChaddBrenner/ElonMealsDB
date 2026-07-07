@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 from datetime import date
 from pathlib import Path
@@ -44,7 +45,19 @@ def build_parser() -> argparse.ArgumentParser:
     schedule.add_argument("--days-back", type=int, default=0, help="Number of days before today to import each run.")
     schedule.add_argument("--days-ahead", type=int, default=1, help="Number of days after today to import each run.")
     schedule.add_argument("--timeout", type=float, default=20.0, help="HTTP timeout in seconds.")
-    schedule.add_argument("--run-on-start", action="store_true", help="Run once immediately before waiting for the schedule.")
+    schedule.add_argument(
+        "--run-on-start",
+        dest="run_on_start",
+        action="store_true",
+        default=None,
+        help="Run once immediately before waiting for the schedule.",
+    )
+    schedule.add_argument(
+        "--no-run-on-start",
+        dest="run_on_start",
+        action="store_false",
+        help="Wait for the next scheduled time before importing.",
+    )
 
     return parser
 
@@ -61,7 +74,10 @@ def main(argv: list[str] | None = None) -> int:
             write_json({"imports": summaries}, None)
         elif args.command == "schedule-import":
             run_times = parse_run_times(args.times)
-            if args.run_on_start:
+            run_on_start = args.run_on_start
+            if run_on_start is None:
+                run_on_start = env_bool("SCRAPER_RUN_ON_START", False)
+            if run_on_start:
                 summaries = import_dates(None, args.days_back, args.days_ahead, args.timeout, continue_on_error=True)
                 write_json({"imports": summaries}, None)
             while True:
@@ -75,6 +91,18 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     return 0
+
+
+def env_bool(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None or value.strip() == "":
+        return default
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ImporterError(f"{name} must be true or false")
 
 
 def import_dates(
