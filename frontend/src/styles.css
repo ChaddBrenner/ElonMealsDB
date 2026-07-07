@@ -323,14 +323,24 @@ button:focus-visible {
   border-bottom: 1px solid var(--border);
 }
 
+.panel-header > div {
+  min-width: 0;
+}
+
 .panel-header h2 {
   font-size: 18px;
   line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.panel-header p {
+  overflow-wrap: anywhere;
 }
 
 .panel-icon {
   width: 36px;
   height: 36px;
+  flex: 0 0 36px;
   display: grid;
   place-items: center;
   color: var(--accent);
@@ -353,6 +363,7 @@ button:focus-visible {
   gap: 2px;
   text-align: left;
   color: var(--ink);
+  min-width: 0;
 }
 
 .meal-tabs button.selected {
@@ -363,6 +374,7 @@ button:focus-visible {
 
 .meal-tabs span {
   font-weight: 750;
+  line-height: 1.25;
 }
 
 .menu-layout {
@@ -1325,6 +1337,10 @@ button:focus-visible {
   .settings-grid,
   .drawer-actions,
   .nutrition-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .meal-tabs {
     grid-template-columns: 1fr;
   }
 }

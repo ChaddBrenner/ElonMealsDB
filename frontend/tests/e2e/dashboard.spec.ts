@@ -4,6 +4,7 @@ const serviceDate = '2026-07-06';
 const emptyDate = '2026-07-08';
 const restaurantId = 101;
 const mealId = 201;
+const dinnerMealId = 202;
 
 const allergens = {
   egg: false,
@@ -76,6 +77,8 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page.getByRole('heading', { name: 'System Proof' })).toBeVisible();
   await expect(page.getByText('GET /api/restaurants/:id/menu')).toBeVisible();
   await expect(page.getByText('3 foods', { exact: true })).toBeVisible();
+  await expect(page.locator('.meal-tabs button').filter({ hasText: '11:00 AM - 2:00 PM' })).toContainText('Summer Break');
+  await expect(page.locator('.meal-tabs button').filter({ hasText: '5:30 - 6:30 PM' })).toContainText('Summer Break');
 
   const systemLink = page.locator('a[href="#system"]');
   await systemLink.click();
@@ -178,11 +181,11 @@ async function mockApi(page: Page) {
           url: 'https://www.elondining.com/locations/lakeside-dining-hall/',
           venue_name: 'Lakeside Dining Hall',
           service_date: serviceDate,
-          meals_count: 1,
-          stations_count: 2,
+          meals_count: 2,
+          stations_count: 3,
           foods_count: 3,
           first_open: `${serviceDate}T11:00:00.000Z`,
-          last_closed: `${serviceDate}T14:00:00.000Z`
+          last_closed: `${serviceDate}T18:30:00.000Z`
         }]
       });
       return;
@@ -200,12 +203,21 @@ async function mockApi(page: Page) {
         meals: [{
           id: mealId,
           restaurant_id: restaurantId,
-          name: 'Lunch',
+          name: 'Summer Break',
           time_open: `${serviceDate}T11:00:00.000Z`,
           time_closed: `${serviceDate}T14:00:00.000Z`,
           stations: [
             { id: 301, mealId, name: 'Global Greens', foods: [tofuBowl, yogurtParfait] },
             { id: 302, mealId, name: 'Homestyle', foods: [chickenPlate] }
+          ]
+        }, {
+          id: dinnerMealId,
+          restaurant_id: restaurantId,
+          name: 'Summer Break',
+          time_open: `${serviceDate}T17:30:00.000Z`,
+          time_closed: `${serviceDate}T18:30:00.000Z`,
+          stations: [
+            { id: 303, mealId: dinnerMealId, name: 'Evening Grill', foods: [] }
           ]
         }]
       });
@@ -233,8 +245,8 @@ async function mockApi(page: Page) {
       await json(route, {
         serviceDate,
         restaurants: 1,
-        meals: 1,
-        stations: 2,
+        meals: 2,
+        stations: 3,
         foods: 3,
         vegan_items: 1,
         vegetarian_items: 2,
