@@ -135,7 +135,7 @@ npm run verify
 npm run verify:docker
 ```
 
-`npm run verify` runs typechecks, tests, e2e, build, dependency audits, scraper tests, Compose config validation, and a secret hygiene check. `npm run verify:docker` also starts the Docker stack with scheduler startup imports disabled, checks health/API readiness, confirms the loopback frontend port, confirms backend/MySQL do not publish host ports, confirms the scheduler is running, and verifies that the backend database user cannot write. If `.env` is not present, the verifier uses `.env.example` for Compose checks.
+`npm run verify` runs typechecks, tests, e2e, build, dependency audits, scraper tests, Compose config validation, and a secret hygiene check. `npm run verify:docker` also starts the Docker stack with scheduler startup imports disabled, checks health/API readiness, confirms only the loopback frontend port is published, confirms missing hashed assets return 404 instead of the SPA fallback, confirms the scheduler is running, and verifies that the backend database user cannot write. If `.env` is not present, the verifier uses `.env.example` for Compose checks.
 
 Run the backend and frontend separately during UI work:
 
