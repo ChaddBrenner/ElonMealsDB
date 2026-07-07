@@ -124,7 +124,7 @@ ORDER BY started_at DESC
 LIMIT 5;
 ```
 
-Review point: data freshness is not implied by logs alone; the database can answer when a date was last imported and whether the most recent import failed.
+Review point: data freshness is not implied by logs alone; the database can answer when a date was last imported and whether the most recent import failed. `foods_count` here is an import-volume count of food appearances across stations and meals; distinct menu foods are counted with `COUNT(DISTINCT f.id)` in the coverage query.
 
 ## Safety Choices
 

@@ -73,12 +73,14 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page.getByText('Data Freshness')).toBeVisible();
   await expect(page.getByText('Import Activity')).toBeVisible();
   await expect(page.getByText('4 recent runs')).toBeVisible();
+  await expect(page.getByLabel('Recent import runs').getByText('3 food appearances')).toBeVisible();
   await expect(page.getByLabel('Imported menu dates').getByText('Jul 6')).toBeVisible();
   await expect(page.getByLabel('Recent import runs').getByText('Jul 6', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Nutrition Insights' })).toBeVisible();
   await expect(page.getByText('Average calories')).toBeVisible();
   await expect(page.getByLabel('Top protein foods').getByText('Campus Chicken Plate')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'System Proof' })).toBeVisible();
+  await expect(page.getByText('Unique foods')).toBeVisible();
   await expect(page.getByText('GET /api/restaurants/:id/menu')).toBeVisible();
   await expect(page.locator('.status-list').getByText('3 foods', { exact: true })).toBeVisible();
   await expect(page.locator('.meal-tabs button').filter({ hasText: '11:00 AM - 2:00 PM' })).toContainText('Summer Break');

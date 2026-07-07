@@ -42,6 +42,7 @@ Personal meal-planning state stays in browser storage. The public backend serves
 - Modeled menu data as relational tables instead of storing page-shaped JSON.
 - Joined restaurants, meals, stations, station-food rows, and foods for menu rendering.
 - Added aggregate endpoints for coverage, dietary counts, average calories, and top-protein foods.
+- Distinguished distinct foods from station/meal food appearances in the UI and audit trail.
 - Kept scraper run metadata separate from menu facts so data freshness is auditable.
 - Included reviewer-ready SQL examples in `docs/sql-walkthrough.md` and in `/api/sql-proof`.
 

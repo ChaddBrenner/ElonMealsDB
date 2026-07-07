@@ -786,7 +786,7 @@ function SystemProofPanel({ examples, metrics, date }: {
 }) {
   const shownExamples = examples.slice(0, 3);
   const importStatus = metrics?.scraperRun?.status || 'sample';
-  const importedFoods = metrics?.scraperRun?.foods_count ?? metrics?.foods ?? 0;
+  const uniqueFoods = metrics?.foods ?? 0;
 
   return (
     <section className="panel system-panel" id="system">
@@ -811,7 +811,7 @@ function SystemProofPanel({ examples, metrics, date }: {
         <div className="system-stats">
           <SystemStat label="Service date" value={date || '-'} />
           <SystemStat label="Import status" value={importStatus} />
-          <SystemStat label="Indexed foods" value={String(importedFoods)} />
+          <SystemStat label="Unique foods" value={String(uniqueFoods)} />
           <SystemStat label="API examples" value={String(shownExamples.length)} />
         </div>
       </div>
@@ -956,7 +956,7 @@ function ImportRunList({ runs }: { runs: ScraperRun[] }) {
         <div className="import-run-row" key={run.id}>
           <div>
             <strong>{formatShortDate(run.target_date)}</strong>
-            <span>{formatFullImportTime(run.started_at)} - {run.foods_count} foods</span>
+            <span>{formatFullImportTime(run.started_at)} - {run.foods_count} food appearances</span>
           </div>
           <Badge tone={run.status === 'success' ? 'green' : run.status === 'partial' ? 'gold' : 'red'}>
             {run.status}

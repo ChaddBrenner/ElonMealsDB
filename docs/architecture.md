@@ -54,7 +54,7 @@ The frontend asks `/api/service-dates` on startup. It selects the current Easter
 - `scraper`: Optional Python CLI that fetches Elon Dining pages and upserts normalized menu data into MySQL as `MYSQL_SCRAPER_USER`. It is not part of the public request path.
 - `scraper-scheduler`: Long-running private scheduler service that runs the same import on configured America/New_York times with the same limited writer account.
 
-Import runs write operational metadata into `scraper_runs`. Successful imports record source URL, target date, counts, and timestamps. Failed scheduled imports also write a `failed` row with an error message and then keep the scheduler alive for the next configured run; one-shot imports still return a nonzero exit after recording the failed run.
+Import runs write operational metadata into `scraper_runs`. Successful imports record source URL, target date, counts, and timestamps. Failed scheduled imports also write a `failed` row with an error message and then keep the scheduler alive for the next configured run; one-shot imports still return a nonzero exit after recording the failed run. `scraper_runs.foods_count` tracks food appearances imported across stations and meals, while dashboard coverage metrics use distinct food ids.
 
 ## Local Planning State
 
