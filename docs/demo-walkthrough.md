@@ -45,7 +45,7 @@ In the dashboard:
 What to point out:
 
 - Personal planning data stays in browser storage, so the public API remains read-only.
-- The app still has real planner workflows: favorites, meal plans, nutrition goals, history, filters, and a nutrition drawer.
+- The app still has real planner workflows: imported-date browsing, favorites, meal plans, nutrition goals, history, filters, SQL-backed nutrition insights, and a nutrition drawer.
 - API text is rendered as plain React text; no HTML injection path is needed for menu data.
 
 ## 3. Show The SQL/System Proof Panel
@@ -56,7 +56,8 @@ What to point out:
 
 - The UI exposes the normalized path: `Restaurants -> Meals -> Stations -> Foods`.
 - The panel displays current import status and indexed food counts from live API data.
-- The Data Freshness panel shows recent scraper import runs from `scraper_runs`, including failed or partial runs.
+- The Data Freshness panel shows imported service dates and recent scraper import runs from `scraper_runs`, including failed or partial runs.
+- The Nutrition Insights panel shows aggregate dietary coverage and top-protein foods backed by SQL ranking queries.
 - The SQL examples are served from `/api/sql-proof`, so the frontend is showing the backend contract instead of a static screenshot.
 
 API proof:

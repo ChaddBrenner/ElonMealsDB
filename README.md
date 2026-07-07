@@ -64,7 +64,7 @@ See [docs/architecture.md](docs/architecture.md) for the system design, [docs/sq
 - SQL joins, aggregates, nutrition ranking, and import audit trails across the full menu hierarchy.
 - Secure API defaults: request validation, rate limits, parameterized queries, structured errors, no stack traces in responses.
 - Docker-first deployment with private DB networking and non-root application containers.
-- A production-style frontend with local favorites, a dated meal planner, nutrition goals, history, responsive tables, and a detail drawer.
+- A production-style frontend with imported-date browsing, local favorites, a dated meal planner, nutrition insights, history, responsive tables, and a detail drawer.
 
 For a short reviewer walkthrough, use [docs/demo-walkthrough.md](docs/demo-walkthrough.md).
 
