@@ -125,7 +125,7 @@ export function App() {
     .map((item) => item.lastImportedAt)
     .filter((value): value is string => Boolean(value))
     .sort((a, b) => b.localeCompare(a))[0] || null;
-  const importLabel = latestImport ? formatImportTime(latestImport) : 'Sample';
+  const freshnessSummary = getFreshnessSummary(latestImport, availableDates.length);
   const coverageLabel = activeDateSummary
     ? `${activeDateSummary.meals} meals, ${activeDateSummary.stations} stations`
     : dateHelper;
@@ -475,7 +475,7 @@ export function App() {
             <Metric label="Restaurants" value={metrics?.restaurants} helper={`${metrics?.foods ?? 0} dishes indexed`} />
             <Metric label="Planned" value={round(totals.calories)} helper={`${todayMeals.length} meals today`} />
             <Metric label="Favorites" value={profile.favoriteFoods.length} helper="Quick picks" />
-            <Metric label="Updated" value={importLabel} helper={`${availableDates.length} menu dates`} />
+            <Metric label="Freshness" value={freshnessSummary.value} helper={freshnessSummary.helper} />
           </div>
         </section>
 
@@ -681,7 +681,8 @@ function DataFreshnessPanel(props: {
       <PanelHeader title="Data Freshness" subtitle={props.coverageLabel} icon={<CalendarDays size={18} />} />
       <div className="status-list">
         <StatusRow label="Service date" value={props.activeDate || '-'} />
-        <StatusRow label="Last import" value={props.latestImport ? formatFullImportTime(props.latestImport) : 'Bundled sample'} />
+        <StatusRow label="Last import" value={props.latestImport ? formatFullImportTime(props.latestImport) : 'Awaiting scheduler'} />
+        <StatusRow label="Import path" value={props.latestImport || props.runs.length ? 'Private scheduler' : 'Seeded database'} />
         <StatusRow label="Menu coverage" value={`${props.foodCount} foods`} />
         <StatusRow label="Available dates" value={String(props.dates.length)} />
       </div>
@@ -785,7 +786,7 @@ function SystemProofPanel({ examples, metrics, date }: {
   date: string;
 }) {
   const shownExamples = examples.slice(0, 3);
-  const importStatus = metrics?.scraperRun?.status || 'sample';
+  const importStatus = metrics?.scraperRun?.status || 'no import run';
   const uniqueFoods = metrics?.foods ?? 0;
 
   return (
@@ -962,7 +963,7 @@ function ImportRunList({ runs }: { runs: ScraperRun[] }) {
             {run.status}
           </Badge>
         </div>
-      )) : <EmptyState text="Scraper imports will appear here after the first run." />}
+      )) : <EmptyState text="Scheduled imports will appear here after the first run." />}
     </div>
   );
 }
@@ -1306,6 +1307,20 @@ function getDateHelper(date: string, activeDateSummary: ServiceDateSummary | und
   return `${activeDateSummary.restaurants} restaurants imported`;
 }
 
+function getFreshnessSummary(latestImport: string | null, dateCount: number) {
+  if (!latestImport) {
+    return {
+      value: 'Ready',
+      helper: dateCount ? `${dateCount} ${pluralize(dateCount, 'menu date')} indexed` : 'Waiting for scheduler'
+    };
+  }
+
+  return {
+    value: 'Synced',
+    helper: `Updated ${formatImportTime(latestImport)} · ${dateCount} ${pluralize(dateCount, 'menu date')}`
+  };
+}
+
 function getMenuSubtitle(date: string, loading: boolean) {
   if (loading) return 'Fetching restaurants and foods';
   return date ? `No restaurants found for ${formatShortDate(date)}` : 'Choose a service date';
@@ -1454,6 +1469,10 @@ function formatAllergen(value: string) {
 function formatFoodContext(food: Food) {
   const primary = food.restaurantName || food.fullName;
   return food.stationName ? `${primary} - ${food.stationName}` : primary;
+}
+
+function pluralize(count: number, singular: string) {
+  return count === 1 ? singular : `${singular}s`;
 }
 
 function round(value: number) {

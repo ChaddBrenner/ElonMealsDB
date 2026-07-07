@@ -70,9 +70,12 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page).toHaveTitle('ElonMealsDB');
   await expect(page.getByRole('heading', { name: "Plan meals around today's dining options." })).toBeVisible();
   await expect(page.getByLabel('Restaurant')).toHaveValue(String(restaurantId));
+  await expect(page.locator('.metric').filter({ hasText: 'Freshness' })).toContainText('Synced');
+  await expect(page.locator('.metric').filter({ hasText: 'Freshness' })).toContainText('Updated');
   await expect(page.getByText('Data Freshness')).toBeVisible();
   await expect(page.getByText('Import Activity')).toBeVisible();
   await expect(page.getByText('4 recent runs')).toBeVisible();
+  await expect(page.locator('.status-list').getByText('Private scheduler')).toBeVisible();
   await expect(page.getByLabel('Recent import runs').getByText('3 food appearances')).toBeVisible();
   await expect(page.getByLabel('Imported menu dates').getByText('Jul 6')).toBeVisible();
   await expect(page.getByLabel('Recent import runs').getByText('Jul 6', { exact: true })).toBeVisible();
