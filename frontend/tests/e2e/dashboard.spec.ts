@@ -30,6 +30,7 @@ const tofuBowl = food({
   vegan: true,
   vegetarian: true,
   glutenFree: true,
+  stationId: 301,
   stationName: 'Global Greens'
 });
 
@@ -42,6 +43,7 @@ const chickenPlate = food({
   calories: 520,
   totalCarbohydrates: 48,
   protein: 34,
+  stationId: 302,
   stationName: 'Homestyle'
 });
 
@@ -55,6 +57,7 @@ const yogurtParfait = food({
   totalCarbohydrates: 35,
   protein: 14,
   vegetarian: true,
+  stationId: 301,
   stationName: 'Global Greens'
 });
 
@@ -68,44 +71,29 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await page.goto('/');
 
   await expect(page).toHaveTitle('ElonMealsDB');
-  await expect(page.getByRole('heading', { name: "Plan meals around today's dining options." })).toBeVisible();
+  await expect(page.getByText('ElonMealsDB')).toBeVisible();
   await expect(page.getByLabel('Restaurant', { exact: true })).toHaveValue(String(restaurantId));
-  await expect(page.locator('.metric').filter({ hasText: 'Freshness' })).toContainText('Synced');
-  await expect(page.locator('.metric').filter({ hasText: 'Freshness' })).toContainText('Updated');
-  await expect(page.getByText('Data Freshness')).toBeVisible();
-  await expect(page.getByText('Import Activity')).toBeVisible();
-  await expect(page.getByText('4 recent runs')).toBeVisible();
-  await expect(page.locator('.status-list').getByText('Private scheduler')).toBeVisible();
-  await expect(page.getByLabel('Recent import runs').getByText('3 food appearances')).toBeVisible();
-  await expect(page.getByLabel('Imported menu dates').getByText('Jul 6')).toBeVisible();
-  await expect(page.getByLabel('Recent import runs').getByText('Jul 6', { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Today's Plan")).toContainText('0 selected');
+  await expect(page.getByText('Data Freshness')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'System Proof' })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Nutrition Insights' })).toBeVisible();
   await expect(page.getByText('Average calories')).toBeVisible();
-  await expect(page.getByLabel('Station nutrition comparison').getByText('Station Compare')).toBeVisible();
-  await expect(page.getByLabel('Station nutrition comparison').getByText('Homestyle')).toBeVisible();
-  await expect(page.getByLabel('Station nutrition comparison').getByText('34 g')).toBeVisible();
-  await expect(page.getByLabel('Top protein foods').getByText('Campus Chicken Plate')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'System Proof' })).toBeVisible();
-  await expect(page.getByText('Unique foods')).toBeVisible();
-  await expect(page.getByText('GET /api/restaurants/:id/menu')).toBeVisible();
-  await expect(page.getByText('GET /api/metrics/stations')).toBeVisible();
-  await expect(page.locator('.status-list').getByText('3 foods', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Dietary coverage').getByText('Vegetarian')).toBeVisible();
+  await expect(page.getByLabel('Station best fit matrix').getByText('Station Best Fit')).toBeVisible();
+  await expect(page.getByLabel('Station best fit matrix').getByText('Homestyle')).toBeVisible();
+  await expect(page.getByLabel('Station best fit matrix').getByText('34 g')).toBeVisible();
+  await expect(page.getByLabel('Protein efficiency leaderboard').getByText('Campus Chicken Plate')).toBeVisible();
   await expect(page.locator('.meal-tabs button').filter({ hasText: '11:00 AM - 2:00 PM' })).toContainText('Summer Break');
   await expect(page.locator('.meal-tabs button').filter({ hasText: '5:30 - 6:30 PM' })).toContainText('Summer Break');
 
-  const systemLink = page.locator('a[href="#system"]');
-  await systemLink.click();
-  await expect(page).toHaveURL(/#system$/);
-  await expect(systemLink).toHaveClass(/active/);
-  await page.waitForFunction(() => {
-    const element = document.querySelector('#system');
-    if (!element) return false;
-    const top = element.getBoundingClientRect().top;
-    return top >= 70 && top < 170;
-  });
+  const stationFilters = page.getByLabel('Station filters');
+  await stationFilters.getByRole('button', { name: /Homestyle/ }).click();
+  const foodTable = page.locator('.food-table');
+  await expect(foodTable.getByRole('button', { name: 'Campus Chicken Plate', exact: true })).toBeVisible();
+  await expect(foodTable.getByRole('button', { name: 'Ginger Tofu Bowl', exact: true })).toHaveCount(0);
+  await stationFilters.getByRole('button', { name: /All stations/ }).click();
 
   await page.getByLabel('Search foods').fill('Tofu');
-  const foodTable = page.locator('.food-table');
   await expect(foodTable.getByRole('button', { name: 'Ginger Tofu Bowl', exact: true })).toBeVisible();
   await expect(foodTable.getByRole('button', { name: 'Campus Chicken Plate', exact: true })).toHaveCount(0);
 
@@ -121,7 +109,8 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   const planPanel = page.locator('.plan-panel');
   await expect(planPanel.getByText('Ginger Tofu Bowl')).toBeVisible();
   await expect(planPanel.getByText('310 cal')).toBeVisible();
-  await expect(page.locator('.metric').filter({ hasText: 'Planned' })).toContainText('310');
+  await expect(page.getByLabel("Today's Plan")).toContainText('1 selected');
+  await expect(page.getByLabel("Today's Plan")).toContainText('310');
 
   const savedProfile = await page.evaluate(() => JSON.parse(localStorage.getItem('elonmealsdb.localProfile.v1') || '{}'));
   expect(savedProfile.favoriteFoods).toHaveLength(1);
@@ -166,18 +155,6 @@ async function mockApi(page: Page) {
           foods: 3,
           lastImportedAt: '2026-07-06T13:15:00.000Z'
         }]
-      });
-      return;
-    }
-
-    if (url.pathname === '/api/import-runs') {
-      await json(route, {
-        runs: [
-          importRun({ id: 1, target_date: serviceDate, started_at: '2026-07-06T13:15:00.000Z', finished_at: '2026-07-06T13:15:04.000Z', status: 'success', foods_count: 3 }),
-          importRun({ id: 2, target_date: '2026-07-05', started_at: '2026-07-05T19:15:00.000Z', finished_at: '2026-07-05T19:15:05.000Z', status: 'success', foods_count: 4 }),
-          importRun({ id: 3, target_date: '2026-07-05', started_at: '2026-07-05T09:15:00.000Z', finished_at: '2026-07-05T09:15:02.000Z', status: 'failed', foods_count: 0, error_message: 'menu-hours unavailable' }),
-          importRun({ id: 4, target_date: '2026-07-04', started_at: '2026-07-04T13:15:00.000Z', finished_at: '2026-07-04T13:15:03.000Z', status: 'partial', foods_count: 2 })
-        ]
       });
       return;
     }
@@ -343,32 +320,6 @@ async function mockApi(page: Page) {
       return;
     }
 
-    if (url.pathname === '/api/sql-proof') {
-      await json(route, {
-        examples: [
-          {
-            title: 'Menu hierarchy',
-            route: 'GET /api/restaurants/:id/menu',
-            summary: 'Builds Restaurant -> Meal -> Station -> Food from normalized tables.',
-            sql: 'SELECT m.id AS meal_id, s.id AS station_id, f.id AS food_id\\nFROM meals m\\nJOIN stations s ON s.meal_id = m.id'
-          },
-          {
-            title: 'Filtered food search',
-            route: 'GET /api/foods',
-            summary: 'Filters foods by date, dietary flags, allergens, calories, and protein.',
-            sql: 'SELECT DISTINCT f.id, f.short_name\\nFROM restaurants r\\nJOIN meals m ON m.restaurant_id = r.id'
-          },
-          {
-            title: 'Station nutrition comparison',
-            route: 'GET /api/metrics/stations',
-            summary: 'Ranks stations by average nutrition using grouped normalized menu rows.',
-            sql: 'SELECT r.name AS restaurant, m.name AS meal, s.name AS station\\nFROM restaurants r\\nJOIN meals m ON m.restaurant_id = r.id'
-          }
-        ]
-      });
-      return;
-    }
-
     await route.fulfill({
       status: 404,
       contentType: 'application/json',
@@ -384,35 +335,6 @@ async function json(route: Route, body: unknown) {
     body: JSON.stringify(body)
   });
 }
-
-function importRun(overrides: Partial<ImportRunFixture>): ImportRunFixture {
-  return {
-    id: 0,
-    source_url: 'https://www.elondining.com/menu-hours/',
-    target_date: serviceDate,
-    started_at: '2026-07-06T13:15:00.000Z',
-    finished_at: '2026-07-06T13:15:04.000Z',
-    status: 'success',
-    restaurants_count: 1,
-    meals_count: 1,
-    foods_count: 3,
-    error_message: null,
-    ...overrides
-  };
-}
-
-type ImportRunFixture = {
-  id: number;
-  source_url: string;
-  target_date: string;
-  started_at: string;
-  finished_at: string | null;
-  status: string;
-  restaurants_count: number;
-  meals_count: number;
-  foods_count: number;
-  error_message?: string | null;
-};
 
 type FoodFixture = {
   id: number;
@@ -441,6 +363,7 @@ type FoodFixture = {
   restaurantId: number;
   restaurantName: string;
   mealName: string;
+  stationId: number;
   stationName: string;
 };
 
@@ -472,6 +395,7 @@ function food(overrides: Partial<FoodFixture>): FoodFixture {
     restaurantId,
     restaurantName: 'Lakeside Dining Hall',
     mealName: 'Lunch',
+    stationId: 0,
     stationName: '',
     ...overrides
   };

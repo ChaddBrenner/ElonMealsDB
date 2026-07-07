@@ -190,6 +190,7 @@ export async function listFoods(filters) {
       ${foodColumns},
       r.id AS restaurant_id,
       r.name AS restaurant_name,
+      s.id AS station_id,
       s.name AS station_name,
       m.name AS meal_name
     FROM restaurants r
@@ -207,6 +208,7 @@ export async function listFoods(filters) {
     restaurantId: row.restaurant_id,
     restaurantName: row.restaurant_name,
     mealName: row.meal_name,
+    stationId: row.station_id,
     stationName: row.station_name
   }));
 }

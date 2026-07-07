@@ -37,6 +37,7 @@ export type Food = {
   restaurantId?: number;
   restaurantName?: string;
   mealName?: string;
+  stationId?: number;
   stationName?: string;
   quantity?: number;
 };

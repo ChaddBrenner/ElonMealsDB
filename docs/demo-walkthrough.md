@@ -45,29 +45,25 @@ In the dashboard:
 What to point out:
 
 - Personal planning data stays in browser storage, so the public API remains read-only.
-- The app still has real planner workflows: imported-date browsing, favorites, meal plans, nutrition goals, history, filters, SQL-backed nutrition insights, and a nutrition drawer.
+- The app still has real planner workflows: favorites, meal plans, nutrition goals, history, station chips, filters, SQL-backed nutrition insights, and a nutrition drawer.
 - API text is rendered as plain React text; no HTML injection path is needed for menu data.
 
-## 3. Show The SQL/System Proof Panel
-
-Click `System` in the sidebar.
+## 3. Show Nutrition Insights And SQL Proof
 
 What to point out:
 
-- The UI exposes the normalized path: `Restaurants -> Meals -> Stations -> Foods`.
-- The panel displays current import status and indexed food counts from live API data.
-- The Data Freshness panel shows imported service dates and recent scraper import runs from `scraper_runs`, including failed or partial runs.
-- The Nutrition Insights panel shows aggregate dietary coverage and top-protein foods backed by SQL ranking queries.
-- Station Compare shows station-level averages from a grouped SQL aggregate across restaurants, meals, stations, station-food rows, and foods.
+- Nutrition Insights shows aggregate dietary coverage and protein-efficiency ranking backed by SQL-fed API data.
+- Station Best Fit shows station-level averages from a grouped SQL aggregate across restaurants, meals, stations, station-food rows, and foods.
+- Clickable station chips filter the food table without exposing dynamic table or column names to the API.
 - The dashboard distinguishes distinct menu foods from scraper food appearances, which demonstrates the many-to-many station-food model.
-- The SQL examples are served from `/api/sql-proof`, so the frontend is showing the backend contract instead of a static screenshot.
+- SQL examples are still served from `/api/sql-proof`, but reviewer proof lives in docs/API output instead of cluttering the product UI.
 
 API proof:
 
 ```bash
 curl -fsS http://localhost:8080/api/sql-proof
 curl -fsS "http://localhost:8080/api/metrics/coverage"
-curl -fsS "http://localhost:8080/api/import-runs?limit=6"
+curl -fsS "http://localhost:8080/api/metrics/stations"
 ```
 
 ## 4. Prove The Relational Model Directly

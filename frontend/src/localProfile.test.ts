@@ -23,16 +23,14 @@ describe('local profile storage', () => {
     const profile = {
       ...createDefaultProfile(),
       name: 'Campus lunch plan',
-      dailyCaloriesGoal: 2400,
-      satisfactionLevel: 9
+      dailyCaloriesGoal: 2400
     };
 
     saveLocalProfile(profile);
 
     expect(JSON.parse(storage.getItem(storageKey) || '{}')).toMatchObject({
       name: 'Campus lunch plan',
-      dailyCaloriesGoal: 2400,
-      satisfactionLevel: 9
+      dailyCaloriesGoal: 2400
     });
   });
 
@@ -57,7 +55,7 @@ describe('local profile storage', () => {
     expect(profile.dailyProteinsGoal).toBe(10);
     expect(profile.dailyCarbsGoal).toBe(260);
     expect(profile.dailyFatsGoal).toBe(10);
-    expect(profile.satisfactionLevel).toBe(10);
+    expect('satisfactionLevel' in profile).toBe(false);
     expect(profile.favoriteFoods).toHaveLength(300);
     expect(profile.meals).toHaveLength(500);
   });

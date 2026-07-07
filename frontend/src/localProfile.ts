@@ -34,7 +34,6 @@ export type LocalProfile = {
   dailyProteinsGoal: number;
   dailyCarbsGoal: number;
   dailyFatsGoal: number;
-  satisfactionLevel: number;
   favoriteFoods: FavoriteFood[];
   meals: PlannedMeal[];
   updatedAt: string;
@@ -50,7 +49,6 @@ export function createDefaultProfile(): LocalProfile {
     dailyProteinsGoal: 135,
     dailyCarbsGoal: 260,
     dailyFatsGoal: 75,
-    satisfactionLevel: 8,
     favoriteFoods: [],
     meals: [],
     updatedAt: new Date().toISOString()
@@ -69,16 +67,15 @@ export function loadLocalProfile(): LocalProfile {
     if (parsed.schemaVersion !== 1) return fallback;
 
     return {
-      ...fallback,
-      ...parsed,
+      schemaVersion: 1,
       name: normalizeName(parsed.name),
       dailyCaloriesGoal: clampNumber(parsed.dailyCaloriesGoal, 500, 6000, fallback.dailyCaloriesGoal),
       dailyProteinsGoal: clampNumber(parsed.dailyProteinsGoal, 10, 400, fallback.dailyProteinsGoal),
       dailyCarbsGoal: clampNumber(parsed.dailyCarbsGoal, 10, 800, fallback.dailyCarbsGoal),
       dailyFatsGoal: clampNumber(parsed.dailyFatsGoal, 10, 400, fallback.dailyFatsGoal),
-      satisfactionLevel: clampNumber(parsed.satisfactionLevel, 1, 10, fallback.satisfactionLevel),
       favoriteFoods: Array.isArray(parsed.favoriteFoods) ? parsed.favoriteFoods.slice(0, 300) : [],
-      meals: Array.isArray(parsed.meals) ? parsed.meals.slice(0, 500) : []
+      meals: Array.isArray(parsed.meals) ? parsed.meals.slice(0, 500) : [],
+      updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : fallback.updatedAt
     };
   } catch {
     return createDefaultProfile();
