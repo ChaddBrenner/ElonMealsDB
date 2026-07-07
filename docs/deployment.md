@@ -159,14 +159,8 @@ Also back up the Docker named volume if you use host-level backup tooling.
 Before making the repo public or linking the deployed app:
 
 ```bash
-npm run typecheck
-npm test
-npm run test:e2e
-npm run build
-PYTHONPATH=scraper .venv/bin/pytest scraper/tests
-npm audit --workspaces --omit=dev
-.venv/bin/pip-audit -r scraper/requirements.txt
-docker compose --profile scraper config --quiet
+npm run verify
+npm run verify:docker
 ```
 
 Manual checks:

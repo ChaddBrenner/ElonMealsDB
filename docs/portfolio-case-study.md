@@ -103,14 +103,8 @@ System proof and import audit trail:
 Local verification commands used on this branch:
 
 ```bash
-npm run typecheck
-npm test
-npm run test:e2e
-npm run build
-PYTHONPATH=scraper .venv/bin/pytest scraper/tests
-npm audit --workspaces --omit=dev
-.venv/bin/pip-audit -r scraper/requirements.txt
-docker compose --profile scraper config --quiet
+npm run verify
+npm run verify:docker
 ```
 
 GitHub Actions also runs `node`, `scraper`, and `docker` jobs on pull requests. The Docker job builds images, starts Compose, checks health/API routes, checks malformed JSON handling, and verifies that the backend database user cannot write.
