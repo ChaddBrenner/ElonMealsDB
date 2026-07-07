@@ -14,6 +14,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "audit:deps": "npm audit --workspaces --omit=dev",
+    "verify": "bash scripts/verify-public.sh",
+    "verify:docker": "bash scripts/verify-public.sh --docker",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down --remove-orphans"

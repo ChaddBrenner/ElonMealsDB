@@ -5,19 +5,9 @@ Last verified: 2026-07-06
 ## Automated Checks
 
 ```bash
-npm run typecheck
-npm test
-npm run test:e2e
-npm run build
-PYTHONPATH=scraper .venv/bin/pytest scraper/tests
-npm audit --workspaces --omit=dev
-.venv/bin/pip-audit -r scraper/requirements.txt
-docker compose config --quiet
-docker compose --profile scraper build
-docker compose up -d --build --wait --wait-timeout 180
+npm run verify
+npm run verify:docker
 docker compose --profile scraper run --rm scraper
-docker compose up -d --build
-docker compose exec -T backend node --input-type=module -e "import { pool } from './src/db.js'; try { await pool.query('DELETE FROM scraper_runs WHERE id = -1'); process.exit(1); } catch { process.exit(0); } finally { await pool.end(); }"
 docker compose ps
 git ls-files --cached --others --exclude-standard
 ```
@@ -25,6 +15,7 @@ git ls-files --cached --others --exclude-standard
 Results:
 
 - Node typecheck, tests, and production build passed.
+- `npm run verify` and `npm run verify:docker` provide the repeatable local public-readiness gate for code, scraper tests, dependency audits, Compose config, Docker health, loopback frontend exposure, backend/MySQL host-port denial, scheduler process, and backend write denial.
 - Playwright UI smoke test passed for dashboard load, search, nutrition drawer, favorites, local meal plan, and browser-local persistence.
 - Scraper parser and scheduler resilience tests passed.
 - CI builds every Docker image, starts the default Compose app with seeded data, checks health/API routes, checks malformed JSON handling, and verifies the backend DB user cannot write.

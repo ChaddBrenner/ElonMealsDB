@@ -192,18 +192,8 @@ What to point out:
 Before publishing or demoing:
 
 ```bash
-npm run typecheck
-npm test
-npm run test:e2e
-npm run build
-PYTHONPATH=scraper .venv/bin/pytest scraper/tests
-npm audit --workspaces --omit=dev
-.venv/bin/pip-audit -r scraper/requirements.txt
-docker compose --profile scraper config --quiet
-docker compose up -d --build --wait --wait-timeout 180
-curl -fsS http://localhost:8080/healthz
-curl -fsS http://localhost:8080/api/service-dates
-curl -fsS http://localhost:8080/api/sql-proof
+npm run verify
+npm run verify:docker
 ```
 
 ## Skills This Project Demonstrates
