@@ -531,7 +531,7 @@ function NutritionInsightsPanel({ metrics, foods, stations, onSelect }: {
       <DietaryCoverage metrics={metrics} foodCount={foodCount} />
       <StationCompare stations={stations} />
       <div className="protein-ranking" aria-label="Protein efficiency leaderboard">
-        <div className="import-run-title">
+        <div className="insight-section-title">
           <strong>Protein Efficiency</strong>
           <span>{proteinEfficiency.length ? 'Grams per 100 calories' : 'No ranking data'}</span>
         </div>
@@ -596,7 +596,7 @@ function StationCompare({ stations }: { stations: StationMetric[] }) {
 
   return (
     <div className="station-compare" aria-label="Station best fit matrix">
-      <div className="import-run-title">
+      <div className="insight-section-title">
         <strong>Station Best Fit</strong>
         <span>{shownStations.length ? 'Protein, calories, and diet coverage' : 'No station data'}</span>
       </div>
