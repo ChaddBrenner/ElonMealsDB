@@ -6,7 +6,7 @@ ElonMealsDB is a self-hosted dining planner that turns Elon Dining menu data int
 
 ## Short Website Summary
 
-Built a Dockerized full-stack dining planner with a React/Vite frontend, Express API, MySQL relational schema, Python scraper, and private scheduled import job. The app supports menu search, dietary filters, nutrition details, favorites, local meal planning, data freshness indicators, and an in-app SQL proof panel while keeping public backend traffic read-only and personal planning data in browser storage.
+Built a Dockerized full-stack dining planner with a React/Vite frontend, Express API, MySQL relational schema, Python scraper, and private scheduled import job. The app supports menu search, imported-date browsing, dietary filters, nutrition insights, nutrition details, favorites, local meal planning, data freshness indicators, and an in-app SQL proof panel while keeping public backend traffic read-only and personal planning data in browser storage.
 
 ## Problem
 
@@ -18,7 +18,7 @@ Campus dining data is useful but awkward to explore when menus, nutrition detail
 - A secure read-only Express API with validated inputs, parameterized queries, CORS allowlisting, rate limiting, Helmet, structured errors, and no stack traces in responses.
 - A Python scraper/importer that parses current Elon Dining embedded menu/nutrition data and upserts it into MySQL.
 - A Docker Compose deployment with frontend, backend, MySQL, private one-shot scraper, and recurring scheduler service.
-- A React/Vite dashboard with restaurant/date selection, menu tabs, station coverage, food search, dietary/allergen filters, nutrition drawer, favorites, local meal planning, history, and nutrition goals.
+- A React/Vite dashboard with restaurant/date selection, imported-date browsing, menu tabs, station coverage, food search, dietary/allergen filters, SQL-backed nutrition insights, nutrition drawer, favorites, local meal planning, history, and nutrition goals.
 - A System Proof panel that shows normalized data lineage, import status, indexed foods, and SQL-backed API examples from the backend.
 - Public-facing docs for architecture, API usage, SQL walkthroughs, deployment, security, and a reviewer demo script.
 
@@ -68,6 +68,7 @@ Personal meal-planning state stays in browser storage. The public backend serves
 - Rebuilt the UI as a dense but approachable data app instead of a static class-project interface.
 - Added responsive desktop/mobile layouts with accessible controls and real local state.
 - Added planner workflows without server-side accounts by using browser-local storage.
+- Surfaced imported-date selection and nutrition ranking data directly in the dashboard.
 - Added screenshots, e2e coverage, and an in-app System Proof section for technical reviewers.
 
 ## Demo Script
@@ -77,10 +78,11 @@ Personal meal-planning state stays in browser storage. The public backend serves
 3. Search for a food and open its nutrition drawer.
 4. Favorite the food and add it to the meal plan.
 5. Show macro totals updating locally.
-6. Open the System Proof section.
-7. Run `/api/sql-proof` and a direct MySQL join from `docs/demo-walkthrough.md`.
-8. Show the scraper scheduler logs and `scraper_runs` audit trail.
-9. Show the read-only DB user write attempt failing with `ER_TABLEACCESS_DENIED_ERROR`.
+6. Show imported dates and the Nutrition Insights ranking.
+7. Open the System Proof section.
+8. Run `/api/sql-proof` and a direct MySQL join from `docs/demo-walkthrough.md`.
+9. Show the scraper scheduler logs and `scraper_runs` audit trail.
+10. Show the read-only DB user write attempt failing with `ER_TABLEACCESS_DENIED_ERROR`.
 
 Full script: [demo-walkthrough.md](demo-walkthrough.md).
 

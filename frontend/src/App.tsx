@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
 import {
+  BarChart3,
   CalendarDays,
   Check,
   ChevronRight,
@@ -571,16 +572,21 @@ export function App() {
             date={date}
           />
 
-          <section className="panel status-panel">
-            <PanelHeader title="Data Freshness" subtitle={coverageLabel} icon={<CalendarDays size={18} />} />
-            <div className="status-list">
-              <StatusRow label="Service date" value={date || '-'} />
-              <StatusRow label="Last import" value={latestImport ? formatFullImportTime(latestImport) : 'Bundled sample'} />
-              <StatusRow label="Menu coverage" value={`${metrics?.foods ?? 0} foods`} />
-              <StatusRow label="Available dates" value={String(availableDates.length)} />
-            </div>
-            <ImportRunList runs={importRuns} />
-          </section>
+          <DataFreshnessPanel
+            activeDate={date}
+            dates={availableDates}
+            coverageLabel={coverageLabel}
+            latestImport={latestImport}
+            foodCount={metrics?.foods ?? 0}
+            runs={importRuns}
+            onDateSelect={setDate}
+          />
+
+          <NutritionInsightsPanel
+            metrics={metrics}
+            foods={allFoods}
+            onSelect={setSelectedFood}
+          />
 
           <section className="panel" id="favorites">
             <PanelHeader title="Favorites" subtitle="Fast access to foods you come back to" icon={<Star size={18} />} />
@@ -657,6 +663,118 @@ export function App() {
         onFavorite={toggleFavorite}
         onAdd={addFoodToPlan}
       />
+    </div>
+  );
+}
+
+function DataFreshnessPanel(props: {
+  activeDate: string;
+  dates: ServiceDateSummary[];
+  coverageLabel: string;
+  latestImport: string | null;
+  foodCount: number;
+  runs: ScraperRun[];
+  onDateSelect: (date: string) => void;
+}) {
+  return (
+    <section className="panel status-panel">
+      <PanelHeader title="Data Freshness" subtitle={props.coverageLabel} icon={<CalendarDays size={18} />} />
+      <div className="status-list">
+        <StatusRow label="Service date" value={props.activeDate || '-'} />
+        <StatusRow label="Last import" value={props.latestImport ? formatFullImportTime(props.latestImport) : 'Bundled sample'} />
+        <StatusRow label="Menu coverage" value={`${props.foodCount} foods`} />
+        <StatusRow label="Available dates" value={String(props.dates.length)} />
+      </div>
+      <ImportedDateList
+        dates={props.dates}
+        activeDate={props.activeDate}
+        onSelect={props.onDateSelect}
+      />
+      <ImportRunList runs={props.runs} />
+    </section>
+  );
+}
+
+function ImportedDateList(props: {
+  dates: ServiceDateSummary[];
+  activeDate: string;
+  onSelect: (date: string) => void;
+}) {
+  const shownDates = props.dates.slice(0, 6);
+
+  return (
+    <div className="date-option-list" aria-label="Imported menu dates">
+      <div className="import-run-title">
+        <strong>Imported Dates</strong>
+        <span>{shownDates.length ? 'Choose a service date' : 'No imported dates'}</span>
+      </div>
+      {shownDates.length ? (
+        <div className="date-options">
+          {shownDates.map((item) => (
+            <button
+              className={item.serviceDate === props.activeDate ? 'selected' : ''}
+              type="button"
+              key={item.serviceDate}
+              onClick={() => props.onSelect(item.serviceDate)}
+            >
+              <strong>{formatShortDate(item.serviceDate)}</strong>
+              <span>{item.foods} foods</span>
+            </button>
+          ))}
+        </div>
+      ) : <EmptyState text="Imported service dates will appear here." />}
+    </div>
+  );
+}
+
+function NutritionInsightsPanel({ metrics, foods, onSelect }: {
+  metrics: CoverageMetrics | null;
+  foods: Food[];
+  onSelect: (food: Food) => void;
+}) {
+  const topProtein = (metrics?.topProtein || [])
+    .map((food) => resolveFoodSnapshot(food, foods))
+    .slice(0, 4);
+  const foodCount = Math.max(1, metrics?.foods || 0);
+
+  return (
+    <section className="panel nutrition-panel">
+      <PanelHeader
+        title="Nutrition Insights"
+        subtitle="SQL-backed aggregate and ranking data"
+        icon={<BarChart3 size={18} />}
+      />
+      <div className="insight-grid">
+        <InsightStat label="Average calories" value={metrics?.avg_calories == null ? '-' : String(round(metrics.avg_calories))} />
+        <InsightStat label="Vegan" value={formatPercent(metrics?.vegan_items || 0, foodCount)} />
+        <InsightStat label="Vegetarian" value={formatPercent(metrics?.vegetarian_items || 0, foodCount)} />
+        <InsightStat label="Gluten free" value={formatPercent(metrics?.gluten_free_items || 0, foodCount)} />
+      </div>
+      <div className="protein-ranking" aria-label="Top protein foods">
+        <div className="import-run-title">
+          <strong>Top Protein</strong>
+          <span>{topProtein.length ? 'Per serving' : 'No ranking data'}</span>
+        </div>
+        {topProtein.length ? topProtein.map((food, index) => (
+          <button className="protein-row" type="button" key={food.id} onClick={() => onSelect(food)}>
+            <span>{index + 1}</span>
+            <div>
+              <strong>{food.shortName}</strong>
+              <small>{formatFoodContext(food)}</small>
+            </div>
+            <Badge tone="green">{round(food.protein)} g</Badge>
+          </button>
+        )) : <EmptyState text="Nutrition rankings will appear when menu data is available." />}
+      </div>
+    </section>
+  );
+}
+
+function InsightStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="insight-stat">
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
@@ -1340,6 +1458,11 @@ function formatFoodContext(food: Food) {
 
 function round(value: number) {
   return Math.round(Number(value || 0) * 10) / 10;
+}
+
+function formatPercent(value: number, total: number) {
+  if (!total) return '-';
+  return `${Math.round((value / total) * 100)}%`;
 }
 
 function easternDateInput() {

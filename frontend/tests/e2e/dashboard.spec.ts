@@ -73,10 +73,14 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page.getByText('Data Freshness')).toBeVisible();
   await expect(page.getByText('Import Activity')).toBeVisible();
   await expect(page.getByText('4 recent runs')).toBeVisible();
+  await expect(page.getByLabel('Imported menu dates').getByText('Jul 6')).toBeVisible();
   await expect(page.getByLabel('Recent import runs').getByText('Jul 6', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nutrition Insights' })).toBeVisible();
+  await expect(page.getByText('Average calories')).toBeVisible();
+  await expect(page.getByLabel('Top protein foods').getByText('Campus Chicken Plate')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'System Proof' })).toBeVisible();
   await expect(page.getByText('GET /api/restaurants/:id/menu')).toBeVisible();
-  await expect(page.getByText('3 foods', { exact: true })).toBeVisible();
+  await expect(page.locator('.status-list').getByText('3 foods', { exact: true })).toBeVisible();
   await expect(page.locator('.meal-tabs button').filter({ hasText: '11:00 AM - 2:00 PM' })).toContainText('Summer Break');
   await expect(page.locator('.meal-tabs button').filter({ hasText: '5:30 - 6:30 PM' })).toContainText('Summer Break');
 
@@ -92,10 +96,11 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   });
 
   await page.getByLabel('Search foods').fill('Tofu');
-  await expect(page.getByRole('button', { name: 'Ginger Tofu Bowl' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Campus Chicken Plate' })).toHaveCount(0);
+  const foodTable = page.locator('.food-table');
+  await expect(foodTable.getByRole('button', { name: 'Ginger Tofu Bowl', exact: true })).toBeVisible();
+  await expect(foodTable.getByRole('button', { name: 'Campus Chicken Plate', exact: true })).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Ginger Tofu Bowl' }).click();
+  await foodTable.getByRole('button', { name: 'Ginger Tofu Bowl', exact: true }).click();
   const drawer = page.locator('.drawer.open');
   await expect(drawer.getByRole('heading', { name: 'Ginger Tofu Bowl' })).toBeVisible();
   await expect(drawer.getByText('Tofu, jasmine rice, ginger, scallions')).toBeVisible();
@@ -122,7 +127,7 @@ test('date changes with no imported menu clear stale restaurant state', async ({
 
   await expect(page.getByRole('heading', { name: 'Lakeside Dining Hall' })).toBeVisible();
 
-  await page.getByLabel('Date').fill(emptyDate);
+  await page.locator('input[type="date"]').fill(emptyDate);
 
   await expect(page.getByRole('heading', { name: 'No menu imported' })).toBeVisible();
   await expect(page.getByText('No restaurants imported for Jul 8.')).toBeVisible();
@@ -133,7 +138,7 @@ test('date changes with no imported menu clear stale restaurant state', async ({
 
   await expect(page.getByLabel('Restaurant')).toBeEnabled();
   await expect(page.getByRole('heading', { name: 'Lakeside Dining Hall' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Ginger Tofu Bowl' })).toBeVisible();
+  await expect(page.locator('.food-table').getByRole('button', { name: 'Ginger Tofu Bowl', exact: true })).toBeVisible();
 });
 
 async function mockApi(page: Page) {
