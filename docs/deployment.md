@@ -147,6 +147,7 @@ For existing MySQL volumes, apply new schema migrations before relying on new da
 
 ```bash
 docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"' < db/migrations/004_food_search_embeddings.sql
+docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"' < db/migrations/005_nullable_food_unknowns.sql
 ```
 
 If database usernames or passwords change after the MySQL volume already exists, re-apply grants without wiping data:

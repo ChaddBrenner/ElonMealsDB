@@ -943,53 +943,6 @@ function RestaurantTimelineTabs(props: {
   );
 }
 
-function LegacyRestaurantTabs(props: {
-  restaurants: RestaurantSummary[];
-  selectedRestaurantId: number | null;
-  loading: boolean;
-  onSelect: (restaurantId: number) => void;
-}) {
-  if (props.loading && !props.restaurants.length) {
-    return (
-      <div className="restaurant-tabs loading" aria-label="Restaurants">
-        <span>Loading restaurants...</span>
-      </div>
-    );
-  }
-
-  if (!props.restaurants.length) {
-    return (
-      <div className="restaurant-tabs empty-tabs" aria-label="Restaurants">
-        <span>No restaurants imported for this date</span>
-      </div>
-    );
-  }
-
-  return (
-    <nav className="restaurant-tabs" role="tablist" aria-label="Restaurants">
-      {props.restaurants.map((restaurant, index) => {
-        const isSelected = restaurant.id === props.selectedRestaurantId;
-        return (
-          <button
-            key={restaurant.id}
-            type="button"
-            role="tab"
-            aria-selected={isSelected}
-            aria-controls="menu"
-            tabIndex={isSelected ? 0 : -1}
-            className={isSelected ? 'selected' : undefined}
-            onClick={() => props.onSelect(restaurant.id)}
-            onKeyDown={(event) => handleTabKeyDown(event, props.restaurants.length, index, (nextIndex) => props.onSelect(props.restaurants[nextIndex].id))}
-          >
-            <span>{restaurant.name}</span>
-            <small>{restaurant.foods_count} foods · {restaurant.meals_count} meals</small>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
 function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, count: number, currentIndex: number, onSelectIndex: (index: number) => void) {
   if (count < 1) return;
 
