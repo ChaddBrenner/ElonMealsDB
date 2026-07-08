@@ -5,9 +5,9 @@ import type { LocalProfile, PlannedMeal } from '../localProfile';
 import {
   allergenFieldMap,
   allergenOptions,
-  COLUMN_VISIBILITY_KEY,
   defaultVisibleColumns,
   macroTriangleVertices,
+  VISIBLE_COLUMNS_STORAGE_ID,
   type MacroTrianglePoint,
   type RevealTarget,
   type SortConfig,
@@ -17,7 +17,7 @@ import {
   type TimelineWindow,
   type VisibleColumns,
   visibleColumnOptions,
-  THEME_KEY
+  THEME_STORAGE_ID
 } from './constants';
 
 export function filterFoodsForSafety(foods: Food[], vegan: boolean, vegetarian: boolean, glutenFree: boolean, allergenFree: string[]) {
@@ -673,14 +673,14 @@ export function hasAllergenFlag(food: Food) {
 
 export function loadTheme(): ThemeMode {
   if (typeof window === 'undefined') return 'light';
-  const saved = window.localStorage.getItem(THEME_KEY);
+  const saved = window.localStorage.getItem(THEME_STORAGE_ID);
   if (saved === 'light' || saved === 'dark') return saved;
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 export function loadVisibleColumns(): VisibleColumns {
   if (typeof window === 'undefined') return defaultVisibleColumns;
-  const raw = window.localStorage.getItem(COLUMN_VISIBILITY_KEY);
+  const raw = window.localStorage.getItem(VISIBLE_COLUMNS_STORAGE_ID);
   if (!raw) return defaultVisibleColumns;
 
   try {
