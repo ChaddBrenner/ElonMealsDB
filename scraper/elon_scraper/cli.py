@@ -6,6 +6,7 @@ from datetime import date
 from pathlib import Path
 
 from .importer import (
+    DbConfig,
     ImporterError,
     build_failure_summary,
     import_menu_payload,
@@ -40,6 +41,9 @@ def build_parser() -> argparse.ArgumentParser:
     import_db.add_argument("--days-ahead", type=int, default=0, help="Number of days after --date/today to import.")
     import_db.add_argument("--timeout", type=float, default=20.0, help="HTTP timeout in seconds.")
 
+    embeddings = subparsers.add_parser("refresh-embeddings", help="Generate FastEmbed vectors for imported menus.")
+    embeddings.add_argument("--date", type=parse_iso_date, required=True, help="Imported service date in YYYY-MM-DD format.")
+
     schedule = subparsers.add_parser("schedule-import", help="Run database imports on a recurring daily schedule.")
     schedule.add_argument("--times", default="05:15,15:15", help="Comma-separated Eastern times in HH:MM format.")
     schedule.add_argument("--days-back", type=int, default=0, help="Number of days before today to import each run.")
@@ -72,6 +76,11 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "import-db":
             summaries = import_dates(args.date, args.days_back, args.days_ahead, args.timeout)
             write_json({"imports": summaries}, None)
+        elif args.command == "refresh-embeddings":
+            from .embeddings import refresh_embeddings_for_service_date
+
+            summary = refresh_embeddings_for_service_date(args.date.isoformat(), DbConfig.from_env())
+            write_json({"embeddings": summary}, None)
         elif args.command == "schedule-import":
             run_times = parse_run_times(args.times)
             run_on_start = args.run_on_start

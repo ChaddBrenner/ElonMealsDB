@@ -9,6 +9,7 @@ import { pingDatabase } from './db.js';
 import { ApiError, asyncHandler, badRequest, bodyParserError, notFound } from './errors.js';
 import {
   getCoverageMetrics,
+  getNutritionInsights,
   getRestaurantMenu,
   getStationMetrics,
   listFoods,
@@ -117,6 +118,11 @@ export function createApp() {
   router.get('/metrics/stations', asyncHandler(async (req, res) => {
     const date = req.query.date ? parseOrThrow(dateSchema, req.query.date) : undefined;
     res.json(await getStationMetrics(date));
+  }));
+
+  router.get('/metrics/nutrition-insights', asyncHandler(async (req, res) => {
+    const date = req.query.date ? parseOrThrow(dateSchema, req.query.date) : undefined;
+    res.json(await getNutritionInsights(date));
   }));
 
   router.get('/sql-proof', (_req, res) => {

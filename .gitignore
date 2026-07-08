@@ -14,7 +14,9 @@ playwright-report/
 test-results/
 .playwright-cli/
 output/
+tmp/
 frontend/.vite/
 frontend/vite.config.d.ts
 frontend/vite.config.js
 security-audit/
+scripts/manual_retail_pdf_second_pass.py

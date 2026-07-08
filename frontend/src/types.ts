@@ -1,13 +1,13 @@
 export type AllergenMap = {
-  egg: boolean;
-  shellfish: boolean;
-  soy: boolean;
-  peanut: boolean;
-  wheat: boolean;
-  treeNut: boolean;
-  milk: boolean;
-  sesame: boolean;
-  fish: boolean;
+  egg: boolean | null;
+  shellfish: boolean | null;
+  soy: boolean | null;
+  peanut: boolean | null;
+  wheat: boolean | null;
+  treeNut: boolean | null;
+  milk: boolean | null;
+  sesame: boolean | null;
+  fish: boolean | null;
 };
 
 export type Food = {
@@ -17,26 +17,29 @@ export type Food = {
   fullName: string;
   description: string;
   ingredients: string;
-  servingSizeAmount: number;
+  servingSizeAmount: number | null;
   servingSizeUnit: string;
-  calories: number;
-  caloriesFromFat: number;
-  totalFat: number;
-  saturatedFat: number;
-  transFat: number;
-  cholesterol: number;
-  sodium: number;
-  totalCarbohydrates: number;
-  dietaryFiber: number;
-  sugars: number;
-  protein: number;
-  vegetarian: boolean;
-  vegan: boolean;
-  glutenFree: boolean;
+  calories: number | null;
+  caloriesFromFat: number | null;
+  totalFat: number | null;
+  saturatedFat: number | null;
+  transFat: number | null;
+  cholesterol: number | null;
+  sodium: number | null;
+  totalCarbohydrates: number | null;
+  dietaryFiber: number | null;
+  sugars: number | null;
+  protein: number | null;
+  vegetarian: boolean | null;
+  vegan: boolean | null;
+  glutenFree: boolean | null;
   allergens: AllergenMap;
   restaurantId?: number;
   restaurantName?: string;
+  mealId?: number;
   mealName?: string;
+  mealTimeOpen?: string;
+  mealTimeClosed?: string;
   stationId?: number;
   stationName?: string;
   quantity?: number;
@@ -134,6 +137,100 @@ export type StationMetric = {
   veganItems: number;
   vegetarianItems: number;
   glutenFreeItems: number;
+};
+
+export type DietGroup = 'Vegan' | 'Vegetarian' | 'Omnivore';
+
+export type InsightFood = Food & {
+  appearanceCount: number;
+  dietGroup: DietGroup;
+  proteinPer100Calories: number;
+  sodiumPer100Calories: number;
+  sodiumScore?: number;
+  macroTotalCalories: number;
+  proteinShare: number;
+  carbShare: number;
+  fatShare: number;
+};
+
+export type MealWindowInsight = {
+  serviceDate: string;
+  restaurantId: number;
+  restaurantName: string;
+  url: string;
+  venueName: string;
+  mealId: number;
+  mealName: string;
+  mealPeriod: string;
+  timeOpen: string;
+  timeClosed: string;
+  stationCount: number;
+};
+
+export type ConstraintCoverageInsight = {
+  key: string;
+  label: string;
+  count: number;
+  total: number;
+  share: number;
+};
+
+export type StationInsight = {
+  serviceDate: string;
+  restaurantId: number;
+  restaurantName: string;
+  mealId: number;
+  mealName: string;
+  mealTimeOpen: string;
+  mealTimeClosed: string;
+  stationId: number;
+  stationName: string;
+  foodCount: number;
+  avgCalories: number;
+  avgProtein: number;
+  vegetarianShare: number;
+  veganShare: number;
+  glutenFreeShare: number;
+  noTop9Share: number;
+  milkFreeShare: number;
+  wheatFreeShare: number;
+  soyFreeShare: number;
+  eggFreeShare: number;
+  proteinShare: number;
+  carbShare: number;
+  fatShare: number;
+};
+
+export type SpecialStationInsight = {
+  serviceDate: string;
+  restaurantId: number;
+  restaurantName: string;
+  mealId: number;
+  mealName: string;
+  mealPeriod: string;
+  mealTimeOpen: string;
+  mealTimeClosed: string;
+  stationId: number;
+  stationName: string;
+  foodCount: number;
+  comparisonDates: number;
+  matchingDates: number;
+  currentShare: number;
+  baselineShare: number;
+  differentToday: boolean;
+};
+
+export type NutritionInsights = {
+  serviceDate: string;
+  mealWindows: MealWindowInsight[];
+  proteinScatter: InsightFood[];
+  proteinEfficiency: InsightFood[];
+  macroFoods: InsightFood[];
+  sodiumOutliers: InsightFood[];
+  constraintCoverage: ConstraintCoverageInsight[];
+  stationConstraints: StationInsight[];
+  stationMacroFingerprints: StationInsight[];
+  specialStations: SpecialStationInsight[];
 };
 
 export type SqlProofExample = {

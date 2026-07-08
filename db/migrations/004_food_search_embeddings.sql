@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS food_search_embeddings (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  service_date DATE NOT NULL,
+  restaurant_id INT NOT NULL,
+  meal_id INT NOT NULL,
+  station_id INT NOT NULL,
+  food_id INT NOT NULL,
+  model VARCHAR(160) NOT NULL,
+  dimension INT NOT NULL,
+  text_hash CHAR(64) NOT NULL,
+  embedding BLOB NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_food_embedding_context (service_date, restaurant_id, meal_id, station_id, food_id, model),
+  INDEX idx_food_embeddings_lookup (service_date, model),
+  INDEX idx_food_embeddings_food (food_id, model),
+  CONSTRAINT fk_food_embeddings_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
+  CONSTRAINT fk_food_embeddings_meal FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE,
+  CONSTRAINT fk_food_embeddings_station FOREIGN KEY (station_id) REFERENCES stations(id) ON DELETE CASCADE,
+  CONSTRAINT fk_food_embeddings_food FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
+);

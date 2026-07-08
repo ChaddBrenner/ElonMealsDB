@@ -1,8 +1,12 @@
 from datetime import date, datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from elon_scraper.importer import parse_run_times, seconds_until_next_run, service_dates
 from elon_scraper.parser import parse_location_menu, parse_menu_hours
+
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 def test_parse_menu_hours_extracts_venue_restaurant_and_meal_times():
@@ -56,6 +60,36 @@ def test_parse_location_menu_uses_embedded_nutrition_json():
     assert food["calories"] == 280
     assert food["total_carbohydrates"] == 51
     assert food["vegan"] is True
+
+
+def test_parse_location_menu_realistic_fixture_keeps_station_and_nutrition_shape():
+    html = (FIXTURES_DIR / "lakeside_location_menu_sample.html").read_text()
+
+    tabs = parse_location_menu(html)
+
+    assert len(tabs) == 2
+    assert [station["name"] for station in tabs[0]] == ["Global Greens", "Homestyle"]
+    assert [station["name"] for station in tabs[1]] == ["Evening Grill"]
+
+    lunch_foods = [food for station in tabs[0] for food in station["foods"]]
+    assert [food["short_name"] for food in lunch_foods] == [
+        "Ginger Tofu Bowl",
+        "Fresh Fruit Salad",
+        "Roasted Chicken Plate",
+    ]
+
+    tofu = lunch_foods[0]
+    assert tofu["external_id"] == "recipe-ginger-tofu"
+    assert tofu["calories"] == 520
+    assert tofu["protein"] == 24
+    assert tofu["vegan"] is True
+    assert tofu["allergy_soy"] is True
+    assert tofu["allergy_sesame"] is True
+
+    fruit = lunch_foods[1]
+    assert fruit["serving_size_amount"] == 0.5
+    assert fruit["serving_size_unit"] == "cup"
+    assert fruit["gluten_free"] is True
 
 
 def test_service_dates_include_requested_window():

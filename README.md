@@ -4,6 +4,8 @@ ElonMealsDB is a Dockerized campus dining planner for exploring Elon Dining menu
 
 Personal planning data stays in the user's browser: favorites, meal plans, nutrition goals, and history are stored locally instead of requiring accounts or server-side user records. The backend is intentionally read-only for public traffic and focuses on normalized menu data, search, coverage metrics, and scraper-backed imports run by the operator.
 
+This is an independent student/portfolio project. It is not affiliated with, endorsed by, or sponsored by Elon University or Elon Dining. Menu and nutrition data can change; users should verify current dining information with the official dining provider, especially for allergen or medical decisions.
+
 ## Quick Start
 
 ```bash
@@ -37,7 +39,7 @@ curl "http://localhost:8080/api/restaurants?date=2026-07-01"
 - Frontend: React, Vite, TypeScript, nginx static container
 - Backend: Node.js, Express, `mysql2/promise`, Zod, Helmet
 - Database: MySQL 8.4 schema plus deterministic sample menu data
-- Scraper: Python CLI parsing current Elon Dining embedded nutrition JSON
+- Scraper/search: Python CLI parsing current Elon Dining embedded nutrition JSON plus local FastEmbed semantic vectors
 - Deployment: Docker Compose behind your own HTTPS reverse proxy
 - DB privilege model: read-only API user plus separate limited scraper writer user
 
@@ -48,6 +50,7 @@ flowchart LR
   Browser["Browser"] --> Frontend["frontend nginx"]
   Frontend --> Backend["backend Express API"]
   Backend --> MySQL["mysql"]
+  Backend -. "semantic search" .-> Embedder["embedder FastEmbed"]
   Scraper["optional scraper profile"] -. "reviewed import path" .-> MySQL
   Scheduler["default scheduler service"] -. "daily imports" .-> MySQL
 ```
@@ -95,6 +98,12 @@ Check the current scheduler state:
 ```bash
 docker compose logs --tail=80 scraper-scheduler
 docker compose ps scraper-scheduler
+```
+
+Refresh semantic search vectors for an already imported date:
+
+```bash
+docker compose --profile scraper run --rm scraper python -m elon_scraper.cli refresh-embeddings --date 2026-07-01
 ```
 
 For local parser development:
@@ -154,3 +163,7 @@ Read [docs/deployment.md](docs/deployment.md), [docs/security.md](docs/security.
 ## API
 
 See [docs/api.md](docs/api.md) for example API calls.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

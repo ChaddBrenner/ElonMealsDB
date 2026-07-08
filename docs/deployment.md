@@ -2,6 +2,8 @@
 
 ElonMealsDB is intended to run as a Docker Compose stack behind an HTTPS reverse proxy that you control. The included Compose file publishes only the frontend container to the host, and it binds to `127.0.0.1:8080` by default. The backend, MySQL database, scraper, and scheduler stay on the private Compose network.
 
+This app imports public dining menu data for a student-facing planning experience. Before running a public deployment, confirm your usage follows the source site's current terms, keep import frequency modest, and make the app's independent/non-affiliated status clear to users.
+
 ## Recommended Topology
 
 ```mermaid
@@ -10,6 +12,7 @@ flowchart LR
   Proxy --> Frontend["frontend:8080"]
   Frontend --> Backend["backend:9000 internal"]
   Backend --> MySQL["mysql internal"]
+  Backend -. "query vectors" .-> Embedder["embedder internal"]
   Scheduler["scraper-scheduler service"] --> MySQL
 ```
 
@@ -23,7 +26,7 @@ Do not expose:
 
 - MySQL port `3306`.
 - Backend port `9000`.
-- Scraper or scheduler containers.
+- Scraper, scheduler, or embedder containers.
 
 ## First Deployment
 
@@ -45,6 +48,7 @@ FRONTEND_PORT=8080
 SCRAPER_RUN_TIMES=05:15,15:15
 SCRAPER_DAYS_AHEAD=1
 SCRAPER_RUN_ON_START=true
+FASTEMBED_MODEL=BAAI/bge-small-en-v1.5
 ```
 
 Start the public app:
@@ -54,6 +58,7 @@ docker compose up -d --build --wait --wait-timeout 180
 ```
 
 The scheduled importer starts with the default stack. It runs privately on the internal Compose network and is not reachable from the public frontend.
+The internal FastEmbed service also starts with the default stack. It has no published ports; the backend uses it for semantic query vectors and falls back to SQL-only search if it is unavailable.
 
 Check the deployment:
 
@@ -114,6 +119,12 @@ Run an immediate one-shot import:
 docker compose --profile scraper run --rm scraper
 ```
 
+Refresh semantic vectors for an already imported date:
+
+```bash
+docker compose --profile scraper run --rm scraper python -m elon_scraper.cli refresh-embeddings --date 2026-07-01
+```
+
 Change import timing:
 
 ```bash
@@ -130,6 +141,12 @@ The schedule is interpreted in `America/New_York`.
 git pull --ff-only
 docker compose --profile scraper build
 docker compose up -d --wait --wait-timeout 180
+```
+
+For existing MySQL volumes, apply new schema migrations before relying on new database-backed features:
+
+```bash
+docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"' < db/migrations/004_food_search_embeddings.sql
 ```
 
 If database usernames or passwords change after the MySQL volume already exists, re-apply grants without wiping data:

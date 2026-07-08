@@ -7,8 +7,10 @@ flowchart LR
   Browser["Browser"] --> Frontend["frontend: nginx static React app"]
   Frontend --> Backend["backend: Express API"]
   Backend --> MySQL["mysql: MySQL 8.4"]
+  Backend -. semantic q .-> Embedder["embedder: FastEmbed internal service"]
   Scraper["scraper profile: explicit import job"] -. reviewed JSON .-> MySQL
   Scheduler["private scheduler service: recurring import"] -. scheduled import .-> MySQL
+  Scraper -. vectors .-> MySQL
 ```
 
 The public API serves normalized dining data and metrics. Personal planning state lives in browser storage, so self-hosting does not require accounts, login secrets, or server-side user records. The one-shot scraper is a private Compose profile, and the recurring scheduler is a private default service, so website users cannot trigger external fetches or imports.
@@ -21,6 +23,10 @@ erDiagram
   meals ||--o{ stations : has
   stations ||--o{ station_foods : lists
   foods ||--o{ station_foods : appears_in
+  food_search_embeddings }o--|| restaurants : scoped_to
+  food_search_embeddings }o--|| meals : scoped_to
+  food_search_embeddings }o--|| stations : scoped_to
+  food_search_embeddings }o--|| foods : embeds
   scraper_runs }o--|| restaurants : documents
 ```
 
@@ -53,8 +59,9 @@ The frontend asks `/api/service-dates` on startup. It selects the current Easter
 - `mysql`: MySQL 8.4 with schema and deterministic sample menu data loaded from `db/init`.
 - `scraper`: Optional Python CLI that fetches Elon Dining pages and upserts normalized menu data into MySQL as `MYSQL_SCRAPER_USER`. It is not part of the public request path.
 - `scraper-scheduler`: Long-running private scheduler service that runs the same import on configured America/New_York times with the same limited writer account.
+- `embedder`: Internal FastEmbed HTTP service used by the backend for query vectors. It has no published ports and stores model files in the `fastembed-cache` volume.
 
-Import runs write operational metadata into `scraper_runs`. Successful imports record source URL, target date, counts, and timestamps. Failed scheduled imports also write a `failed` row with an error message and then keep the scheduler alive for the next configured run; one-shot imports still return a nonzero exit after recording the failed run. `scraper_runs.foods_count` tracks food appearances imported across stations and meals, while dashboard coverage metrics use distinct food ids.
+Import runs write operational metadata into `scraper_runs`. Successful imports record source URL, target date, counts, and timestamps. After a successful import, the scraper refreshes FastEmbed vectors in `food_search_embeddings` for each food appearance on that service date. Failed scheduled imports also write a `failed` row with an error message and then keep the scheduler alive for the next configured run; one-shot imports still return a nonzero exit after recording the failed run. `scraper_runs.foods_count` tracks food appearances imported across stations and meals, while dashboard coverage metrics use distinct food ids.
 
 ## Local Planning State
 

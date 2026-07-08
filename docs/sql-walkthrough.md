@@ -156,7 +156,7 @@ Review point: data freshness is not implied by logs alone; the database can answ
 ## Safety Choices
 
 - API queries use `mysql2/promise` placeholders and Zod validation.
-- Search text is allowlisted and escaped for `LIKE`.
+- Search text is allowlisted, ranked with a food `FULLTEXT` index, and escaped for `LIKE` fallback/context matching.
 - Allergen filters map request values to a fixed server-side column allowlist.
 - The public backend connects as `MYSQL_API_USER`, which has `SELECT`/`SHOW VIEW` only.
 - The scraper and scheduler use `MYSQL_SCRAPER_USER`, which has the write grants needed for imports but is not reachable from public routes.

@@ -110,11 +110,21 @@ def import_menu_payload(payload: dict[str, Any], config: DbConfig | None = None)
     finally:
         connection.close()
 
-    return {
+    summary = {
         "service_date": service_date,
         **inserted,
         "foods": len(touched_food_ids),
     }
+
+    try:
+        from .embeddings import embeddings_enabled, refresh_embeddings_for_service_date
+
+        if embeddings_enabled():
+            summary["embeddings"] = refresh_embeddings_for_service_date(service_date, db_config)
+    except Exception as exc:
+        summary["embedding_error"] = trim_text(exc, 500)
+
+    return summary
 
 
 def record_scraper_failure(
@@ -375,11 +385,15 @@ def trim_text(value: Any, max_length: int) -> str:
 
 
 def numeric(value: Any) -> float:
+    if value is None or value == "":
+        return None
     try:
-        return float(value or 0)
+        return float(value)
     except (TypeError, ValueError):
-        return 0.0
+        return None
 
 
-def bool_value(value: Any) -> bool:
+def bool_value(value: Any) -> bool | None:
+    if value is None or value == "":
+        return None
     return bool(value)

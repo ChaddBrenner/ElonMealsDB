@@ -11,10 +11,12 @@ JOIN foods f ON f.id = sf.food_id
 WHERE m.restaurant_id = ?`
   },
   {
-    title: 'Filtered food search',
+    title: 'Full-text food search',
     route: 'GET /api/foods',
-    summary: 'Filters foods by date, dietary flags, allergens, calories, and protein.',
-    sql: `SELECT DISTINCT f.id, f.short_name, f.calories, f.protein
+    summary: 'Filters foods by date, dietary flags, allergens, calories, and protein; ranks text queries with a food FULLTEXT index plus exact/context boosts.',
+    sql: `SELECT DISTINCT f.id, f.short_name, f.calories, f.protein,
+       MATCH(f.short_name, f.full_name, f.description, f.ingredients)
+         AGAINST (? IN NATURAL LANGUAGE MODE) AS food_search_score
 FROM restaurants r
 JOIN meals m ON m.restaurant_id = r.id
 JOIN stations s ON s.meal_id = m.id
@@ -22,7 +24,15 @@ JOIN station_foods sf ON sf.station_id = s.id
 JOIN foods f ON f.id = sf.food_id
 WHERE r.service_date = ?
   AND f.vegan = ?
-  AND f.protein >= ?`
+  AND f.protein >= ?
+  AND (
+    MATCH(f.short_name, f.full_name, f.description, f.ingredients)
+      AGAINST (? IN NATURAL LANGUAGE MODE) > 0
+    OR r.name LIKE ?
+    OR m.name LIKE ?
+    OR s.name LIKE ?
+  )
+ORDER BY food_search_score DESC, f.short_name ASC`
   },
   {
     title: 'Coverage metrics',

@@ -15,5 +15,7 @@ playwright-report
 test-results
 .playwright-cli
 output
+tmp
 security-audit
 npm-debug.log
+scripts/manual_retail_pdf_second_pass.py

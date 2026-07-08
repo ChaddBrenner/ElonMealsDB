@@ -22,6 +22,7 @@ Default checks:
   - Node and Python dependency audits
   - Docker Compose configuration validation
   - Secret hygiene check that .env is not tracked
+  - Release tree hygiene check that publishable source is committed
 
 With --docker:
   - Rebuilds and starts the Compose stack with SCRAPER_RUN_ON_START=false
@@ -97,12 +98,67 @@ npm audit --workspaces --omit=dev
 step "Python dependency audit"
 "$PIP_AUDIT" -r scraper/requirements.txt
 
+step "Repository metadata"
+if [[ ! -f LICENSE ]]; then
+  echo "LICENSE is required before publishing the repository." >&2
+  exit 1
+fi
+
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+
+const readPackage = (path) => JSON.parse(fs.readFileSync(path, 'utf8'));
+const root = readPackage('package.json');
+const backend = readPackage('backend/package.json');
+const frontend = readPackage('frontend/package.json');
+const packages = [
+  ['package.json', root],
+  ['backend/package.json', backend],
+  ['frontend/package.json', frontend],
+];
+
+if (!/^\d+\.\d+\.\d+$/.test(root.version)) {
+  throw new Error(`package.json version must be plain semver, got ${root.version}`);
+}
+
+for (const [path, pkg] of packages) {
+  if (pkg.version !== root.version) {
+    throw new Error(`${path} version ${pkg.version} does not match root ${root.version}`);
+  }
+  if (pkg.license !== 'MIT') {
+    throw new Error(`${path} must declare MIT license metadata`);
+  }
+}
+
+if (root.private !== true || backend.private !== true || frontend.private !== true) {
+  throw new Error('workspace packages should stay private to prevent accidental npm publishing');
+}
+
+if (!root.repository?.url?.includes('ElonMealsDB')) {
+  throw new Error('package.json repository URL is missing or unexpected');
+}
+NODE
+
 step "Compose config"
 compose_cmd --profile scraper config --quiet
 
 step "Secret hygiene"
 if git ls-files --error-unmatch .env >/dev/null 2>&1; then
   echo ".env is tracked by Git; remove it before publishing." >&2
+  exit 1
+fi
+
+if git ls-files tmp output .playwright-cli frontend/dist frontend/test-results scripts/manual_retail_pdf_second_pass.py | grep -q .; then
+  echo "Generated or local-only artifacts are tracked; remove them before publishing." >&2
+  git ls-files tmp output .playwright-cli frontend/dist frontend/test-results scripts/manual_retail_pdf_second_pass.py >&2
+  exit 1
+fi
+
+step "Release tree hygiene"
+dirty_status="$(git status --porcelain --untracked-files=all)"
+if [[ -n "$dirty_status" ]]; then
+  echo "The publishable Git tree is not clean. Commit or remove source changes before treating this as public-ready." >&2
+  printf '%s\n' "$dirty_status" >&2
   exit 1
 fi
 

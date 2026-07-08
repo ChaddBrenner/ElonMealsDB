@@ -53,6 +53,8 @@ Food filter backed by a parameterized SQL query:
 curl "http://localhost:8080/api/foods?date=2026-07-01&vegan=true&minProtein=10&allergenFree=milk,egg"
 ```
 
+When `SEMANTIC_SEARCH_ENABLED=true`, `q` uses a hybrid search path: MySQL FULLTEXT/LIKE boosts exact menu, station, meal, and restaurant matches, while an internal FastEmbed service adds local vector similarity for broader food and ingredient intent. If the embedder is unavailable, the endpoint falls back to the SQL-only search path.
+
 Supported food filters:
 
 | Query param | Validation |
@@ -84,5 +86,6 @@ Private scraper operations:
 
 ```bash
 docker compose --profile scraper run --rm scraper
+docker compose --profile scraper run --rm scraper python -m elon_scraper.cli refresh-embeddings --date 2026-07-01
 docker compose logs --tail=80 scraper-scheduler
 ```

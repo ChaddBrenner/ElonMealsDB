@@ -4,6 +4,8 @@ This project is designed for public self-hosting with a read-only menu API and b
 
 The latest repeatable audit notes are in [security-audit.md](security-audit.md). Production setup guidance is in [deployment.md](deployment.md).
 
+ElonMealsDB is an independent project and is not affiliated with or endorsed by Elon University or Elon Dining. Treat scraped dining data as convenience data, not medical or contractual guidance. Users should verify allergens, ingredients, hours, and availability with the official dining provider.
+
 ## Public Attack Surface
 
 - `frontend` exposes `127.0.0.1:8080` by default for a same-host HTTPS reverse proxy.
