@@ -56,7 +56,15 @@ export function createApp() {
     windowMs: config.RATE_LIMIT_WINDOW_MS,
     max: config.RATE_LIMIT_MAX,
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    handler(_req, res) {
+      res.status(429).json({
+        error: {
+          code: 'rate_limited',
+          message: 'Too many menu requests. Give the app a moment, then try again.'
+        }
+      });
+    }
   }));
 
   app.use(express.json({

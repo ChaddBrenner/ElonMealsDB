@@ -11,7 +11,7 @@ const envSchema = z.object({
   DB_PASSWORD: z.string().default(''),
   CORS_ORIGINS: z.string().default('http://localhost:8080,http://localhost:5173'),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).max(3600000).default(60000),
-  RATE_LIMIT_MAX: z.coerce.number().int().min(10).max(5000).default(120),
+  RATE_LIMIT_MAX: z.coerce.number().int().min(10).max(5000).default(360),
   BODY_LIMIT: z.string().regex(/^\d+(b|kb|mb)$/i).default('8kb')
 });
 

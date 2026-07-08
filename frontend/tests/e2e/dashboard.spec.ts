@@ -3,8 +3,10 @@ import { expect, test, type Page, type Route } from '@playwright/test';
 const serviceDate = '2026-07-06';
 const emptyDate = '2026-07-08';
 const restaurantId = 101;
+const secondRestaurantId = 102;
 const mealId = 201;
 const dinnerMealId = 202;
+const cafeMealId = 203;
 
 const allergens = {
   egg: false,
@@ -61,6 +63,24 @@ const yogurtParfait = food({
   stationName: 'Global Greens'
 });
 
+const avocadoToast = food({
+  id: 4,
+  externalId: 'recipe-avocado-toast',
+  shortName: 'Avocado Toast',
+  fullName: 'Avocado Toast',
+  ingredients: 'Avocado, sourdough, lemon, chili flakes',
+  calories: 330,
+  totalCarbohydrates: 38,
+  protein: 11,
+  vegan: true,
+  vegetarian: true,
+  stationId: 304,
+  stationName: 'Cafe Counter',
+  restaurantId: secondRestaurantId,
+  restaurantName: 'Acorn Coffee Shop',
+  mealName: 'Breakfast'
+});
+
 test('dashboard supports search, details, favorites, and local meal planning', async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on('console', (message) => {
@@ -72,19 +92,35 @@ test('dashboard supports search, details, favorites, and local meal planning', a
 
   await expect(page).toHaveTitle('ElonMealsDB');
   await expect(page.getByText('ElonMealsDB')).toBeVisible();
-  await expect(page.getByLabel('Restaurant', { exact: true })).toHaveValue(String(restaurantId));
+  await expect(page.getByLabel('Restaurants').getByRole('tab', { name: /Lakeside Dining Hall/ })).toHaveClass(/selected/);
+  await expect(page.getByLabel('Restaurants').getByRole('tab', { name: /Acorn Coffee Shop/ })).toBeVisible();
   await expect(page.getByLabel("Today's Plan")).toContainText('0 selected');
+  await expect(page.getByText('0 meals planned')).toHaveCount(0);
   await expect(page.getByText('Data Freshness')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'System Proof' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Meal History' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Profile And Goals' })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Nutrition Insights' })).toBeVisible();
-  await expect(page.getByText('Average calories')).toBeVisible();
-  await expect(page.getByLabel('Dietary coverage').getByText('Vegetarian')).toBeVisible();
-  await expect(page.getByLabel('Station best fit matrix').getByText('Station Best Fit')).toBeVisible();
-  await expect(page.getByLabel('Station best fit matrix').getByText('Homestyle')).toBeVisible();
-  await expect(page.getByLabel('Station best fit matrix').getByText('34 g')).toBeVisible();
+  await expect(page.getByText('Foods indexed')).toHaveCount(0);
+  await expect(page.getByLabel('Macro mix').getByText('Macro Mix')).toBeVisible();
+  await expect(page.getByLabel('Dining fit matrix').getByText('Dining Fit')).toBeVisible();
+  await expect(page.getByLabel('Calories versus protein').getByText('Calories vs Protein')).toBeVisible();
+  await expect(page.getByLabel('Allergen flag station comparison').getByText('Allergen Flags')).toBeVisible();
   await expect(page.getByLabel('Protein efficiency leaderboard').getByText('Campus Chicken Plate')).toBeVisible();
   await expect(page.locator('.meal-tabs button').filter({ hasText: '11:00 AM - 2:00 PM' })).toContainText('Summer Break');
   await expect(page.locator('.meal-tabs button').filter({ hasText: '5:30 - 6:30 PM' })).toContainText('Summer Break');
+  await expect(page.getByText('Summer Break |')).toHaveCount(0);
+
+  await page.getByLabel('Restaurants').getByRole('tab', { name: /Acorn Coffee Shop/ }).click();
+  await expect(page.getByRole('heading', { name: 'Acorn Coffee Shop' })).toBeVisible();
+  await expect(page.locator('.food-table').getByRole('button', { name: 'Avocado Toast', exact: true })).toBeVisible();
+  await page.getByLabel('Restaurants').getByRole('tab', { name: /Lakeside Dining Hall/ }).click();
+  await expect(page.getByRole('heading', { name: 'Lakeside Dining Hall' })).toBeVisible();
+
+  await page.getByLabel('Edit nutrition goals').click();
+  await expect(page.getByRole('dialog', { name: 'Nutrition Goals' })).toBeVisible();
+  await page.getByLabel('Close goals').click();
+  await expect(page.getByRole('dialog', { name: 'Nutrition Goals' })).toHaveCount(0);
 
   const stationFilters = page.getByLabel('Station filters');
   await stationFilters.getByRole('button', { name: /Homestyle/ }).click();
@@ -109,6 +145,7 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   const planPanel = page.locator('.plan-panel');
   await expect(planPanel.getByText('Ginger Tofu Bowl')).toBeVisible();
   await expect(planPanel.getByText('310 cal')).toBeVisible();
+  await expect(planPanel.getByText('Jul 6')).toHaveCount(0);
   await expect(page.getByLabel("Today's Plan")).toContainText('1 selected');
   await expect(page.getByLabel("Today's Plan")).toContainText('310');
 
@@ -129,12 +166,12 @@ test('date changes with no imported menu clear stale restaurant state', async ({
 
   await expect(page.getByRole('heading', { name: 'No menu imported' })).toBeVisible();
   await expect(page.getByText('No restaurants imported for Jul 8.')).toBeVisible();
-  await expect(page.getByLabel('Restaurant', { exact: true })).toBeDisabled();
+  await expect(page.getByLabel('Restaurants')).toContainText('No restaurants imported for this date');
   await expect(page.getByRole('heading', { name: 'Lakeside Dining Hall' })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Use latest imported date' }).click();
 
-  await expect(page.getByLabel('Restaurant', { exact: true })).toBeEnabled();
+  await expect(page.getByLabel('Restaurants').getByRole('tab', { name: /Lakeside Dining Hall/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Lakeside Dining Hall' })).toBeVisible();
   await expect(page.locator('.food-table').getByRole('button', { name: 'Ginger Tofu Bowl', exact: true })).toBeVisible();
 });
@@ -149,10 +186,10 @@ async function mockApi(page: Page) {
       await json(route, {
         dates: [{
           serviceDate,
-          restaurants: 1,
-          meals: 1,
-          stations: 2,
-          foods: 3,
+          restaurants: 2,
+          meals: 3,
+          stations: 4,
+          foods: 4,
           lastImportedAt: '2026-07-06T13:15:00.000Z'
         }]
       });
@@ -177,6 +214,17 @@ async function mockApi(page: Page) {
           foods_count: 3,
           first_open: `${serviceDate}T11:00:00.000Z`,
           last_closed: `${serviceDate}T18:30:00.000Z`
+        }, {
+          id: secondRestaurantId,
+          name: 'Acorn Coffee Shop',
+          url: 'https://www.elondining.com/locations/acorn-coffee-shop/',
+          venue_name: 'Acorn Coffee Shop',
+          service_date: serviceDate,
+          meals_count: 1,
+          stations_count: 1,
+          foods_count: 1,
+          first_open: `${serviceDate}T07:30:00.000Z`,
+          last_closed: `${serviceDate}T10:30:00.000Z`
         }]
       });
       return;
@@ -215,6 +263,29 @@ async function mockApi(page: Page) {
       return;
     }
 
+    if (url.pathname === `/api/restaurants/${secondRestaurantId}/menu`) {
+      await json(route, {
+        restaurant: {
+          id: secondRestaurantId,
+          name: 'Acorn Coffee Shop',
+          url: 'https://www.elondining.com/locations/acorn-coffee-shop/',
+          venue_name: 'Acorn Coffee Shop',
+          service_date: serviceDate
+        },
+        meals: [{
+          id: cafeMealId,
+          restaurant_id: secondRestaurantId,
+          name: 'Breakfast',
+          time_open: `${serviceDate}T07:30:00.000Z`,
+          time_closed: `${serviceDate}T10:30:00.000Z`,
+          stations: [
+            { id: 304, mealId: cafeMealId, name: 'Cafe Counter', foods: [avocadoToast] }
+          ]
+        }]
+      });
+      return;
+    }
+
     if (url.pathname === '/api/metrics/coverage') {
       if (!hasMenuForDate) {
         await json(route, {
@@ -235,13 +306,13 @@ async function mockApi(page: Page) {
 
       await json(route, {
         serviceDate,
-        restaurants: 1,
-        meals: 2,
-        stations: 3,
-        foods: 3,
-        vegan_items: 1,
-        vegetarian_items: 2,
-        gluten_free_items: 1,
+          restaurants: 2,
+          meals: 3,
+          stations: 4,
+          foods: 4,
+          vegan_items: 2,
+          vegetarian_items: 3,
+          gluten_free_items: 1,
         avg_calories: 356.7,
         scraperRun: {
           id: 1,
@@ -299,6 +370,22 @@ async function mockApi(page: Page) {
           veganItems: 1,
           vegetarianItems: 2,
           glutenFreeItems: 1
+        }, {
+          serviceDate,
+          restaurantId: secondRestaurantId,
+          restaurantName: 'Acorn Coffee Shop',
+          mealId: cafeMealId,
+          mealName: 'Breakfast',
+          mealTimeOpen: `${serviceDate}T07:30:00.000Z`,
+          mealTimeClosed: `${serviceDate}T10:30:00.000Z`,
+          stationId: 304,
+          stationName: 'Cafe Counter',
+          foodCount: 1,
+          avgCalories: 330,
+          avgProtein: 11,
+          veganItems: 1,
+          vegetarianItems: 1,
+          glutenFreeItems: 0
         }]
       });
       return;
@@ -311,7 +398,7 @@ async function mockApi(page: Page) {
       }
 
       const query = (url.searchParams.get('q') || '').toLowerCase();
-      const foods = [tofuBowl, chickenPlate, yogurtParfait]
+      const foods = [tofuBowl, chickenPlate, yogurtParfait, avocadoToast]
         .filter((item) => !query || `${item.shortName} ${item.fullName} ${item.ingredients}`.toLowerCase().includes(query))
         .filter((item) => url.searchParams.get('vegan') !== 'true' || item.vegan)
         .filter((item) => url.searchParams.get('vegetarian') !== 'true' || item.vegetarian)
