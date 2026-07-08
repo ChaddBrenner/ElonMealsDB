@@ -65,4 +65,4 @@ Import runs write operational metadata into `scraper_runs`. Successful imports r
 
 ## Local Planning State
 
-The app stores the user's profile, favorites, planned meals, quantities, and history in `localStorage` under a versioned key. That keeps the full planning workflow available without introducing a public write API. Clearing browser storage resets only the personal planner state; the menu database remains unchanged.
+The app stores the user's profile, safety preferences, favorites, planned meals, quantities, and nutrition goals in `localStorage` under a versioned key. That keeps the full planning workflow available without introducing a public write API. Clearing browser storage resets only the personal planner state; the menu database remains unchanged.

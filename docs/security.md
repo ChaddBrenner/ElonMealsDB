@@ -17,7 +17,7 @@ ElonMealsDB is an independent project and is not affiliated with or endorsed by 
 ## Input Policy
 
 - Public API routes are read-only.
-- User favorites, plans, goals, and history are stored in browser storage instead of being uploaded to the server.
+- User favorites, selected foods, safety preferences, and nutrition goals are stored in browser storage instead of being uploaded to the server.
 - The frontend renders API text as plain React text and does not use HTML injection sinks.
 - The API does not expose arbitrary SQL/query execution.
 - SQL never uses dynamic table names, column names, or order clauses from requests.

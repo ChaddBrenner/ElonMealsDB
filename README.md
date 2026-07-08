@@ -2,7 +2,7 @@
 
 ElonMealsDB is a Dockerized campus dining planner for exploring Elon Dining menus with a relational MySQL data model, a secure Express API, an explicit scraper job, and a polished React dashboard.
 
-Personal planning data stays in the user's browser: favorites, meal plans, nutrition goals, and history are stored locally instead of requiring accounts or server-side user records. The backend is intentionally read-only for public traffic and focuses on normalized menu data, search, coverage metrics, and scraper-backed imports run by the operator.
+Personal planning data stays in the user's browser: favorites, selected foods, nutrition goals, and safety preferences are stored locally instead of requiring accounts or server-side user records. The backend is intentionally read-only for public traffic and focuses on normalized menu data, search, coverage metrics, and scraper-backed imports run by the operator.
 
 This is an independent student/portfolio project. It is not affiliated with, endorsed by, or sponsored by Elon University or Elon Dining. Menu and nutrition data can change; users should verify current dining information with the official dining provider, especially for allergen or medical decisions.
 
@@ -63,7 +63,7 @@ See [docs/architecture.md](docs/architecture.md) for the system design, [docs/sq
 - SQL joins, aggregates, station-level nutrition comparison, nutrition ranking, and import audit trails across the full menu hierarchy.
 - Secure API defaults: request validation, rate limits, parameterized queries, structured errors, no stack traces in responses.
 - Docker-first deployment with private DB networking and non-root application containers.
-- A production-style frontend with imported-date browsing, local favorites, a dated meal planner, station comparison, nutrition insights, history, responsive tables, and a detail drawer.
+- A production-style frontend with imported-date browsing, local favorites, a dated meal planner, station comparison, nutrition insights, CSV export, responsive tables, and a detail drawer.
 
 For a short reviewer walkthrough, use [docs/demo-walkthrough.md](docs/demo-walkthrough.md).
 

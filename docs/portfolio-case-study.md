@@ -6,7 +6,7 @@ ElonMealsDB is a self-hosted dining planner that turns Elon Dining menu data int
 
 ## Short Website Summary
 
-Built a Dockerized full-stack dining planner with a React/Vite frontend, Express API, MySQL relational schema, Python scraper, and private scheduled import job. The app supports menu search, dietary filters, clickable station filtering, station-level nutrition comparison, nutrition insights, nutrition details, favorites, local meal planning, history, and browser-local nutrition goals while keeping public backend traffic read-only and personal planning data in browser storage.
+Built a Dockerized full-stack dining planner with a React/Vite frontend, Express API, MySQL relational schema, Python scraper, and private scheduled import job. The app supports menu search, dietary filters, clickable station filtering, station-level nutrition comparison, nutrition insights, nutrition details, favorites, selected-food planning, CSV export, and browser-local nutrition goals while keeping public backend traffic read-only and personal planning data in browser storage.
 
 ## Problem
 
@@ -18,7 +18,7 @@ Campus dining data is useful but awkward to explore when menus, nutrition detail
 - A secure read-only Express API with validated inputs, parameterized queries, CORS allowlisting, rate limiting, Helmet, structured errors, and no stack traces in responses.
 - A Python scraper/importer that parses current Elon Dining embedded menu/nutrition data and upserts it into MySQL.
 - A Docker Compose deployment with frontend, backend, MySQL, private one-shot scraper, and recurring scheduler service.
-- A React/Vite dashboard with restaurant/date selection, compact top controls, pinned daily nutrition progress, menu tabs, clickable station filters, food search, dietary/allergen filters, SQL-backed nutrition insights, nutrition drawer, favorites, selected-food planning, history, and nutrition goals.
+- A React/Vite dashboard with restaurant/date selection, compact top controls, pinned daily nutrition progress, menu tabs, clickable station filters, food search, dietary/allergen filters, SQL-backed nutrition insights, nutrition drawer, favorites, selected-food planning, CSV export, and nutrition goals.
 - Reviewer-facing SQL/API proof in docs and `/api/sql-proof`, kept out of the product UI so the app feels like a finished dining planner rather than a portfolio checklist.
 - Public-facing docs for architecture, API usage, SQL walkthroughs, deployment, security, and a reviewer demo script.
 

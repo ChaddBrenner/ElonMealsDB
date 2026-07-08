@@ -45,7 +45,7 @@ In the dashboard:
 What to point out:
 
 - Personal planning data stays in browser storage, so the public API remains read-only.
-- The app still has real planner workflows: favorites, meal plans, nutrition goals, history, station chips, filters, SQL-backed nutrition insights, and a nutrition drawer.
+- The app still has real planner workflows: favorites, selected-food planning, CSV export, nutrition goals, station chips, filters, SQL-backed nutrition insights, and a nutrition drawer.
 - API text is rendered as plain React text; no HTML injection path is needed for menu data.
 
 ## 3. Show Nutrition Insights And SQL Proof
