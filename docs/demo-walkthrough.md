@@ -1,6 +1,6 @@
-# Portfolio Demo Walkthrough
+# Demo Walkthrough
 
-This walkthrough is designed for a short portfolio review. It shows the user-facing app first, then proves the backend, SQL model, scraper import flow, Docker deployment, and security boundaries.
+This is the short path I use to explain the project. Start with the app as a normal user would see it, then show the SQL model, scraper/import flow, Docker setup, and security boundaries.
 
 ## 1. Start The Stack
 
@@ -22,7 +22,7 @@ What to point out:
 - The frontend proxies `/api` to the backend over the private Compose network.
 - MySQL is internal-only and is not exposed to the host.
 
-Quick proof:
+Quick checks:
 
 ```bash
 docker compose ps
@@ -45,20 +45,20 @@ In the dashboard:
 What to point out:
 
 - Personal planning data stays in browser storage, so the public API remains read-only.
-- The app still has real planner workflows: favorites, selected-food planning, CSV export, nutrition goals, station chips, filters, SQL-backed nutrition insights, and a nutrition drawer.
+- The app has real planner workflows: favorites, selected-food planning, CSV export, nutrition goals, station chips, filters, SQL-backed nutrition insights, and a nutrition drawer.
 - API text is rendered as plain React text; no HTML injection path is needed for menu data.
 
-## 3. Show Nutrition Insights And SQL Proof
+## 3. Show Nutrition Insights And SQL Examples
 
 What to point out:
 
 - Nutrition Insights shows aggregate dietary coverage and protein-efficiency ranking backed by SQL-fed API data.
 - Station Best Fit shows station-level averages from a grouped SQL aggregate across restaurants, meals, stations, station-food rows, and foods.
 - Clickable station chips filter the food table without exposing dynamic table or column names to the API.
-- The dashboard distinguishes distinct menu foods from scraper food appearances, which demonstrates the many-to-many station-food model.
-- SQL examples are still served from `/api/sql-proof`, but reviewer proof lives in docs/API output instead of cluttering the product UI.
+- The dashboard distinguishes distinct menu foods from scraper food appearances, which is where the many-to-many station-food model matters.
+- SQL examples are served from `/api/sql-proof`, but they stay out of the main product UI.
 
-API proof:
+API examples:
 
 ```bash
 curl -fsS http://localhost:8080/api/sql-proof
@@ -115,7 +115,7 @@ What to point out:
 - Dynamic allergen filters are constrained to a server-side allowlist of known columns.
 - The API database user can read but cannot mutate tables.
 
-Read-only proof:
+Read-only check:
 
 ```bash
 docker compose exec -T backend node --input-type=module -e "import { pool } from './src/db.js'; try { await pool.query('DELETE FROM scraper_runs WHERE id = -1'); process.exit(1); } catch (error) { console.log(error.code); process.exit(0); } finally { await pool.end(); }"
@@ -149,7 +149,7 @@ What to point out:
 - Web users cannot trigger imports; scraper writes happen only through private operator-run containers.
 - Failed scheduled imports are recorded in `scraper_runs` and the scheduler continues to the next run.
 
-Audit trail proof:
+Audit trail query:
 
 ```sql
 SELECT
@@ -195,7 +195,7 @@ npm run verify
 npm run verify:docker
 ```
 
-## Skills This Project Demonstrates
+## Skills This Project Shows
 
 - Relational schema design and multi-table SQL joins.
 - Parameterized API query design with validation at the boundary.

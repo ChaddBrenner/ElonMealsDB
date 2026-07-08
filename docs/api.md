@@ -76,7 +76,7 @@ curl "http://localhost:8080/api/metrics/stations?date=2026-07-01"
 
 This endpoint groups the normalized restaurant, meal, station, station-food, and food tables by station. It returns food counts, average calories, average protein, and dietary coverage for the top station rows on the selected service date.
 
-SQL proof examples:
+SQL examples:
 
 ```bash
 curl "http://localhost:8080/api/sql-proof"

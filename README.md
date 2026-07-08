@@ -1,6 +1,6 @@
 # ElonMealsDB
 
-ElonMealsDB is a Dockerized campus dining planner for exploring Elon Dining menus with a relational MySQL data model, a secure Express API, an explicit scraper job, and a polished React dashboard.
+ElonMealsDB is a full-stack dining planner I built around a normalized MySQL database. It takes Elon Dining menu data, imports it into a relational model, and turns it into a React dashboard for searching foods, comparing stations, checking nutrition, and planning a meal.
 
 Personal planning data stays in the user's browser: favorites, selected foods, nutrition goals, and safety preferences are stored locally instead of requiring accounts or server-side user records. The backend is intentionally read-only for public traffic and focuses on normalized menu data, search, coverage metrics, and scraper-backed imports run by the operator.
 
@@ -55,16 +55,33 @@ flowchart LR
   Scheduler["default scheduler service"] -. "daily imports" .-> MySQL
 ```
 
-See [docs/architecture.md](docs/architecture.md) for the system design, [docs/sql-walkthrough.md](docs/sql-walkthrough.md) for runnable SQL examples, [docs/demo-walkthrough.md](docs/demo-walkthrough.md) for a portfolio-ready demo path, and [docs/portfolio-case-study.md](docs/portfolio-case-study.md) for website-ready project copy.
+See [docs/architecture.md](docs/architecture.md) for the system design, [docs/sql-walkthrough.md](docs/sql-walkthrough.md) for runnable SQL examples, [docs/demo-walkthrough.md](docs/demo-walkthrough.md) for a short demo path, and [docs/portfolio-case-study.md](docs/portfolio-case-study.md) for project notes.
 
-## What This Shows
+## Why SQL Is Central Here
+
+I wanted this to be more than a frontend wrapped around a JSON file. The app uses SQL for the parts where a relational database actually makes sense:
+
+- Restaurant -> meal -> station -> food hierarchy joins.
+- Many-to-many station food appearances, so the same food can show up in different places without duplicating nutrition facts.
+- Dietary and allergen filtering with validated request parameters.
+- Station-level aggregates for average calories, protein, and safe-option counts.
+- Nutrition rankings such as protein per 100 calories and high-sodium outliers.
+- Import audit trails through `scraper_runs`, so freshness is queryable instead of just implied by logs.
+
+The SQL examples in [docs/sql-walkthrough.md](docs/sql-walkthrough.md) can be run against the local Docker database, and `/api/sql-proof` exposes fixed example queries for a quick code review.
+
+## What This Project Shows
 
 - Normalized relational design for restaurants, meals, stations, foods, and scraper run metadata.
 - SQL joins, aggregates, station-level nutrition comparison, nutrition ranking, and import audit trails across the full menu hierarchy.
 - Secure API defaults: request validation, rate limits, parameterized queries, structured errors, no stack traces in responses.
 - Docker-first deployment with private DB networking and non-root application containers.
-- A production-style frontend with imported-date browsing, local favorites, a dated meal planner, station comparison, nutrition insights, CSV export, responsive tables, and a detail drawer.
+- A frontend that works like an app: imported-date browsing, local favorites, a dated meal planner, station comparison, nutrition insights, CSV export, responsive tables, and a detail drawer.
 - A decomposed React frontend with feature-oriented modules for timeline, planner, menu controls, food views, insights, panels, shared utilities, and scoped stylesheet sections.
+
+## Self-Hosting
+
+I self-host the app as Docker containers behind Caddy and Cloudflare Tunnel. The public tunnel reaches the frontend through the reverse proxy, while the backend, MySQL, scraper, scheduler, and embedder stay on the private Docker network. The default local Compose setup mirrors that shape by publishing only the frontend on `127.0.0.1:8080`.
 
 For a short reviewer walkthrough, use [docs/demo-walkthrough.md](docs/demo-walkthrough.md).
 

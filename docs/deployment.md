@@ -22,6 +22,8 @@ Use one of:
 - A private host firewall that allows only `80` and `443` from the internet.
 - Docker volumes or host backups for `mysql-data`.
 
+My hosted copy runs as Docker Compose behind Caddy and Cloudflare Tunnel. Cloudflare Tunnel handles the public HTTPS entrypoint, Caddy reverse proxies to the loopback-bound frontend, and the backend/database/import services stay private on the Docker network. That is the production shape this repo is meant to support.
+
 Do not expose:
 
 - MySQL port `3306`.

@@ -83,7 +83,7 @@ Review point: `COUNT(DISTINCT ...)` prevents over-counting foods that appear in 
 
 ## Nutrition Ranking
 
-This query demonstrates analytical use of the same normalized model:
+This query uses the same normalized model for a simple nutrition ranking:
 
 ```sql
 SELECT

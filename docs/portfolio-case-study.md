@@ -2,11 +2,11 @@
 
 ## ElonMealsDB
 
-ElonMealsDB is a self-hosted dining planner that turns Elon Dining menu data into a searchable, nutrition-aware React dashboard backed by a normalized MySQL model. It is designed as both a useful campus meal-planning app and a portfolio project that demonstrates SQL, secure backend design, Docker deployment, scraping, and frontend product polish.
+ElonMealsDB is a self-hosted dining planner that turns Elon Dining menu data into a searchable, nutrition-aware React dashboard backed by a normalized MySQL model. I built it because I wanted the project to have real SQL and deployment depth, not just a nice frontend sitting on top of static data.
 
 ## Short Website Summary
 
-Built a Dockerized full-stack dining planner with a React/Vite frontend, Express API, MySQL relational schema, Python scraper, and private scheduled import job. The app supports menu search, dietary filters, clickable station filtering, station-level nutrition comparison, nutrition insights, nutrition details, favorites, selected-food planning, CSV export, and browser-local nutrition goals while keeping public backend traffic read-only and personal planning data in browser storage.
+Built a Dockerized full-stack dining planner with a React/Vite frontend, Express API, MySQL relational schema, Python scraper, and private scheduled import job. The app supports menu search, dietary filters, station filtering, station-level nutrition comparison, nutrition insights, nutrition details, favorites, selected-food planning, CSV export, and browser-local nutrition goals while keeping public backend traffic read-only.
 
 ## Problem
 
@@ -19,8 +19,8 @@ Campus dining data is useful but awkward to explore when menus, nutrition detail
 - A Python scraper/importer that parses current Elon Dining embedded menu/nutrition data and upserts it into MySQL.
 - A Docker Compose deployment with frontend, backend, MySQL, private one-shot scraper, and recurring scheduler service.
 - A React/Vite dashboard with restaurant/date selection, compact top controls, pinned daily nutrition progress, menu tabs, clickable station filters, food search, dietary/allergen filters, SQL-backed nutrition insights, nutrition drawer, favorites, selected-food planning, CSV export, and nutrition goals.
-- Reviewer-facing SQL/API proof in docs and `/api/sql-proof`, kept out of the product UI so the app feels like a finished dining planner rather than a portfolio checklist.
-- Public-facing docs for architecture, API usage, SQL walkthroughs, deployment, security, and a reviewer demo script.
+- SQL/API examples in docs and `/api/sql-proof`, kept out of the main product UI so the app still feels like a dining planner.
+- Public docs for architecture, API usage, SQL walkthroughs, deployment, security, and a demo script.
 
 ## Architecture
 
@@ -44,7 +44,7 @@ Personal meal-planning state stays in browser storage. The public backend serves
 - Added aggregate endpoints for coverage, dietary counts, station comparison, average calories, and top-protein foods.
 - Distinguished distinct foods from station/meal food appearances in the UI and audit trail.
 - Kept scraper run metadata separate from menu facts so data freshness is auditable.
-- Included reviewer-ready SQL examples in `docs/sql-walkthrough.md` and in `/api/sql-proof`.
+- Included runnable SQL examples in `docs/sql-walkthrough.md` and in `/api/sql-proof`.
 
 ### Backend And Security
 
@@ -63,6 +63,7 @@ Personal meal-planning state stays in browser storage. The public backend serves
 - Kept MySQL internal-only with a named volume.
 - Used non-root runtime users, health checks, dropped Linux capabilities, `no-new-privileges`, and read-only filesystems where practical.
 - Added a scheduler service that imports today and tomorrow on configured America/New_York times.
+- Self-hosted the app as Docker containers behind Caddy and Cloudflare Tunnel, with only the frontend exposed through the reverse proxy.
 
 ### Frontend Product Work
 
@@ -71,7 +72,7 @@ Personal meal-planning state stays in browser storage. The public backend serves
 - Added responsive desktop/mobile layouts with accessible controls and real local state.
 - Added planner workflows without server-side accounts by using browser-local storage.
 - Surfaced station filtering, nutrition coverage, station best-fit comparison, and protein-efficiency ranking directly in the dashboard.
-- Added screenshots, e2e coverage, and reviewer docs for technical proof without cluttering the product surface.
+- Added screenshots and e2e coverage without turning the product surface into a checklist.
 
 ## Demo Script
 
@@ -100,14 +101,14 @@ Mobile:
 
 ## Verification
 
-Local verification commands used on this branch:
+Local verification commands used before publishing:
 
 ```bash
 npm run verify
 npm run verify:docker
 ```
 
-GitHub Actions also runs `node`, `scraper`, and `docker` jobs on pull requests. The Docker job builds images, starts Compose, checks health/API routes, checks malformed JSON handling, and verifies that the backend database user cannot write.
+GitHub Actions runs `node`, `scraper`, and `docker` jobs on pull requests and pushes. The Docker job builds the images, starts Compose, checks health/API routes, checks malformed JSON handling, and verifies that the backend database user cannot write.
 
 ## Resume Bullets
 
@@ -115,7 +116,7 @@ GitHub Actions also runs `node`, `scraper`, and `docker` jobs on pull requests. 
 - Designed normalized MySQL tables and SQL-backed API endpoints for menu hierarchy, dietary filtering, nutrition ranking, data freshness, and import audit trails.
 - Hardened a public self-hosted deployment with least-privilege DB users, request validation, parameterized SQL, rate limiting, security headers, no upload surface, non-root containers, and private Docker networking.
 
-## Links For Reviewers
+## Links
 
 - [Architecture](architecture.md)
 - [SQL walkthrough](sql-walkthrough.md)

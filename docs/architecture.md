@@ -48,7 +48,7 @@ WHERE r.service_date = :serviceDate
 ORDER BY r.name, m.time_open, s.name, f.short_name;
 ```
 
-For a more complete portfolio-oriented SQL walkthrough, see [sql-walkthrough.md](sql-walkthrough.md).
+For more SQL examples, see [sql-walkthrough.md](sql-walkthrough.md).
 
 The frontend asks `/api/service-dates` on startup. It selects the current Eastern service date when data has been imported for today, otherwise it falls back to the newest available imported or sample date. This keeps first-run Docker installs usable while still preferring fresh scheduled imports.
 
@@ -72,7 +72,7 @@ The React frontend is split by product responsibility instead of keeping the das
 - `frontend/src/components/planner.tsx`: pinned nutrition totals, selected-food planning, export, quantity controls, and goal settings.
 - `frontend/src/components/menuControls.tsx`: dietary filters, allergen controls, table column picker, view mode toggle, and station chips.
 - `frontend/src/components/foodViews.tsx`: table and compact overview modes for browsing foods by station.
-- `frontend/src/components/insights.tsx`: SQL-backed nutrition visualizations and useful reviewer-facing tables.
+- `frontend/src/components/insights.tsx`: SQL-backed nutrition visualizations and tables.
 - `frontend/src/components/panels.tsx`: nutrition drawer, global search dialog, and favorites.
 - `frontend/src/styles`: scoped CSS sections for tokens/base, layout/planner, menu table, insights, overlays, and responsive motion.
 

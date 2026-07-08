@@ -63,7 +63,7 @@ Checked with `rg` for:
 - DOM injection sinks: `dangerouslySetInnerHTML`, `innerHTML`, `outerHTML`, `eval`, `new Function`.
 - Upload and multipart libraries: `multer`, `formidable`, `busboy`, upload keywords.
 - Server-side command/file-write sinks: `child_process`, `exec`, `fs.write`.
-- Candidate secrets: common token patterns, password assignments, API key names outside examples/docs.
+- Candidate secrets: common token patterns, password assignments, and API key names outside examples/docs.
 - Dynamic SQL: query construction, `ORDER BY`, `GROUP BY`, `WHERE`, and template interpolation in backend repositories.
 
 Findings:
