@@ -52,6 +52,7 @@ const allergenOptions = [
 
 const THEME_STORAGE_ID = 'elonmealsdb.theme.v1';
 type ThemeMode = 'light' | 'dark';
+type MacroTone = 'calories' | 'protein' | 'carbs' | 'fat';
 
 export function App() {
   const [profile, setProfile] = useState<LocalProfile>(() => loadLocalProfile());
@@ -349,8 +350,7 @@ export function App() {
             </div>
           </div>
           <label className="field date-field">
-            <span><CalendarDays size={15} /> Date</span>
-            <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+            <input type="date" value={date} aria-label="Date" onChange={(event) => setDate(event.target.value)} />
           </label>
           <label className="search-field">
             <Search size={18} />
@@ -390,9 +390,6 @@ export function App() {
         <PlanSummaryBar
           profile={profile}
           totals={totals}
-          itemCount={plannedItemCount}
-          date={date}
-          onClearDay={clearToday}
           onOpenSettings={() => setSettingsOpen(true)}
         />
 
@@ -469,7 +466,7 @@ export function App() {
 
           <MealPlanPanel
             meals={todayMeals}
-            date={date}
+            itemCount={plannedItemCount}
             onQuantity={updatePlannedQuantity}
             onRemoveFood={removePlannedFood}
             onRemoveMeal={removePlannedMeal}
@@ -918,37 +915,20 @@ function PanelHeader({ title, subtitle, icon }: { title: string; subtitle?: stri
 function PlanSummaryBar(props: {
   profile: LocalProfile;
   totals: MacroTotals;
-  itemCount: number;
-  date: string;
-  onClearDay: () => void;
   onOpenSettings: () => void;
 }) {
   return (
-    <section className="plan-summary-bar" aria-label="Today's Plan">
-      <div className="plan-summary-title">
-        <div>
-          <span>Today&apos;s Plan</span>
-          <strong>{formatShortDate(props.date)}</strong>
-        </div>
-        <Badge tone={props.itemCount ? 'green' : 'neutral'}>
-          {formatSelectedCount(props.itemCount)} selected
-        </Badge>
+    <section className="plan-summary-bar" aria-label="Nutrition totals">
+      <div className="plan-summary-goals">
+        <Goal label="Calories" tone="calories" value={props.totals.calories} max={props.profile.dailyCaloriesGoal} />
+        <Goal label="Protein" tone="protein" value={props.totals.protein} max={props.profile.dailyProteinsGoal} unit="g" />
+        <Goal label="Carbs" tone="carbs" value={props.totals.carbs} max={props.profile.dailyCarbsGoal} unit="g" />
+        <Goal label="Fat" tone="fat" value={props.totals.fat} max={props.profile.dailyFatsGoal} unit="g" />
+      </div>
+      <div className="plan-summary-actions">
         <button className="icon-button plan-settings-button" type="button" onClick={props.onOpenSettings} aria-label="Edit nutrition goals">
           <Settings2 size={16} />
         </button>
-      </div>
-      <div className="plan-summary-goals">
-        <Goal label="Calories" value={props.totals.calories} max={props.profile.dailyCaloriesGoal} />
-        <Goal label="Protein" value={props.totals.protein} max={props.profile.dailyProteinsGoal} unit="g" />
-        <Goal label="Carbs" value={props.totals.carbs} max={props.profile.dailyCarbsGoal} unit="g" />
-        <Goal label="Fat" value={props.totals.fat} max={props.profile.dailyFatsGoal} unit="g" />
-      </div>
-      <div className="plan-summary-actions">
-        {props.itemCount > 0 && (
-          <button className="secondary-button compact" type="button" onClick={props.onClearDay}>
-            <Trash2 size={14} /> Clear
-          </button>
-        )}
       </div>
     </section>
   );
@@ -956,15 +936,23 @@ function PlanSummaryBar(props: {
 
 function MealPlanPanel(props: {
   meals: PlannedMeal[];
-  date: string;
+  itemCount: number;
   onQuantity: (mealId: string, foodId: number, quantity: number) => void;
   onRemoveFood: (mealId: string, foodId: number) => void;
   onRemoveMeal: (mealId: string) => void;
   onClearDay: () => void;
 }) {
   return (
-    <aside className="panel plan-panel">
-      <PanelHeader title="Selected Foods" icon={<Utensils size={18} />} />
+    <aside className="panel plan-panel" aria-label="Selected foods">
+      <div className="panel-header selected-foods-header">
+        <div>
+          <h2>Selected Foods</h2>
+          <Badge tone={props.itemCount ? 'green' : 'neutral'}>
+            {formatSelectedCount(props.itemCount)} selected
+          </Badge>
+        </div>
+        <div className="panel-icon"><Utensils size={18} /></div>
+      </div>
       <div className="planned-meals">
         {props.meals.length ? props.meals.map((meal) => (
           <div className="planned-meal" key={meal.id}>
@@ -987,7 +975,6 @@ function MealPlanPanel(props: {
                   quantity={item.quantity}
                   onDecrease={() => item.quantity <= 0.25 ? props.onRemoveFood(meal.id, item.foodId) : props.onQuantity(meal.id, item.foodId, item.quantity - 0.25)}
                   onIncrease={() => props.onQuantity(meal.id, item.foodId, item.quantity + 0.25)}
-                  onRemove={() => props.onRemoveFood(meal.id, item.foodId)}
                 />
               </div>
             ))}
@@ -1024,7 +1011,7 @@ function GoalSettingsDialog(props: {
         <div className="drawer-header">
           <div>
             <h2 id="goal-dialog-title">Nutrition Goals</h2>
-            <p>Adjust the targets used by Today&apos;s Plan.</p>
+            <p>Adjust the targets used by your planner.</p>
           </div>
           <button className="icon-button" type="button" onClick={props.onClose} aria-label="Close goals">
             <X size={18} />
@@ -1123,7 +1110,7 @@ function StationFilter(props: {
           key={station.id}
           onClick={() => props.onSelect(props.selectedStationId === station.id ? null : station.id)}
         >
-          <span>{station.name}</span>
+          <span>{formatStationName(station.name)}</span>
           <Badge tone="neutral">{station.foods.length}</Badge>
         </button>
       ))}
@@ -1156,6 +1143,7 @@ function FoodTable(props: {
             <th>Calories</th>
             <th>Protein</th>
             <th>Carbs</th>
+            <th>Fat</th>
             <th aria-label="Actions" />
           </tr>
         </thead>
@@ -1163,18 +1151,20 @@ function FoodTable(props: {
           {props.foods.map((food) => (
             <tr key={`${food.id}-${food.restaurantId || 'all'}-${food.stationName || food.mealName || 'food'}`}>
               <td data-label="Food">
-                <button className="link-button strong" type="button" onClick={() => props.onSelect(food)}>{food.shortName}</button>
-                <small>{formatFoodContext(food)}</small>
+                <div className="food-name-cell">
+                  <button className="icon-button favorite-inline" type="button" disabled={props.busy} onClick={() => props.onFavorite(food)} aria-label={`${props.favoriteIds.has(food.id) ? 'Remove' : 'Add'} ${food.shortName} favorite`}>
+                    <Star size={15} fill={props.favoriteIds.has(food.id) ? 'currentColor' : 'none'} />
+                  </button>
+                  <button className="link-button strong" type="button" onClick={() => props.onSelect(food)}>{food.shortName}</button>
+                </div>
               </td>
-              <td data-label="Station">{food.stationName || food.mealName || '-'}</td>
+              <td data-label="Station">{formatStationName(food.stationName || food.mealName || '-')}</td>
               <td data-label="Dietary"><Dietary food={food} /></td>
-              <td data-label="Calories">{round(food.calories)}</td>
-              <td data-label="Protein">{round(food.protein)} g</td>
-              <td data-label="Carbs">{round(food.totalCarbohydrates)} g</td>
+              <td className="macro-cell calories" data-label="Calories">{round(food.calories)}</td>
+              <td className="macro-cell protein" data-label="Protein">{round(food.protein)} g</td>
+              <td className="macro-cell carbs" data-label="Carbs">{round(food.totalCarbohydrates)} g</td>
+              <td className="macro-cell fat" data-label="Fat">{round(food.totalFat)} g</td>
               <td className="row-actions" data-label="Actions">
-                <button className="icon-button" type="button" disabled={props.busy} onClick={() => props.onFavorite(food)} aria-label={`${props.favoriteIds.has(food.id) ? 'Remove' : 'Add'} favorite`}>
-                  <Star size={16} fill={props.favoriteIds.has(food.id) ? 'currentColor' : 'none'} />
-                </button>
                 <button className="primary-row-button" type="button" disabled={props.busy} onClick={() => props.onAdd(food)}>
                   <Plus size={15} /> Add
                 </button>
@@ -1214,10 +1204,10 @@ function NutritionDrawer(props: {
           </div>
           <Dietary food={food} />
           <div className="nutrition-grid">
-            <MetricBlock label="Calories" value={round(food.calories)} />
-            <MetricBlock label="Protein" value={`${round(food.protein)} g`} />
-            <MetricBlock label="Carbs" value={`${round(food.totalCarbohydrates)} g`} />
-            <MetricBlock label="Fat" value={`${round(food.totalFat)} g`} />
+            <MetricBlock label="Calories" tone="calories" value={round(food.calories)} />
+            <MetricBlock label="Protein" tone="protein" value={`${round(food.protein)} g`} />
+            <MetricBlock label="Carbs" tone="carbs" value={`${round(food.totalCarbohydrates)} g`} />
+            <MetricBlock label="Fat" tone="fat" value={`${round(food.totalFat)} g`} />
           </div>
           <div className="detail-block">
             <strong>Serving Size</strong>
@@ -1284,10 +1274,10 @@ function Badge({ children, tone }: { children: ReactNode; tone: 'green' | 'gold'
   return <span className={`badge ${tone}`}>{children}</span>;
 }
 
-function Goal({ label, value, max, unit = '' }: { label: string; value: number; max: number; unit?: string }) {
+function Goal({ label, tone, value, max, unit = '' }: { label: string; tone: MacroTone; value: number; max: number; unit?: string }) {
   const percent = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
-    <div className="goal">
+    <div className={`goal ${tone}`}>
       <div>
         <span>{label}</span>
         <strong>{round(value)}{unit} / {max}{unit}</strong>
@@ -1320,24 +1310,22 @@ function GoalInput({ label, value, min, max, onChange }: {
   );
 }
 
-function QuantityStepper({ quantity, onDecrease, onIncrease, onRemove }: {
+function QuantityStepper({ quantity, onDecrease, onIncrease }: {
   quantity: number;
   onDecrease: () => void;
   onIncrease: () => void;
-  onRemove: () => void;
 }) {
   return (
     <div className="quantity-stepper">
       <button type="button" onClick={onDecrease} aria-label="Decrease quantity"><Minus size={13} /></button>
-      <span>{quantity}</span>
+      <span>{formatSelectedCount(quantity)}</span>
       <button type="button" onClick={onIncrease} aria-label="Increase quantity"><Plus size={13} /></button>
-      <button type="button" onClick={onRemove} aria-label="Remove food"><X size={13} /></button>
     </div>
   );
 }
 
-function MetricBlock({ label, value }: { label: string; value: string | number }) {
-  return <div className="metric-block"><strong>{value}</strong><span>{label}</span></div>;
+function MetricBlock({ label, tone, value }: { label: string; tone: MacroTone; value: string | number }) {
+  return <div className={`metric-block ${tone}`}><strong>{value}</strong><span>{label}</span></div>;
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
@@ -1479,7 +1467,27 @@ function formatAllergen(value: string) {
 
 function formatFoodContext(food: Food) {
   const primary = food.restaurantName || food.fullName;
-  return food.stationName ? `${primary} - ${food.stationName}` : primary;
+  return food.stationName ? `${primary} - ${formatStationName(food.stationName)}` : primary;
+}
+
+function formatStationName(value: string) {
+  const normalized = value.trim();
+  if (!normalized || normalized === '-') return normalized || '-';
+
+  const minorWords = new Set(['a', 'an', 'and', 'at', 'for', 'from', 'in', 'of', 'or', 'the', 'to', 'with']);
+
+  return normalized
+    .split(/\s+/)
+    .map((word, wordIndex) => word
+      .split(/([-/&])/)
+      .map((part) => {
+        if (!part || /^[-/&]$/.test(part)) return part;
+        const lower = part.toLowerCase();
+        if (wordIndex > 0 && minorWords.has(lower)) return lower;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join(''))
+    .join(' ');
 }
 
 function formatSelectedCount(value: number) {

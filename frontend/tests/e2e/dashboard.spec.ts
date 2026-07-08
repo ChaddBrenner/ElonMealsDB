@@ -33,7 +33,7 @@ const tofuBowl = food({
   vegetarian: true,
   glutenFree: true,
   stationId: 301,
-  stationName: 'Global Greens'
+  stationName: 'global greens'
 });
 
 const chickenPlate = food({
@@ -60,7 +60,7 @@ const yogurtParfait = food({
   protein: 14,
   vegetarian: true,
   stationId: 301,
-  stationName: 'Global Greens'
+  stationName: 'global greens'
 });
 
 const avocadoToast = food({
@@ -94,7 +94,8 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page.getByText('ElonMealsDB')).toBeVisible();
   await expect(page.getByLabel('Restaurants').getByRole('tab', { name: /Lakeside Dining Hall/ })).toHaveClass(/selected/);
   await expect(page.getByLabel('Restaurants').getByRole('tab', { name: /Acorn Coffee Shop/ })).toBeVisible();
-  await expect(page.getByLabel("Today's Plan")).toContainText('0 selected');
+  await expect(page.getByLabel('Selected foods')).toContainText('0 selected');
+  await expect(page.getByText("Today's Plan")).toHaveCount(0);
   await expect(page.getByText('0 meals planned')).toHaveCount(0);
   await expect(page.getByText('Data Freshness')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'System Proof' })).toHaveCount(0);
@@ -123,8 +124,11 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page.getByRole('dialog', { name: 'Nutrition Goals' })).toHaveCount(0);
 
   const stationFilters = page.getByLabel('Station filters');
+  await expect(stationFilters.getByRole('button', { name: /Global Greens/ })).toBeVisible();
+  await expect(stationFilters).not.toContainText('global greens');
   await stationFilters.getByRole('button', { name: /Homestyle/ }).click();
   const foodTable = page.locator('.food-table');
+  await expect(foodTable.getByRole('columnheader', { name: 'Fat' })).toBeVisible();
   await expect(foodTable.getByRole('button', { name: 'Campus Chicken Plate', exact: true })).toBeVisible();
   await expect(foodTable.getByRole('button', { name: 'Ginger Tofu Bowl', exact: true })).toHaveCount(0);
   await stationFilters.getByRole('button', { name: /All stations/ }).click();
@@ -146,8 +150,9 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(planPanel.getByText('Ginger Tofu Bowl')).toBeVisible();
   await expect(planPanel.getByText('310 cal')).toBeVisible();
   await expect(planPanel.getByText('Jul 6')).toHaveCount(0);
-  await expect(page.getByLabel("Today's Plan")).toContainText('1 selected');
-  await expect(page.getByLabel("Today's Plan")).toContainText('310');
+  await expect(planPanel).toContainText('1 selected');
+  await expect(planPanel.getByLabel('Remove food')).toHaveCount(0);
+  await expect(page.getByLabel('Nutrition totals')).toContainText('310 / 2200');
 
   const savedProfile = await page.evaluate(() => JSON.parse(localStorage.getItem('elonmealsdb.localProfile.v1') || '{}'));
   expect(savedProfile.favoriteFoods).toHaveLength(1);
@@ -246,7 +251,7 @@ async function mockApi(page: Page) {
           time_open: `${serviceDate}T11:00:00.000Z`,
           time_closed: `${serviceDate}T14:00:00.000Z`,
           stations: [
-            { id: 301, mealId, name: 'Global Greens', foods: [tofuBowl, yogurtParfait] },
+            { id: 301, mealId, name: 'global greens', foods: [tofuBowl, yogurtParfait] },
             { id: 302, mealId, name: 'Homestyle', foods: [chickenPlate] }
           ]
         }, {
