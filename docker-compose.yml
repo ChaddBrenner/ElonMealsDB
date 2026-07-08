@@ -47,7 +47,7 @@ services:
       DB_PASSWORD: ${MYSQL_API_PASSWORD:?MYSQL_API_PASSWORD is required}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
-      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-120}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-360}
       BODY_LIMIT: ${BODY_LIMIT:-8kb}
     depends_on:
       mysql:

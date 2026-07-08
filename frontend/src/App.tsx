@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import {
   BarChart3,
   CalendarDays,
   Check,
   ChevronRight,
-  History,
   Leaf,
   Loader2,
   Minus,
+  Moon,
   Plus,
   RotateCcw,
   Search,
   Settings2,
   Soup,
   Star,
+  Sun,
   Trash2,
   Utensils,
   X
@@ -31,7 +32,6 @@ import {
 import {
   createDefaultProfile,
   loadLocalProfile,
-  normalizeName,
   saveLocalProfile,
   type LocalProfile,
   type PlannedMeal
@@ -50,8 +50,12 @@ const allergenOptions = [
   ['tree_nut', 'Tree nut']
 ] as const;
 
+const THEME_STORAGE_ID = 'elonmealsdb.theme.v1';
+type ThemeMode = 'light' | 'dark';
+
 export function App() {
   const [profile, setProfile] = useState<LocalProfile>(() => loadLocalProfile());
+  const [theme, setTheme] = useState<ThemeMode>(() => loadTheme());
   const [date, setDate] = useState('');
   const [availableDates, setAvailableDates] = useState<ServiceDateSummary[]>([]);
   const [restaurants, setRestaurants] = useState<RestaurantSummary[]>([]);
@@ -72,8 +76,11 @@ export function App() {
   const [maxCalories, setMaxCalories] = useState('');
   const [allergenFree, setAllergenFree] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const debouncedQuery = useDebouncedValue(query.trim(), 280);
 
   const selectedRestaurant = restaurants.find((restaurant) => restaurant.id === selectedRestaurantId) || restaurants[0] || null;
   const activeMeal = menu?.meals.find((meal) => meal.id === activeMealId) || menu?.meals[0] || null;
@@ -82,7 +89,7 @@ export function App() {
   const totals = useMemo(() => calculateTotals(todayMeals), [todayMeals]);
   const plannedItemCount = useMemo(() => todayMeals.reduce((count, meal) => count + meal.foods.reduce((sum, food) => sum + food.quantity, 0), 0), [todayMeals]);
   const favoriteIds = useMemo(() => new Set(profile.favoriteFoods.map((favorite) => favorite.foodId)), [profile.favoriteFoods]);
-  const activeFilters = Boolean(query || vegan || vegetarian || glutenFree || minProtein || maxCalories || allergenFree.length);
+  const activeFilters = Boolean(debouncedQuery || vegan || vegetarian || glutenFree || minProtein || maxCalories || allergenFree.length);
 
   const menuFoods = useMemo(() => {
     if (!activeMeal || !selectedRestaurant) return [];
@@ -100,12 +107,15 @@ export function App() {
   const tableFoods = useMemo(() => selectedStationId
     ? sourceFoods.filter((food) => food.stationId === selectedStationId)
     : sourceFoods, [sourceFoods, selectedStationId]);
-  const historyMeals = useMemo(() => [...profile.meals].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 8), [profile.meals]);
   const latestImportedDate = availableDates[0]?.serviceDate || '';
 
   useEffect(() => {
     saveLocalProfile(profile);
   }, [profile]);
+
+  useEffect(() => {
+    window.localStorage.setItem(THEME_STORAGE_ID, theme);
+  }, [theme]);
 
   useEffect(() => {
     let active = true;
@@ -162,16 +172,14 @@ export function App() {
       getRestaurants(date),
       getCoverageMetrics(date),
       getStationMetrics(date),
-      getFoods({ date }),
-      getFoods(buildFilters(date, query, vegan, vegetarian, glutenFree, minProtein, maxCalories, allergenFree))
+      getFoods({ date })
     ])
-      .then(([restaurantsResponse, metricsResponse, stationMetricsResponse, allFoodsResponse, filteredFoodsResponse]) => {
+      .then(([restaurantsResponse, metricsResponse, stationMetricsResponse, allFoodsResponse]) => {
         if (!active) return;
         setRestaurants(restaurantsResponse.restaurants);
         setMetrics(metricsResponse);
         setStationMetrics(stationMetricsResponse.stations);
         setAllFoods(allFoodsResponse.foods);
-        setFilteredFoods(filteredFoodsResponse.foods);
         setSelectedRestaurantId((current) => (
           restaurantsResponse.restaurants.some((restaurant) => restaurant.id === current)
             ? current
@@ -189,7 +197,38 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [date, query, vegan, vegetarian, glutenFree, minProtein, maxCalories, allergenFree]);
+  }, [date]);
+
+  useEffect(() => {
+    if (!date) return;
+
+    if (!activeFilters) {
+      setFilteredFoods([]);
+      setFilterLoading(false);
+      return;
+    }
+
+    let active = true;
+    setFilterLoading(true);
+    setError(null);
+
+    if (debouncedQuery && !safeSearch.test(debouncedQuery)) {
+      setError('Search accepts letters, numbers, spaces, and basic punctuation only.');
+      setFilterLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    getFoods(buildFilters(date, debouncedQuery, vegan, vegetarian, glutenFree, minProtein, maxCalories, allergenFree))
+      .then((response) => active && setFilteredFoods(response.foods))
+      .catch((caught: Error) => active && setError(caught.message))
+      .finally(() => active && setFilterLoading(false));
+
+    return () => {
+      active = false;
+    };
+  }, [date, activeFilters, debouncedQuery, vegan, vegetarian, glutenFree, minProtein, maxCalories, allergenFree]);
 
   useEffect(() => {
     if (!selectedRestaurantId) {
@@ -299,7 +338,7 @@ export function App() {
   }
 
   return (
-    <div className="product-shell">
+    <div className="product-shell" data-theme={theme}>
       <main>
         <header className="topbar">
           <div className="brand compact-brand">
@@ -313,19 +352,6 @@ export function App() {
             <span><CalendarDays size={15} /> Date</span>
             <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
           </label>
-          <label className="field location-field">
-            <span>Restaurant</span>
-            <select
-              value={selectedRestaurantId || ''}
-              onChange={(event) => setSelectedRestaurantId(Number(event.target.value))}
-              aria-label="Restaurant"
-              disabled={!restaurants.length}
-            >
-              {restaurants.length ? restaurants.map((restaurant) => (
-                <option value={restaurant.id} key={restaurant.id}>{restaurant.name}</option>
-              )) : <option value="">No restaurants imported</option>}
-            </select>
-          </label>
           <label className="search-field">
             <Search size={18} />
             <input
@@ -335,6 +361,14 @@ export function App() {
               aria-label="Search foods"
             />
           </label>
+          <button
+            className="icon-button theme-toggle"
+            type="button"
+            onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
+            aria-label={theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
+          >
+            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
         </header>
 
         {error && (
@@ -346,20 +380,27 @@ export function App() {
           </div>
         )}
 
+        <RestaurantTabs
+          restaurants={restaurants}
+          selectedRestaurantId={selectedRestaurantId}
+          loading={loading}
+          onSelect={setSelectedRestaurantId}
+        />
+
         <PlanSummaryBar
           profile={profile}
           totals={totals}
           itemCount={plannedItemCount}
-          mealsCount={todayMeals.length}
           date={date}
           onClearDay={clearToday}
+          onOpenSettings={() => setSettingsOpen(true)}
         />
 
         <section className="planner-grid">
           <section className="panel menu-panel" id="menu">
             <PanelHeader
               title={selectedRestaurant?.name || (loading ? 'Loading menu' : 'No menu imported')}
-              subtitle={selectedRestaurant && activeMeal ? formatMealSubtitle(activeMeal) : getMenuSubtitle(date, loading)}
+              subtitle={selectedRestaurant ? '' : getMenuSubtitle(date, loading)}
               icon={<Soup size={18} />}
             />
             {selectedRestaurant ? (
@@ -367,11 +408,15 @@ export function App() {
                 <div className="meal-tabs" role="tablist" aria-label="Meals">
                   {menu?.meals.map((meal) => {
                     const tabLabel = mealTabLabels.get(meal.id) || defaultMealTabLabel(meal);
+                    const isSelected = meal.id === activeMealId;
                     return (
                       <button
                         key={meal.id}
-                        className={meal.id === activeMealId ? 'selected' : ''}
+                        className={isSelected ? 'selected' : ''}
                         type="button"
+                        role="tab"
+                        aria-selected={isSelected}
+                        aria-controls="menu"
                         onClick={() => setActiveMealId(meal.id)}
                       >
                         <span>{tabLabel.primary}</span>
@@ -400,7 +445,7 @@ export function App() {
                     onMaxCalories={setMaxCalories}
                     onAllergenFree={setAllergenFree}
                   />
-                  {loading || !menu ? <LoadingState /> : (
+                  {loading || filterLoading || !menu ? <LoadingState /> : (
                     <FoodTable
                       foods={tableFoods}
                       favoriteIds={favoriteIds}
@@ -437,6 +482,7 @@ export function App() {
             metrics={metrics}
             foods={allFoods}
             stations={stationMetrics}
+            restaurants={restaurants}
             onSelect={setSelectedFood}
           />
 
@@ -454,47 +500,16 @@ export function App() {
               )) : <EmptyState text="Favorite foods will appear here." />}
             </div>
           </section>
-
-          <section className="panel" id="history">
-            <PanelHeader title="Meal History" subtitle="Recent plans saved in this browser" icon={<History size={18} />} />
-            <div className="history-list">
-              {historyMeals.length ? historyMeals.map((meal) => (
-                <div className="history-row" key={meal.id}>
-                  <div>
-                    <strong>{meal.mealName}</strong>
-                    <span>{meal.restaurantName} on {formatShortDate(meal.date)}</span>
-                  </div>
-                  <Badge tone="green">{round(calculateTotals([meal]).calories)} cal</Badge>
-                </div>
-              )) : <EmptyState text="Meals you build will be saved here." />}
-            </div>
-          </section>
-
-          <section className="panel settings-panel" id="settings">
-            <PanelHeader title="Profile And Goals" subtitle="Personal defaults for your plan" icon={<Settings2 size={18} />} />
-            <div className="settings-grid">
-              <label className="field">
-                <span>Name</span>
-                <input
-                  value={profile.name}
-                  maxLength={42}
-                  onChange={(event) => updateProfile({ name: event.target.value.slice(0, 42) })}
-                  onBlur={(event) => updateProfile({ name: normalizeName(event.target.value) })}
-                />
-              </label>
-              <GoalInput label="Calories" value={profile.dailyCaloriesGoal} min={500} max={6000} onChange={(value) => updateProfile({ dailyCaloriesGoal: value })} />
-              <GoalInput label="Protein" value={profile.dailyProteinsGoal} min={10} max={400} onChange={(value) => updateProfile({ dailyProteinsGoal: value })} />
-              <GoalInput label="Carbs" value={profile.dailyCarbsGoal} min={10} max={800} onChange={(value) => updateProfile({ dailyCarbsGoal: value })} />
-              <GoalInput label="Fat" value={profile.dailyFatsGoal} min={10} max={400} onChange={(value) => updateProfile({ dailyFatsGoal: value })} />
-            </div>
-            <div className="settings-actions">
-              <button className="secondary-button" type="button" onClick={resetLocalProfile}>
-                <RotateCcw size={16} /> Reset planner
-              </button>
-            </div>
-          </section>
         </section>
       </main>
+
+      <GoalSettingsDialog
+        profile={profile}
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onChange={updateProfile}
+        onReset={resetLocalProfile}
+      />
 
       <NutritionDrawer
         food={selectedFood}
@@ -508,13 +523,58 @@ export function App() {
   );
 }
 
-function NutritionInsightsPanel({ metrics, foods, stations, onSelect }: {
+function RestaurantTabs(props: {
+  restaurants: RestaurantSummary[];
+  selectedRestaurantId: number | null;
+  loading: boolean;
+  onSelect: (restaurantId: number) => void;
+}) {
+  if (props.loading && !props.restaurants.length) {
+    return (
+      <div className="restaurant-tabs loading" aria-label="Restaurants">
+        <span>Loading restaurants...</span>
+      </div>
+    );
+  }
+
+  if (!props.restaurants.length) {
+    return (
+      <div className="restaurant-tabs empty-tabs" aria-label="Restaurants">
+        <span>No restaurants imported for this date</span>
+      </div>
+    );
+  }
+
+  return (
+    <nav className="restaurant-tabs" role="tablist" aria-label="Restaurants">
+      {props.restaurants.map((restaurant) => {
+        const isSelected = restaurant.id === props.selectedRestaurantId;
+        return (
+          <button
+            key={restaurant.id}
+            type="button"
+            role="tab"
+            aria-selected={isSelected}
+            aria-controls="menu"
+            className={isSelected ? 'selected' : undefined}
+            onClick={() => props.onSelect(restaurant.id)}
+          >
+            <span>{restaurant.name}</span>
+            <small>{restaurant.foods_count} foods · {restaurant.meals_count} meals</small>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function NutritionInsightsPanel({ metrics, foods, stations, restaurants, onSelect }: {
   metrics: CoverageMetrics | null;
   foods: Food[];
   stations: StationMetric[];
+  restaurants: RestaurantSummary[];
   onSelect: (food: Food) => void;
 }) {
-  const foodCount = Math.max(1, metrics?.foods || 0);
   const proteinEfficiency = foods
     .filter((food) => food.calories > 0 && food.protein > 0)
     .map((food) => ({ food, score: (food.protein / food.calories) * 100 }))
@@ -525,11 +585,15 @@ function NutritionInsightsPanel({ metrics, foods, stations, onSelect }: {
     <section className="panel nutrition-panel">
       <PanelHeader
         title="Nutrition Insights"
-        subtitle="Station fit, dietary coverage, and high-value protein choices"
+        subtitle="Compare dining options, restrictions, and macro value"
         icon={<BarChart3 size={18} />}
       />
-      <DietaryCoverage metrics={metrics} foodCount={foodCount} />
-      <StationCompare stations={stations} />
+      <div className="insight-canvas">
+        <MacroBalance foods={foods} metrics={metrics} />
+        <DiningFitMatrix restaurants={restaurants} stations={stations} metrics={metrics} />
+        <ProteinScatter foods={foods} onSelect={onSelect} />
+        <StationSafety foods={foods} />
+      </div>
       <div className="protein-ranking" aria-label="Protein efficiency leaderboard">
         <div className="insight-section-title">
           <strong>Protein Efficiency</strong>
@@ -550,33 +614,92 @@ function NutritionInsightsPanel({ metrics, foods, stations, onSelect }: {
   );
 }
 
-function DietaryCoverage({ metrics, foodCount }: { metrics: CoverageMetrics | null; foodCount: number }) {
-  const rows = [
-    { label: 'Vegetarian', value: metrics?.vegetarian_items || 0 },
-    { label: 'Vegan', value: metrics?.vegan_items || 0 },
-    { label: 'Gluten free', value: metrics?.gluten_free_items || 0 }
-  ];
+function MacroBalance({ foods, metrics }: { foods: Food[]; metrics: CoverageMetrics | null }) {
+  const count = Math.max(1, foods.length);
+  const averages = foods.reduce((sum, food) => {
+    sum.calories += food.calories;
+    sum.protein += food.protein;
+    sum.carbs += food.totalCarbohydrates;
+    sum.fat += food.totalFat;
+    return sum;
+  }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  const proteinCalories = (averages.protein / count) * 4;
+  const carbCalories = (averages.carbs / count) * 4;
+  const fatCalories = (averages.fat / count) * 9;
+  const macroTotal = Math.max(1, proteinCalories + carbCalories + fatCalories);
+  const proteinShare = Math.round((proteinCalories / macroTotal) * 100);
+  const carbsShare = Math.round((carbCalories / macroTotal) * 100);
+  const fatShare = Math.max(0, 100 - proteinShare - carbsShare);
+  const avgCalories = metrics?.avg_calories ?? averages.calories / count;
 
   return (
-    <div className="coverage-panel" aria-label="Dietary coverage">
-      <div className="coverage-headline">
-        <div>
-          <span>Average calories</span>
-          <strong>{metrics?.avg_calories == null ? '-' : round(metrics.avg_calories)}</strong>
+    <div className="insight-card macro-balance" aria-label="Macro mix">
+      <div className="insight-section-title">
+        <strong>Macro Mix</strong>
+        <span>Average item profile</span>
+      </div>
+      <div className="macro-visual">
+        <div
+          className="macro-donut"
+          style={{ '--protein': `${proteinShare}%`, '--carbs': `${proteinShare + carbsShare}%` } as CSSProperties}
+        >
+          <strong>{round(avgCalories)}</strong>
+          <span>cal</span>
         </div>
-        <div>
-          <span>Foods indexed</span>
-          <strong>{metrics?.foods ?? 0}</strong>
+        <div className="macro-key">
+          <MiniBar label="Protein" value={proteinShare} tone="protein" />
+          <MiniBar label="Carbs" value={carbsShare} tone="carbs" />
+          <MiniBar label="Fat" value={fatShare} tone="fat" />
         </div>
       </div>
-      <div className="coverage-bars">
+    </div>
+  );
+}
+
+function DiningFitMatrix({ restaurants, stations, metrics }: {
+  restaurants: RestaurantSummary[];
+  stations: StationMetric[];
+  metrics: CoverageMetrics | null;
+}) {
+  const rows = restaurants.slice(0, 6).map((restaurant) => {
+    const stationRows = stations.filter((station) => station.restaurantId === restaurant.id);
+    const total = stationRows.reduce((sum, station) => sum + station.foodCount, 0) || restaurant.foods_count || 0;
+    const vegan = stationRows.reduce((sum, station) => sum + station.veganItems, 0);
+    const vegetarian = stationRows.reduce((sum, station) => sum + station.vegetarianItems, 0);
+    const glutenFree = stationRows.reduce((sum, station) => sum + station.glutenFreeItems, 0);
+    return {
+      restaurant,
+      total,
+      vegan,
+      vegetarian,
+      glutenFree,
+      fitScore: total ? Math.round(((vegetarian + vegan + glutenFree) / (total * 3)) * 100) : 0
+    };
+  });
+
+  if (!rows.length && !metrics?.restaurants) {
+    return <InsightEmpty title="Dining Fit" text="Restaurant comparison appears when menu data is available." />;
+  }
+
+  return (
+    <div className="insight-card dining-fit" aria-label="Dining fit matrix">
+      <div className="insight-section-title">
+        <strong>Dining Fit</strong>
+        <span>Diet-friendly options by restaurant</span>
+      </div>
+      <div className="fit-list">
         {rows.map((row) => (
-          <div className="coverage-row" key={row.label}>
-            <span>{row.label}</span>
-            <div className="coverage-track" aria-label={`${row.label} ${formatPercent(row.value, foodCount)}`}>
-              <span style={{ width: formatPercent(row.value, foodCount) }} />
+          <div className="fit-row" key={row.restaurant.id}>
+            <div>
+              <strong>{row.restaurant.name}</strong>
+              <small>{row.total} menu items</small>
             </div>
-            <strong>{formatPercent(row.value, foodCount)}</strong>
+            <div className="fit-bars" aria-label={`${row.restaurant.name} fit score ${row.fitScore}%`}>
+              <span className="fit-bar vegan" style={{ width: `${percentOf(row.vegan, row.total)}%` }} />
+              <span className="fit-bar vegetarian" style={{ width: `${percentOf(row.vegetarian, row.total)}%` }} />
+              <span className="fit-bar gf" style={{ width: `${percentOf(row.glutenFree, row.total)}%` }} />
+            </div>
+            <Badge tone={row.fitScore >= 50 ? 'green' : 'neutral'}>{row.fitScore}%</Badge>
           </div>
         ))}
       </div>
@@ -584,64 +707,122 @@ function DietaryCoverage({ metrics, foodCount }: { metrics: CoverageMetrics | nu
   );
 }
 
-function StationCompare({ stations }: { stations: StationMetric[] }) {
-  const shownStations = [...stations].sort((a, b) => b.avgProtein - a.avgProtein || a.avgCalories - b.avgCalories).slice(0, 6);
-  const maxProtein = Math.max(1, ...shownStations.map((station) => station.avgProtein));
-  const maxCalories = Math.max(1, ...shownStations.map((station) => station.avgCalories));
-  const stationNameCounts = shownStations.reduce((counts, station) => {
-    const name = station.stationName.toLowerCase();
-    counts.set(name, (counts.get(name) || 0) + 1);
-    return counts;
-  }, new Map<string, number>());
+function ProteinScatter({ foods, onSelect }: { foods: Food[]; onSelect: (food: Food) => void }) {
+  const points = foods
+    .filter((food) => food.calories > 0 && food.protein > 0)
+    .map((food) => ({ food, score: food.protein / food.calories }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 24);
+  const maxCalories = Math.max(1, ...points.map((point) => point.food.calories));
+  const maxProtein = Math.max(1, ...points.map((point) => point.food.protein));
+
+  if (!points.length) {
+    return <InsightEmpty title="Calories vs Protein" text="Protein value appears when nutrition data is available." />;
+  }
 
   return (
-    <div className="station-compare" aria-label="Station best fit matrix">
+    <div className="insight-card protein-map" aria-label="Calories versus protein">
       <div className="insight-section-title">
-        <strong>Station Best Fit</strong>
-        <span>{shownStations.length ? 'Protein, calories, and diet coverage' : 'No station data'}</span>
+        <strong>Calories vs Protein</strong>
+        <span>Upper left favors lean protein</span>
       </div>
-      {shownStations.length ? shownStations.map((station) => {
-        const protein = round(station.avgProtein);
-        const proteinWidth = Math.max(8, Math.round((station.avgProtein / maxProtein) * 100));
-        const calorieWidth = Math.max(8, Math.round((station.avgCalories / maxCalories) * 100));
-        const vegetarianShare = Math.round((station.vegetarianItems / Math.max(1, station.foodCount)) * 100);
-        const glutenFreeShare = Math.round((station.glutenFreeItems / Math.max(1, station.foodCount)) * 100);
-        return (
-          <div className="station-metric-row" key={station.stationId}>
-            <div className="station-metric-title">
-              <strong>{formatStationMetricTitle(station, stationNameCounts)}</strong>
-              <small>{station.restaurantName} - {station.mealName}</small>
-            </div>
-            <div className="station-metric-cell">
-              <span>Protein</span>
-              <div className="station-meter" aria-label={`${station.stationName} average protein ${protein} grams`}>
-                <span style={{ width: `${proteinWidth}%` }} />
-              </div>
-              <strong>{protein} g</strong>
-            </div>
-            <div className="station-metric-cell">
-              <span>Calories</span>
-              <div className="station-meter gold" aria-label={`${station.stationName} average calories ${round(station.avgCalories)}`}>
-                <span style={{ width: `${calorieWidth}%` }} />
-              </div>
-              <strong>{round(station.avgCalories)}</strong>
-            </div>
-            <div className="station-metric-tags">
-              <Badge tone="green">{vegetarianShare}% veg</Badge>
-              <Badge tone="gold">{glutenFreeShare}% GF</Badge>
-              <small>{station.foodCount} foods</small>
-            </div>
-          </div>
-        );
-      }) : <EmptyState text="Station comparison appears when menu data is available." />}
+      <div className="scatter-frame">
+        <span className="scatter-axis x">Calories</span>
+        <span className="scatter-axis y">Protein</span>
+        {points.map(({ food }) => (
+          <button
+            key={`${food.id}-${food.restaurantName || ''}-${food.stationName || ''}`}
+            className="scatter-point"
+            type="button"
+            title={`${food.shortName}: ${round(food.calories)} cal, ${round(food.protein)} g protein`}
+            style={{
+              left: `${Math.min(94, Math.max(4, (food.calories / maxCalories) * 92))}%`,
+              top: `${Math.min(90, Math.max(8, 94 - (food.protein / maxProtein) * 82))}%`
+            }}
+            onClick={() => onSelect(food)}
+            aria-label={`${food.shortName}, ${round(food.calories)} calories, ${round(food.protein)} grams protein`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
-function formatStationMetricTitle(station: StationMetric, nameCounts: Map<string, number>) {
-  const hasDuplicateName = (nameCounts.get(station.stationName.toLowerCase()) || 0) > 1;
-  if (!hasDuplicateName) return station.stationName;
-  return `${station.stationName} - ${formatTimeRange(station.mealTimeOpen, station.mealTimeClosed)}`;
+function StationSafety({ foods }: { foods: Food[] }) {
+  const stationMap = foods.reduce((map, food) => {
+    const stationName = food.stationName || food.mealName || 'Menu';
+    const key = `${food.restaurantName || 'Restaurant'}:${stationName}`;
+    const current = map.get(key) || {
+      key,
+      stationName,
+      restaurantName: food.restaurantName || 'Restaurant',
+      total: 0,
+      unflagged: 0
+    };
+    current.total += 1;
+    if (!hasAllergenFlag(food)) current.unflagged += 1;
+    map.set(key, current);
+    return map;
+  }, new Map<string, { key: string; stationName: string; restaurantName: string; total: number; unflagged: number }>());
+
+  const rows = Array.from(stationMap.values())
+    .filter((row) => row.total > 0)
+    .sort((a, b) => percentOf(b.unflagged, b.total) - percentOf(a.unflagged, a.total) || b.total - a.total)
+    .slice(0, 5);
+
+  if (!rows.length) {
+    return <InsightEmpty title="Allergen Flags" text="Allergen-aware station details appear with food data." />;
+  }
+
+  return (
+    <div className="insight-card station-safety" aria-label="Allergen flag station comparison">
+      <div className="insight-section-title">
+        <strong>Allergen Flags</strong>
+        <span>Stations with fewer flagged items</span>
+      </div>
+      <div className="safety-list">
+        {rows.map((row) => {
+          const unflaggedShare = percentOf(row.unflagged, row.total);
+          return (
+            <div className="safety-row" key={row.key}>
+              <div>
+                <strong>{row.stationName}</strong>
+                <small>{row.restaurantName}</small>
+              </div>
+              <div className="safety-meter" aria-label={`${row.stationName} ${unflaggedShare}% without flagged allergens`}>
+                <span style={{ width: `${unflaggedShare}%` }} />
+              </div>
+              <Badge tone={unflaggedShare >= 70 ? 'green' : 'gold'}>{unflaggedShare}%</Badge>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MiniBar({ label, value, tone }: { label: string; value: number; tone: 'protein' | 'carbs' | 'fat' }) {
+  return (
+    <div className="mini-bar">
+      <span>{label}</span>
+      <div className={`mini-track ${tone}`} aria-label={`${label} ${value}%`}>
+        <span style={{ width: `${value}%` }} />
+      </div>
+      <strong>{value}%</strong>
+    </div>
+  );
+}
+
+function InsightEmpty({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="insight-card">
+      <div className="insight-section-title">
+        <strong>{title}</strong>
+        <span>No data yet</span>
+      </div>
+      <EmptyState text={text} />
+    </div>
+  );
 }
 
 function NoMenuState({ date, latestDate, loading, onUseLatest }: {
@@ -722,12 +903,12 @@ function upsertPlannedFood(profile: LocalProfile, date: string, restaurant: Rest
   };
 }
 
-function PanelHeader({ title, subtitle, icon }: { title: string; subtitle: string; icon: ReactNode }) {
+function PanelHeader({ title, subtitle, icon }: { title: string; subtitle?: string; icon: ReactNode }) {
   return (
     <div className="panel-header">
       <div>
         <h2>{title}</h2>
-        <p>{subtitle}</p>
+        {subtitle ? <p>{subtitle}</p> : null}
       </div>
       <div className="panel-icon">{icon}</div>
     </div>
@@ -738,9 +919,9 @@ function PlanSummaryBar(props: {
   profile: LocalProfile;
   totals: MacroTotals;
   itemCount: number;
-  mealsCount: number;
   date: string;
   onClearDay: () => void;
+  onOpenSettings: () => void;
 }) {
   return (
     <section className="plan-summary-bar" aria-label="Today's Plan">
@@ -752,6 +933,9 @@ function PlanSummaryBar(props: {
         <Badge tone={props.itemCount ? 'green' : 'neutral'}>
           {formatSelectedCount(props.itemCount)} selected
         </Badge>
+        <button className="icon-button plan-settings-button" type="button" onClick={props.onOpenSettings} aria-label="Edit nutrition goals">
+          <Settings2 size={16} />
+        </button>
       </div>
       <div className="plan-summary-goals">
         <Goal label="Calories" value={props.totals.calories} max={props.profile.dailyCaloriesGoal} />
@@ -760,8 +944,7 @@ function PlanSummaryBar(props: {
         <Goal label="Fat" value={props.totals.fat} max={props.profile.dailyFatsGoal} unit="g" />
       </div>
       <div className="plan-summary-actions">
-        <span>{props.mealsCount} {pluralize(props.mealsCount, 'meal')} planned</span>
-        {props.mealsCount > 0 && (
+        {props.itemCount > 0 && (
           <button className="secondary-button compact" type="button" onClick={props.onClearDay}>
             <Trash2 size={14} /> Clear
           </button>
@@ -781,7 +964,7 @@ function MealPlanPanel(props: {
 }) {
   return (
     <aside className="panel plan-panel">
-      <PanelHeader title="Selected Foods" subtitle={formatShortDate(props.date)} icon={<Utensils size={18} />} />
+      <PanelHeader title="Selected Foods" icon={<Utensils size={18} />} />
       <div className="planned-meals">
         {props.meals.length ? props.meals.map((meal) => (
           <div className="planned-meal" key={meal.id}>
@@ -817,6 +1000,49 @@ function MealPlanPanel(props: {
         </button>
       )}
     </aside>
+  );
+}
+
+function GoalSettingsDialog(props: {
+  profile: LocalProfile;
+  open: boolean;
+  onClose: () => void;
+  onChange: (patch: Partial<LocalProfile>) => void;
+  onReset: () => void;
+}) {
+  if (!props.open) return null;
+
+  return (
+    <div className="modal-layer" role="presentation" onMouseDown={props.onClose}>
+      <section
+        className="goal-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="goal-dialog-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="drawer-header">
+          <div>
+            <h2 id="goal-dialog-title">Nutrition Goals</h2>
+            <p>Adjust the targets used by Today&apos;s Plan.</p>
+          </div>
+          <button className="icon-button" type="button" onClick={props.onClose} aria-label="Close goals">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="settings-grid">
+          <GoalInput label="Calories" value={props.profile.dailyCaloriesGoal} min={500} max={6000} onChange={(value) => props.onChange({ dailyCaloriesGoal: value })} />
+          <GoalInput label="Protein" value={props.profile.dailyProteinsGoal} min={10} max={400} onChange={(value) => props.onChange({ dailyProteinsGoal: value })} />
+          <GoalInput label="Carbs" value={props.profile.dailyCarbsGoal} min={10} max={800} onChange={(value) => props.onChange({ dailyCarbsGoal: value })} />
+          <GoalInput label="Fat" value={props.profile.dailyFatsGoal} min={10} max={400} onChange={(value) => props.onChange({ dailyFatsGoal: value })} />
+        </div>
+        <div className="settings-actions">
+          <button className="secondary-button" type="button" onClick={props.onReset}>
+            <RotateCcw size={16} /> Reset goals and planner
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -1161,6 +1387,17 @@ function resolveFoodSnapshot(food: Food, allFoods: Food[]) {
   return allFoods.find((item) => item.id === food.id) || food;
 }
 
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [value, delayMs]);
+
+  return debounced;
+}
+
 type MealTabLabel = {
   primary: string;
   secondary: string;
@@ -1187,11 +1424,6 @@ function defaultMealTabLabel(meal: Meal): MealTabLabel {
     primary: meal.name || 'Meal window',
     secondary: formatMealWindow(meal)
   };
-}
-
-function formatMealSubtitle(meal: Meal) {
-  const stationCount = meal.stations.length;
-  return `${meal.name || 'Meal window'} | ${formatMealWindow(meal)} | ${stationCount} ${stationCount === 1 ? 'station' : 'stations'}`;
 }
 
 function formatMealWindow(meal: Pick<Meal, 'time_open' | 'time_closed'>) {
@@ -1254,17 +1486,24 @@ function formatSelectedCount(value: number) {
   return Number.isInteger(value) ? String(value) : String(round(value));
 }
 
-function pluralize(count: number, singular: string) {
-  return count === 1 ? singular : `${singular}s`;
-}
-
 function round(value: number) {
   return Math.round(Number(value || 0) * 10) / 10;
 }
 
-function formatPercent(value: number, total: number) {
-  if (!total) return '-';
-  return `${Math.round((value / total) * 100)}%`;
+function percentOf(value: number, total: number) {
+  if (!total) return 0;
+  return Math.max(0, Math.min(100, Math.round((value / total) * 100)));
+}
+
+function hasAllergenFlag(food: Food) {
+  return Object.values(food.allergens).some(Boolean);
+}
+
+function loadTheme(): ThemeMode {
+  if (typeof window === 'undefined') return 'light';
+  const saved = window.localStorage.getItem(THEME_STORAGE_ID);
+  if (saved === 'light' || saved === 'dark') return saved;
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 function easternDateInput() {
