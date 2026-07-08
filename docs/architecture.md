@@ -63,6 +63,19 @@ The frontend asks `/api/service-dates` on startup. It selects the current Easter
 
 Import runs write operational metadata into `scraper_runs`. Successful imports record source URL, target date, counts, and timestamps. After a successful import, the scraper refreshes FastEmbed vectors in `food_search_embeddings` for each food appearance on that service date. Failed scheduled imports also write a `failed` row with an error message and then keep the scheduler alive for the next configured run; one-shot imports still return a nonzero exit after recording the failed run. `scraper_runs.foods_count` tracks food appearances imported across stations and meals, while dashboard coverage metrics use distinct food ids.
 
+## Frontend Structure
+
+The React frontend is split by product responsibility instead of keeping the dashboard in one large component:
+
+- `frontend/src/app`: shared constants, table/search types, local formatting, sorting, CSV export, planner helpers, and chart geometry helpers.
+- `frontend/src/components/timeline.tsx`: restaurant open-window tabs and current-time affordances.
+- `frontend/src/components/planner.tsx`: pinned nutrition totals, selected-food planning, export, quantity controls, and goal settings.
+- `frontend/src/components/menuControls.tsx`: dietary filters, allergen controls, table column picker, view mode toggle, and station chips.
+- `frontend/src/components/foodViews.tsx`: table and compact overview modes for browsing foods by station.
+- `frontend/src/components/insights.tsx`: SQL-backed nutrition visualizations and useful reviewer-facing tables.
+- `frontend/src/components/panels.tsx`: nutrition drawer, global search dialog, and favorites.
+- `frontend/src/styles`: scoped CSS sections for tokens/base, layout/planner, menu table, insights, overlays, and responsive motion.
+
 ## Local Planning State
 
 The app stores the user's profile, safety preferences, favorites, planned meals, quantities, and nutrition goals in `localStorage` under a versioned key. That keeps the full planning workflow available without introducing a public write API. Clearing browser storage resets only the personal planner state; the menu database remains unchanged.

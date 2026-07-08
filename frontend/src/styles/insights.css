@@ -1,0 +1,720 @@
+.nutrition-panel {
+  margin-top: 14px;
+}
+
+.insight-canvas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.insight-card {
+  min-height: 184px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.insight-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.insight-section-title strong {
+  font-size: 13px;
+}
+
+.insight-section-title span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.chart-legend,
+.macro-stack-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.diet-dot,
+.macro-stack-legend span {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  flex: 0 0 10px;
+  border-radius: 999px;
+}
+
+.diet-dot.vegan,
+.scatter-point.vegan,
+.triangle-svg-point.vegan {
+  --point-color: var(--accent);
+}
+
+.diet-dot.vegetarian,
+.scatter-point.vegetarian,
+.triangle-svg-point.vegetarian {
+  --point-color: var(--macro-carbs);
+}
+
+.diet-dot.omnivore,
+.scatter-point.omnivore,
+.triangle-svg-point.omnivore {
+  --point-color: var(--macro-protein);
+}
+
+.diet-dot,
+.macro-stack-legend .protein {
+  background: var(--point-color, var(--accent));
+}
+
+.macro-visual {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.macro-donut {
+  width: 98px;
+  height: 98px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, var(--surface) 0 55%, transparent 56%),
+    conic-gradient(var(--chart-protein) 0 var(--protein), var(--chart-carbs) var(--protein) var(--carbs), var(--chart-fat) var(--carbs) 100%);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.macro-donut strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.macro-donut span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.macro-key,
+.fit-list,
+.safety-list {
+  display: grid;
+  gap: 9px;
+}
+
+.mini-bar,
+.fit-row,
+.safety-row {
+  display: grid;
+  align-items: center;
+  gap: 9px;
+}
+
+.mini-bar {
+  grid-template-columns: minmax(74px, 1fr) minmax(80px, 1.2fr) auto;
+}
+
+.fit-row {
+  grid-template-columns: minmax(128px, 1fr) minmax(110px, 1fr) auto;
+}
+
+.safety-row {
+  grid-template-columns: minmax(118px, 1fr) minmax(90px, 1fr) auto;
+}
+
+.mini-bar span,
+.fit-row small,
+.safety-row small,
+.scatter-axis {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.mini-bar strong {
+  font-size: 12px;
+  text-align: right;
+}
+
+.mini-track,
+.safety-meter {
+  height: 8px;
+}
+
+.mini-track span,
+.safety-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 320ms ease;
+}
+
+.mini-track.protein span,
+.safety-meter span,
+.fit-bar.vegetarian {
+  background: var(--chart-protein);
+}
+
+.mini-track.carbs span,
+.fit-bar.gf {
+  background: var(--chart-carbs);
+}
+
+.mini-track.fat span,
+.fit-bar.vegan {
+  background: var(--chart-fat);
+}
+
+.fit-row > div:first-child,
+.safety-row > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.fit-row strong,
+.safety-row strong,
+.protein-row strong,
+.protein-row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fit-bars {
+  position: relative;
+  height: 10px;
+}
+
+.fit-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 4px;
+  border-radius: inherit;
+  opacity: 0.86;
+}
+
+.fit-bar.vegetarian {
+  opacity: 0.42;
+}
+
+.fit-bar.gf {
+  opacity: 0.68;
+}
+
+.scatter-frame {
+  position: relative;
+  min-height: 188px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 0.5px), color-mix(in srgb, var(--border) 72%, transparent) calc(50% - 0.5px), color-mix(in srgb, var(--border) 72%, transparent) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(0deg, transparent calc(50% - 0.5px), color-mix(in srgb, var(--border) 72%, transparent) calc(50% - 0.5px), color-mix(in srgb, var(--border) 72%, transparent) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    color-mix(in srgb, var(--surface-soft) 82%, var(--surface));
+}
+
+.protein-map .scatter-frame {
+  min-height: 286px;
+}
+
+.scatter-axis {
+  position: absolute;
+  pointer-events: none;
+}
+
+.scatter-axis.x {
+  right: 9px;
+  bottom: 7px;
+}
+
+.scatter-axis.y {
+  left: 9px;
+  top: 7px;
+}
+
+.scatter-point {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+  padding: 0;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--point-color, var(--chart-protein));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--point-color, var(--chart-protein)) 60%, var(--border));
+  transform: translate(-50%, -50%);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.scatter-point > span {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  z-index: 2;
+  max-width: 176px;
+  min-height: 24px;
+  display: none;
+  align-items: center;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: left;
+  box-shadow: var(--shadow);
+  transform: translateY(-50%);
+  white-space: normal;
+}
+
+.scatter-point:hover,
+.scatter-point:focus-visible {
+  transform: translate(-50%, -50%) scale(1.45);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.scatter-point:hover > span,
+.scatter-point:focus-visible > span {
+  display: inline-flex;
+}
+
+.macro-triangle-card,
+.heatmap-card {
+  overflow: visible;
+}
+
+.macro-triangle-frame {
+  position: relative;
+  min-height: clamp(348px, 42vw, 444px);
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  padding: 2px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-soft) 72%, var(--surface));
+  isolation: isolate;
+}
+
+.macro-triangle-plot {
+  position: relative;
+  width: min(100%, 438px);
+  aspect-ratio: 1;
+  overflow: visible;
+}
+
+.macro-triangle-bg {
+  z-index: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.macro-triangle-points {
+  z-index: 4;
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.triangle-shell {
+  fill: color-mix(in srgb, var(--accent-soft) 36%, var(--surface));
+  stroke: color-mix(in srgb, var(--accent) 64%, var(--border-strong));
+  stroke-linejoin: round;
+  stroke-width: 1.2;
+}
+
+.triangle-label {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.product-shell[data-theme='dark'] .macro-triangle-frame {
+  border-color: #263631;
+  background: rgb(19 26 23);
+}
+
+.product-shell[data-theme='dark'] .triangle-shell {
+  fill: rgb(12 19 17);
+  stroke: color-mix(in srgb, var(--accent) 72%, white);
+}
+
+.product-shell[data-theme='dark'] .triangle-label {
+  color: color-mix(in srgb, white 78%, var(--muted));
+}
+
+.triangle-label::before {
+  width: 8px;
+  height: 8px;
+  display: block;
+  flex: 0 0 8px;
+  border-radius: 999px;
+  background: var(--label-color);
+  content: '';
+}
+
+.triangle-label.protein {
+  --label-color: var(--macro-protein);
+  top: 5.4%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.triangle-label.carbs {
+  --label-color: var(--macro-carbs);
+  bottom: 7.8%;
+  left: 2%;
+}
+
+.triangle-label.fat {
+  --label-color: var(--macro-fat);
+  right: 2%;
+  bottom: 7.8%;
+}
+
+.triangle-point {
+  z-index: 5;
+}
+
+.triangle-point.label-left > span {
+  right: 14px;
+  left: auto;
+}
+
+.heatmap-legend {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.heatmap-legend span:nth-child(2) {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, hsl(5 74% 88%), hsl(48 70% 72%), hsl(130 64% 54%));
+}
+
+.constraint-heatmap {
+  --constraint-columns: 8;
+  --heatmap-row-height: 66px;
+  display: grid;
+  grid-template-columns: minmax(142px, 150px) repeat(var(--constraint-columns), minmax(38px, 1fr));
+  align-items: stretch;
+  gap: 4px;
+  overflow: visible;
+  padding-bottom: 6px;
+}
+
+.heatmap-station-heading,
+.heatmap-column-heading,
+.heatmap-station-name,
+.heatmap-cell {
+  min-width: 0;
+}
+
+.heatmap-station-heading,
+.heatmap-column-heading {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.heatmap-column-heading {
+  writing-mode: vertical-rl;
+  min-height: 68px;
+  justify-self: center;
+  text-align: left;
+}
+
+.heatmap-station-name {
+  min-height: var(--heatmap-row-height);
+  height: var(--heatmap-row-height);
+  display: grid;
+  gap: 1px;
+  align-content: center;
+  padding: 6px 7px 6px 0;
+  border-top: 1px solid var(--border);
+}
+
+.heatmap-station-name strong,
+.fingerprint-row strong,
+.insight-table-row strong,
+.coverage-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heatmap-station-name small,
+.fingerprint-row small,
+.insight-table-row small,
+.coverage-row small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.heatmap-station-name strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.heatmap-cell {
+  position: relative;
+  min-height: var(--heatmap-row-height);
+  height: var(--heatmap-row-height);
+  display: block;
+  border: 1px solid color-mix(in srgb, var(--border) 56%, transparent);
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  cursor: default;
+}
+
+.heatmap-cell:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.heatmap-cell > span {
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  z-index: 5;
+  display: none;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1;
+  box-shadow: var(--shadow);
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+}
+
+.heatmap-cell:hover > span,
+.heatmap-cell.active > span,
+.heatmap-cell:focus > span,
+.heatmap-cell:focus-visible > span {
+  display: inline-flex;
+}
+
+.fingerprint-list,
+.insight-table-list,
+.coverage-list {
+  display: grid;
+  gap: 8px;
+}
+
+.station-fingerprints {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.station-fingerprints .fingerprint-list {
+  min-height: 176px;
+  align-content: space-evenly;
+  gap: 12px;
+}
+
+.fingerprint-row,
+.coverage-row {
+  display: grid;
+  grid-template-columns: minmax(118px, 0.9fr) minmax(110px, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+}
+
+.fingerprint-row > div:first-child,
+.coverage-row > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.fingerprint-bar,
+.coverage-meter {
+  overflow: hidden;
+  height: 12px;
+  display: flex;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 58%, transparent);
+}
+
+.fingerprint-bar span,
+.coverage-meter span {
+  display: block;
+  height: 100%;
+}
+
+.fingerprint-bar .protein,
+.macro-stack-legend .protein {
+  background: var(--chart-protein);
+}
+
+.fingerprint-bar .carbs,
+.macro-stack-legend .carbs {
+  background: var(--chart-carbs);
+}
+
+.fingerprint-bar .fat,
+.macro-stack-legend .fat {
+  background: var(--chart-fat);
+}
+
+.coverage-meter span {
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--macro-calories-2));
+}
+
+.insight-tables {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+  gap: 12px;
+  padding: 14px;
+}
+
+.insight-table-card {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 11px;
+  padding: 12px;
+}
+
+.insight-table-row {
+  min-width: 0;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  padding: 8px 9px;
+  text-align: left;
+}
+
+.insight-table-row > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.protein-ranking {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+}
+
+.protein-ranking .insight-section-title {
+  grid-column: 1 / -1;
+}
+
+.protein-row {
+  min-width: 0;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.protein-rank {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.protein-row div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.protein-row small {
+  color: var(--muted);
+}
+
+.protein-row .badge {
+  grid-column: 2;
+  justify-self: start;
+  width: max-content;
+  min-width: 46px;
+  min-height: 28px;
+  padding: 4px 10px;
+}
+
+.food-list-item {
+  padding: 12px;
+}
+
+.favorite-list-item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 34px;
+  align-items: center;
+}
+
+.favorite-list-item .favorite-inline {
+  justify-self: start;
+}
+
+.favorite-list-item .primary-row-button {
+  justify-self: end;
+}
+
+.favorite-list-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

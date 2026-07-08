@@ -1,0 +1,499 @@
+.data-table-wrap {
+  overflow-x: auto;
+}
+
+.mobile-food-rows {
+  display: none;
+}
+
+.food-table {
+  max-height: clamp(620px, 78vh, 1120px);
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.food-table .data-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
+.food-overview {
+  max-height: clamp(620px, 78vh, 1120px);
+  display: grid;
+  align-content: start;
+  gap: 11px;
+  overflow: auto;
+  padding: 12px;
+  scrollbar-width: thin;
+}
+
+.overview-station {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--border);
+}
+
+.overview-station:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.overview-station-heading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overview-station-heading strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-food-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 6px;
+}
+
+.overview-food-item {
+  min-width: 0;
+  min-height: 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, var(--surface-soft));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface-soft) 66%, var(--surface));
+  overflow: hidden;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.overview-food,
+.overview-add-food {
+  min-width: 0;
+  min-height: 30px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.1;
+}
+
+.overview-food {
+  overflow: hidden;
+  padding: 0 9px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-add-food {
+  display: grid;
+  place-items: center;
+  border-left: 1px solid var(--border);
+  color: var(--accent-strong);
+}
+
+.overview-food-item:hover {
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.overview-food-item:hover .overview-food,
+.overview-food-item:hover .overview-add-food {
+  color: var(--accent-strong);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.data-table th {
+  background: var(--table-head);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sort-header {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.sort-header svg {
+  color: var(--faint);
+}
+
+.sort-header.active,
+th[aria-sort='ascending'],
+th[aria-sort='descending'] {
+  color: var(--accent-strong);
+}
+
+.sort-header.active svg {
+  color: var(--accent);
+}
+
+.data-table td:first-child {
+  min-width: 220px;
+}
+
+.data-table td small {
+  display: block;
+}
+
+.food-name-cell {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.favorite-inline {
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  flex: 0 0 30px;
+  color: var(--gold);
+}
+
+.food-name-cell .link-button {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.station-cell {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.macro-cell {
+  font-weight: 800;
+}
+
+.macro-cell.calories {
+  color: var(--macro-calories);
+}
+
+.macro-cell.protein {
+  color: var(--macro-protein);
+}
+
+.macro-cell.carbs {
+  color: var(--macro-carbs);
+}
+
+.macro-cell.fat {
+  color: var(--macro-fat);
+}
+
+.data-table tbody tr {
+  transition: background-color 140ms ease;
+}
+
+.data-table tbody tr:hover {
+  background: color-mix(in srgb, var(--accent-soft) 48%, transparent);
+}
+
+.data-table tbody tr.highlighted-row {
+  background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.link-button {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 0;
+  text-align: left;
+}
+
+.link-button.strong {
+  font-weight: 780;
+}
+
+.row-actions-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.data-table th.row-actions-header,
+.data-table td.row-actions {
+  position: sticky;
+  right: 0;
+  background: var(--surface);
+  box-shadow: -8px 0 12px color-mix(in srgb, var(--surface) 82%, transparent);
+  width: 92px;
+  min-width: 92px;
+  vertical-align: middle;
+}
+
+.data-table td.row-actions {
+  z-index: 2;
+}
+
+.data-table th.row-actions-header {
+  z-index: 5;
+  background: var(--table-head);
+  box-shadow: -8px 0 12px color-mix(in srgb, var(--table-head) 82%, transparent);
+}
+
+.data-table tbody tr:hover td.row-actions,
+.data-table tbody tr.highlighted-row td.row-actions {
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--surface));
+}
+
+.primary-row-button.icon-only {
+  width: 34px;
+  min-width: 34px;
+  padding: 0;
+}
+
+.add-action-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.add-action-button.is-added,
+.add-action-button.is-added:disabled {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  opacity: 1;
+  animation: addConfirm 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.add-feedback-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 16px;
+}
+
+.add-feedback-icon svg {
+  grid-area: 1 / 1;
+  transition: opacity 150ms ease, transform 190ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.add-feedback-check {
+  opacity: 0;
+  transform: scale(0.45) rotate(-35deg);
+}
+
+.add-feedback-icon.is-added .add-feedback-plus {
+  opacity: 0;
+  transform: scale(0.5) rotate(90deg);
+}
+
+.add-feedback-icon.is-added .add-feedback-check {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.badge.green {
+  color: color-mix(in srgb, var(--accent-strong) 82%, #0f5132);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.badge.gold {
+  color: color-mix(in srgb, var(--gold) 72%, var(--ink));
+  background: var(--gold-soft);
+  border-color: color-mix(in srgb, var(--gold) 40%, var(--border));
+}
+
+.badge.red {
+  color: color-mix(in srgb, var(--danger) 80%, var(--ink));
+  background: var(--danger-soft);
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+}
+
+.badge.neutral {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface-soft) 88%, var(--surface));
+  border-color: var(--border);
+}
+
+.badge.count-bump {
+  animation: countBump 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.dietary {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.plan-panel {
+  align-self: start;
+  position: sticky;
+  top: 150px;
+  max-height: calc(100vh - 164px);
+  overflow-y: auto;
+}
+
+.planner-grid.overview-mode .plan-panel {
+  position: static;
+  max-height: none;
+  overflow: visible;
+}
+
+.selected-foods-header > div:first-child {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.selected-foods-header h2 {
+  line-height: 1;
+}
+
+.planned-meals,
+.compact-list {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.planned-meal {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.planned-meal-header,
+.planned-food,
+.food-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.planned-meal-header div,
+.planned-food div,
+.food-list-item div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.planned-food {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  margin-inline: -8px;
+  border-top: 1px solid var(--border);
+  border-radius: 8px;
+  padding-top: 9px;
+  padding-inline: 8px;
+  transition: background-color 170ms ease, border-color 170ms ease, box-shadow 170ms ease, transform 170ms ease;
+}
+
+.planned-food.is-added-pulse {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+  animation: selectedFoodPulse 820ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.planned-food.is-added-pulse .quantity-stepper span {
+  animation: countBump 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.quantity-stepper {
+  min-height: 32px;
+  display: grid;
+  grid-template-columns: 30px 40px 30px;
+  align-items: center;
+  overflow: hidden;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.quantity-stepper button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 0;
+  display: grid;
+  place-items: center;
+}
+
+.quantity-stepper span {
+  min-width: 0;
+  color: var(--ink);
+  font-weight: 750;
+  text-align: center;
+}
+
+.plan-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.plan-actions .secondary-button {
+  width: 100%;
+}
+
+.lower-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}

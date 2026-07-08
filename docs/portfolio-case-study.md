@@ -67,6 +67,7 @@ Personal meal-planning state stays in browser storage. The public backend serves
 ### Frontend Product Work
 
 - Rebuilt the UI as a dense but approachable data app instead of a static class-project interface.
+- Split the React frontend into feature modules for timeline, planner, menu controls, food views, nutrition insights, panels, shared utilities, and scoped stylesheet sections.
 - Added responsive desktop/mobile layouts with accessible controls and real local state.
 - Added planner workflows without server-side accounts by using browser-local storage.
 - Surfaced station filtering, nutrition coverage, station best-fit comparison, and protein-efficiency ranking directly in the dashboard.

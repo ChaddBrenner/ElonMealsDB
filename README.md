@@ -64,6 +64,7 @@ See [docs/architecture.md](docs/architecture.md) for the system design, [docs/sq
 - Secure API defaults: request validation, rate limits, parameterized queries, structured errors, no stack traces in responses.
 - Docker-first deployment with private DB networking and non-root application containers.
 - A production-style frontend with imported-date browsing, local favorites, a dated meal planner, station comparison, nutrition insights, CSV export, responsive tables, and a detail drawer.
+- A decomposed React frontend with feature-oriented modules for timeline, planner, menu controls, food views, insights, panels, shared utilities, and scoped stylesheet sections.
 
 For a short reviewer walkthrough, use [docs/demo-walkthrough.md](docs/demo-walkthrough.md).
 
