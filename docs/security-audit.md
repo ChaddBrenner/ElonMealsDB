@@ -1,6 +1,6 @@
 # Security Audit
 
-Last verified: 2026-07-06
+Last public-readiness gate verified: 2026-07-08
 
 ## Automated Checks
 
