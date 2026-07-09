@@ -3,7 +3,6 @@ FROM python:3.12-slim-bookworm AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV HOME=/home/elon
-ENV FASTEMBED_CACHE_PATH=/home/elon/.cache/fastembed
 
 WORKDIR /app
 RUN apt-get update \
@@ -11,7 +10,6 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --system --gid 10001 elon \
   && useradd --system --uid 10001 --gid elon --home-dir /home/elon --create-home --shell /usr/sbin/nologin elon \
-  && mkdir -p /home/elon/.cache/fastembed \
   && chown -R elon:elon /home/elon
 
 COPY requirements.txt .

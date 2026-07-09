@@ -20,7 +20,7 @@ Campus dining data is useful but awkward to explore when menus, nutrition detail
 - A Docker Compose deployment with frontend, backend, MySQL, private one-shot scraper, and recurring scheduler service.
 - A React/Vite dashboard with restaurant/date selection, compact top controls, pinned daily nutrition progress, menu tabs, clickable station filters, food search, dietary/allergen filters, SQL-backed nutrition insights, nutrition drawer, favorites, selected-food planning, CSV export, and nutrition goals.
 - SQL/API examples in docs and `/api/sql-proof`, kept out of the main product UI so the app still feels like a dining planner.
-- Public docs for architecture, API usage, SQL walkthroughs, deployment, security, and a demo script.
+- A small public docs set for the SQL model, deployment, security notes, and this portfolio writeup.
 
 ## Architecture
 
@@ -74,20 +74,18 @@ Personal meal-planning state stays in browser storage. The public backend serves
 - Surfaced station filtering, nutrition coverage, station best-fit comparison, and protein-efficiency ranking directly in the dashboard.
 - Added screenshots and e2e coverage without turning the product surface into a checklist.
 
-## Demo Script
+## Demo Path
 
-1. Start the Docker stack.
-2. Open the dashboard and select a service date.
-3. Search for a food and open its nutrition drawer.
-4. Favorite the food and add it to the meal plan.
-5. Show macro totals updating locally.
-6. Click station chips and show the table filtering by station.
-7. Show Nutrition Insights: dietary coverage, station best-fit rows, and protein efficiency.
-8. Run `/api/sql-proof` and a direct MySQL join from `docs/demo-walkthrough.md`.
-9. Show the scraper scheduler logs and `scraper_runs` audit trail.
-10. Show the read-only DB user write attempt failing with `ER_TABLEACCESS_DENIED_ERROR`.
+This is the path I would use in an interview or blog post:
 
-Full script: [demo-walkthrough.md](demo-walkthrough.md).
+1. Start the Docker stack and open the dashboard.
+2. Pick a service date, search for a food, and open the nutrition drawer.
+3. Favorite the food, add it to the meal plan, and show macro totals updating locally.
+4. Click station chips and show the table filtering by station.
+5. Show Nutrition Insights: dietary coverage, station best-fit rows, and protein efficiency.
+6. Run `/api/sql-proof` and one direct MySQL query from [sql-walkthrough.md](sql-walkthrough.md).
+7. Show the scraper scheduler logs and `scraper_runs` audit trail.
+8. Show the read-only DB user write attempt failing with `ER_TABLEACCESS_DENIED_ERROR`.
 
 ## Screenshots
 
@@ -110,6 +108,8 @@ npm run verify:docker
 
 GitHub Actions runs `node`, `scraper`, and `docker` jobs on pull requests and pushes. The Docker job builds the images, starts Compose, checks health/API routes, checks malformed JSON handling, and verifies that the backend database user cannot write.
 
+Locally, `npm run verify` covers the code path without needing the full Docker runtime. `npm run verify:docker` is the stronger end-to-end gate when Docker is available.
+
 ## Resume Bullets
 
 - Re-architected a legacy dining app into a Dockerized React, Express, MySQL, and Python scraper system with a secure read-only public API and private scheduled import path.
@@ -118,8 +118,5 @@ GitHub Actions runs `node`, `scraper`, and `docker` jobs on pull requests and pu
 
 ## Links
 
-- [Architecture](architecture.md)
 - [SQL walkthrough](sql-walkthrough.md)
-- [Demo walkthrough](demo-walkthrough.md)
-- [Deployment](deployment.md)
-- [Security audit](security-audit.md)
+- [Deployment and security](deployment.md)

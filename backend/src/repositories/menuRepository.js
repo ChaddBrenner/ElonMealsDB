@@ -1,5 +1,4 @@
 import { query } from '../db.js';
-import { config } from '../config.js';
 import { notFound } from '../errors.js';
 
 const foodColumns = `f.id, f.external_id, f.short_name, f.full_name, f.description, f.ingredients,
@@ -9,14 +8,8 @@ const foodColumns = `f.id, f.external_id, f.short_name, f.full_name, f.descripti
   f.allergy_egg, f.allergy_shellfish, f.allergy_soy, f.allergy_peanut, f.allergy_wheat,
   f.allergy_tree_nut, f.allergy_milk, f.allergy_sesame, f.allergy_fish`;
 const foodFullTextExpression = 'MATCH(f.short_name, f.full_name, f.description, f.ingredients) AGAINST (:fullTextSearch IN NATURAL LANGUAGE MODE)';
-const semanticCandidateLimit = 5000;
 const resultLimit = 200;
-const semanticScoreThreshold = 0.68;
-const singleTermSemanticScoreThreshold = 0.72;
 const insightFoodLimit = 48;
-
-let embeddingTableCache = { checkedAt: 0, exists: false };
-const queryEmbeddingCache = new Map();
 
 export const supportedAllergens = new Map([
   ['egg', 'allergy_egg'],
@@ -166,7 +159,6 @@ export async function listFoods(filters) {
   const where = ['r.service_date = :serviceDate'];
   const params = { serviceDate };
   const hasSearch = Boolean(filters.q);
-  const semanticSearch = hasSearch ? await getSemanticSearch(filters.q) : null;
 
   if (filters.vegan !== undefined) where.push('f.vegan = :vegan');
   if (filters.vegetarian !== undefined) where.push('f.vegetarian = :vegetarian');
@@ -189,7 +181,7 @@ export async function listFoods(filters) {
     params.exactSearch = filters.q;
   }
 
-  if (hasSearch && !semanticSearch) {
+  if (hasSearch) {
     where.push(`(
       ${foodFullTextExpression} > 0
       OR f.short_name LIKE :searchLike ESCAPE '\\\\'
@@ -226,33 +218,9 @@ export async function listFoods(filters) {
       END AS food_search_boost`
     : '';
 
-  const semanticSelect = semanticSearch
-    ? `,
-      fse.dimension AS search_embedding_dimension,
-      fse.embedding AS search_embedding`
-    : '';
-
-  const semanticJoin = semanticSearch
-    ? `
-    LEFT JOIN food_search_embeddings fse
-      ON fse.service_date = r.service_date
-      AND fse.restaurant_id = r.id
-      AND fse.meal_id = m.id
-      AND fse.station_id = s.id
-      AND fse.food_id = f.id
-      AND fse.model = :semanticModel`
-    : '';
-
-  if (semanticSearch) {
-    params.semanticModel = semanticSearch.model;
-  }
-
-  const orderBy = semanticSearch
-    ? `f.short_name ASC, m.time_open ASC, s.name ASC`
-    : hasSearch
+  const orderBy = hasSearch
     ? `food_search_boost DESC, food_search_score DESC, f.short_name ASC, m.time_open ASC, s.name ASC`
     : `f.short_name ASC`;
-  const limit = semanticSearch ? semanticCandidateLimit : resultLimit;
 
   const rows = await query(`
     SELECT DISTINCT
@@ -266,21 +234,17 @@ export async function listFoods(filters) {
       m.time_open AS meal_time_open,
       m.time_closed AS meal_time_closed
       ${searchSelect}
-      ${semanticSelect}
     FROM restaurants r
     JOIN meals m ON m.restaurant_id = r.id
     JOIN stations s ON s.meal_id = m.id
     JOIN station_foods sf ON sf.station_id = s.id
     JOIN foods f ON f.id = sf.food_id
-    ${semanticJoin}
     WHERE ${where.join(' AND ')}
     ORDER BY ${orderBy}
-    LIMIT ${limit}
+    LIMIT ${resultLimit}
   `, params);
 
-  const resultRows = semanticSearch ? rankSemanticRows(rows, semanticSearch.vector, filters.q) : rows;
-
-  return resultRows.map((row) => ({
+  return rows.map((row) => ({
     ...mapFood(row),
     restaurantId: row.restaurant_id,
     restaurantName: row.restaurant_name,
@@ -777,222 +741,6 @@ function getMealPeriod(timeOpen, fallback) {
 function getHour(value) {
   const match = String(value || '').match(/[T\s](\d{2}):/);
   return match ? Number(match[1]) : null;
-}
-
-async function getSemanticSearch(searchText) {
-  if (!config.SEMANTIC_SEARCH_ENABLED || !config.EMBEDDING_SERVICE_URL) {
-    return null;
-  }
-  if (!await hasEmbeddingTable()) {
-    return null;
-  }
-
-  const vector = await getQueryEmbedding(searchText);
-  return vector ? { vector, model: config.FASTEMBED_MODEL } : null;
-}
-
-async function hasEmbeddingTable() {
-  const now = Date.now();
-  if (now - embeddingTableCache.checkedAt < 60000) {
-    return embeddingTableCache.exists;
-  }
-
-  try {
-    const rows = await query(`
-      SELECT COUNT(*) AS table_count
-      FROM information_schema.tables
-      WHERE table_schema = DATABASE()
-        AND table_name = 'food_search_embeddings'
-      LIMIT 1
-    `);
-    embeddingTableCache = {
-      checkedAt: now,
-      exists: Number(rows[0]?.table_count || 0) > 0
-    };
-  } catch {
-    embeddingTableCache = { checkedAt: now, exists: false };
-  }
-  return embeddingTableCache.exists;
-}
-
-async function getQueryEmbedding(searchText) {
-  const cacheKey = `${config.FASTEMBED_MODEL}\n${searchText.trim().toLowerCase()}`;
-  if (queryEmbeddingCache.has(cacheKey)) {
-    return queryEmbeddingCache.get(cacheKey);
-  }
-
-  const endpoint = `${config.EMBEDDING_SERVICE_URL.replace(/\/$/, '')}/embed`;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), config.EMBEDDING_REQUEST_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: searchText,
-        model: config.FASTEMBED_MODEL
-      }),
-      signal: controller.signal
-    });
-    if (!response.ok) {
-      return null;
-    }
-
-    const payload = await response.json();
-    const vector = normalizeVector(payload.embedding);
-    if (!vector) {
-      return null;
-    }
-    queryEmbeddingCache.set(cacheKey, vector);
-    if (queryEmbeddingCache.size > 100) {
-      queryEmbeddingCache.delete(queryEmbeddingCache.keys().next().value);
-    }
-    return vector;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-export function rankSemanticRows(rows, queryVector, searchText) {
-  const nutritionIntent = getNutritionIntent(searchText);
-  const activeSemanticThreshold = getSemanticScoreThreshold(searchText);
-  return rows
-    .map((row) => {
-      const textScore = getTextSearchScore(row);
-      const semanticScore = getSemanticScore(queryVector, row.search_embedding);
-      const nutritionScore = getNutritionScore(row, nutritionIntent);
-      const nutritionMatch = passesNutritionIntent(row, nutritionIntent);
-      const effectiveTextScore = nutritionIntent && !nutritionMatch ? 0 : textScore;
-      return {
-        ...row,
-        _searchScore: (effectiveTextScore * 4) + (semanticScore * 50) + nutritionScore,
-        _semanticScore: semanticScore,
-        _textScore: effectiveTextScore,
-        _nutritionMatch: nutritionMatch
-      };
-    })
-    .filter((row) => row._textScore > 0 || row._nutritionMatch || (!nutritionIntent && row._semanticScore >= activeSemanticThreshold))
-    .sort((a, b) => {
-      const scoreDelta = b._searchScore - a._searchScore;
-      if (scoreDelta !== 0) return scoreDelta;
-      const nameDelta = a.short_name.localeCompare(b.short_name);
-      if (nameDelta !== 0) return nameDelta;
-      const timeDelta = String(a.meal_time_open).localeCompare(String(b.meal_time_open));
-      if (timeDelta !== 0) return timeDelta;
-      return a.station_name.localeCompare(b.station_name);
-    })
-    .slice(0, resultLimit);
-}
-
-function getSemanticScoreThreshold(searchText) {
-  return searchText.trim().split(/\s+/).length === 1
-    ? singleTermSemanticScoreThreshold
-    : semanticScoreThreshold;
-}
-
-function getTextSearchScore(row) {
-  const boost = Number(row.food_search_boost || 0);
-  const fullText = Math.min(Number(row.food_search_score || 0) * 20, 15);
-  return boost + fullText;
-}
-
-function getSemanticScore(queryVector, embeddingBlob) {
-  const rowVector = decodeVector(embeddingBlob);
-  if (!rowVector || rowVector.length !== queryVector.length) {
-    return 0;
-  }
-
-  let score = 0;
-  for (let index = 0; index < queryVector.length; index += 1) {
-    score += queryVector[index] * rowVector[index];
-  }
-  return Math.max(0, Math.min(1, score));
-}
-
-function getNutritionIntent(searchText) {
-  const text = searchText.toLowerCase();
-  const metric = [
-    ['protein', ['protein']],
-    ['calories', ['calorie', 'calories', 'kcal']],
-    ['carbs', ['carb', 'carbs', 'carbohydrate', 'carbohydrates']],
-    ['fat', ['fat', 'fats']]
-  ].find(([, terms]) => terms.some((term) => text.includes(term)))?.[0];
-
-  if (!metric) return null;
-
-  const low = /\b(low|lower|lowest|less|least|few|fewer|light|under)\b/.test(text);
-  const high = /\b(high|higher|highest|more|most|rich|heavy|max|best)\b/.test(text);
-  return {
-    metric,
-    direction: low ? 'low' : high ? 'high' : metric === 'protein' ? 'high' : null
-  };
-}
-
-function getNutritionScore(row, intent) {
-  if (!intent) return 0;
-  const value = getNutritionValue(row, intent.metric);
-  if (intent.direction === 'low') {
-    const ceiling = intent.metric === 'calories' ? 700 : 50;
-    return (1 - Math.min(value / ceiling, 1)) * 60;
-  }
-  if (intent.direction === 'high') {
-    const target = intent.metric === 'protein' ? 35 : intent.metric === 'calories' ? 800 : 60;
-    return Math.min(value / target, 1) * 70;
-  }
-  return 0;
-}
-
-function passesNutritionIntent(row, intent) {
-  if (!intent || !intent.direction) return false;
-  const value = getNutritionValue(row, intent.metric);
-  if (intent.direction === 'high') {
-    if (intent.metric === 'protein') return value >= 8;
-    if (intent.metric === 'calories') return value >= 400;
-    return value >= 12;
-  }
-  if (intent.metric === 'calories') return value > 0 && value <= 300;
-  if (intent.metric === 'protein') return value <= 5;
-  return value <= 8;
-}
-
-function getNutritionValue(row, metric) {
-  if (metric === 'protein') return Number(row.protein || 0);
-  if (metric === 'calories') return Number(row.calories || 0);
-  if (metric === 'carbs') return Number(row.total_carbohydrates || 0);
-  if (metric === 'fat') return Number(row.total_fat || 0);
-  return 0;
-}
-
-function decodeVector(value) {
-  if (!value || !Buffer.isBuffer(value) || value.length % 4 !== 0) {
-    return null;
-  }
-
-  const vector = [];
-  for (let offset = 0; offset < value.length; offset += 4) {
-    vector.push(value.readFloatLE(offset));
-  }
-  return vector;
-}
-
-function normalizeVector(value) {
-  if (!Array.isArray(value) || !value.length) {
-    return null;
-  }
-
-  const vector = value.map((item) => Number(item));
-  if (vector.some((item) => !Number.isFinite(item))) {
-    return null;
-  }
-
-  const norm = Math.sqrt(vector.reduce((sum, item) => sum + (item * item), 0));
-  if (norm <= 0) {
-    return null;
-  }
-  return vector.map((item) => item / norm);
 }
 
 function parseAllergenFree(value) {

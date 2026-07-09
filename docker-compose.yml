@@ -49,15 +49,9 @@ services:
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-360}
       BODY_LIMIT: ${BODY_LIMIT:-8kb}
-      SEMANTIC_SEARCH_ENABLED: ${SEMANTIC_SEARCH_ENABLED:-true}
-      EMBEDDING_SERVICE_URL: ${EMBEDDING_SERVICE_URL:-http://embedder:9100}
-      EMBEDDING_REQUEST_TIMEOUT_MS: ${EMBEDDING_REQUEST_TIMEOUT_MS:-1500}
-      FASTEMBED_MODEL: ${FASTEMBED_MODEL:-BAAI/bge-small-en-v1.5}
     depends_on:
       mysql:
         condition: service_healthy
-      embedder:
-        condition: service_started
     networks:
       - internal
     expose:
@@ -116,16 +110,11 @@ services:
       DB_NAME: ${MYSQL_DATABASE:-elon_meals}
       DB_USER: ${MYSQL_SCRAPER_USER:-elon_scraper}
       DB_PASSWORD: ${MYSQL_SCRAPER_PASSWORD:?MYSQL_SCRAPER_PASSWORD is required}
-      FASTEMBED_ENABLED: ${FASTEMBED_ENABLED:-true}
-      FASTEMBED_MODEL: ${FASTEMBED_MODEL:-BAAI/bge-small-en-v1.5}
-      FASTEMBED_CACHE_PATH: /home/elon/.cache/fastembed
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - internal
-    volumes:
-      - fastembed-cache:/home/elon/.cache
     read_only: true
     tmpfs:
       - /tmp:noexec,nosuid,size=64m,uid=10001,gid=10001
@@ -154,16 +143,11 @@ services:
       DB_USER: ${MYSQL_SCRAPER_USER:-elon_scraper}
       DB_PASSWORD: ${MYSQL_SCRAPER_PASSWORD:?MYSQL_SCRAPER_PASSWORD is required}
       SCRAPER_RUN_ON_START: ${SCRAPER_RUN_ON_START:-true}
-      FASTEMBED_ENABLED: ${FASTEMBED_ENABLED:-true}
-      FASTEMBED_MODEL: ${FASTEMBED_MODEL:-BAAI/bge-small-en-v1.5}
-      FASTEMBED_CACHE_PATH: /home/elon/.cache/fastembed
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - internal
-    volumes:
-      - fastembed-cache:/home/elon/.cache
     read_only: true
     tmpfs:
       - /tmp:noexec,nosuid,size=64m,uid=10001,gid=10001
@@ -177,38 +161,9 @@ services:
       timeout: 5s
       retries: 3
 
-  embedder:
-    build:
-      context: ./scraper
-    command: ["python", "-m", "elon_scraper.embedder_service"]
-    restart: unless-stopped
-    environment:
-      EMBEDDER_PORT: 9100
-      FASTEMBED_MODEL: ${FASTEMBED_MODEL:-BAAI/bge-small-en-v1.5}
-      FASTEMBED_CACHE_PATH: /home/elon/.cache/fastembed
-    networks:
-      - internal
-    expose:
-      - "9100"
-    volumes:
-      - fastembed-cache:/home/elon/.cache
-    read_only: true
-    tmpfs:
-      - /tmp:noexec,nosuid,size=64m,uid=10001,gid=10001
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9100/health', timeout=2).read()"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-
 networks:
   internal:
     driver: bridge
 
 volumes:
   mysql-data:
-  fastembed-cache:

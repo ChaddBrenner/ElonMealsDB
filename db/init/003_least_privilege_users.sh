@@ -10,6 +10,7 @@ scraper_password="${MYSQL_SCRAPER_PASSWORD:-}"
 require_identifier() {
   name="$1"
   value="$2"
+  # Database and user names are interpolated as identifiers, so keep them boring.
   case "$value" in
     ""|*[!A-Za-z0-9_]*)
       echo "Invalid ${name}; use letters, numbers, and underscores only." >&2
@@ -19,6 +20,7 @@ require_identifier() {
 }
 
 sql_escape() {
+  # Passwords are string literals in the SQL below; escape backslashes and quotes.
   printf "%s" "$1" | sed "s/\\\\/\\\\\\\\/g; s/'/''/g"
 }
 
@@ -45,7 +47,8 @@ api_password_sql="$(sql_escape "$api_password")"
 scraper_password_sql="$(sql_escape "$scraper_password")"
 
 MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot <<-EOSQL
-CREATE USER IF NOT EXISTS '${api_user}'@'%' IDENTIFIED BY '${api_password_sql}';
+	-- Reset grants every time so rerunning this script is safe after credential changes.
+	CREATE USER IF NOT EXISTS '${api_user}'@'%' IDENTIFIED BY '${api_password_sql}';
 ALTER USER '${api_user}'@'%' IDENTIFIED BY '${api_password_sql}';
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM '${api_user}'@'%';
 GRANT SELECT, SHOW VIEW ON \`${database}\`.* TO '${api_user}'@'%';

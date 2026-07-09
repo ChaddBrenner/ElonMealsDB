@@ -110,21 +110,11 @@ def import_menu_payload(payload: dict[str, Any], config: DbConfig | None = None)
     finally:
         connection.close()
 
-    summary = {
+    return {
         "service_date": service_date,
         **inserted,
         "foods": len(touched_food_ids),
     }
-
-    try:
-        from .embeddings import embeddings_enabled, refresh_embeddings_for_service_date
-
-        if embeddings_enabled():
-            summary["embeddings"] = refresh_embeddings_for_service_date(service_date, db_config)
-    except Exception as exc:
-        summary["embedding_error"] = trim_text(exc, 500)
-
-    return summary
 
 
 def record_scraper_failure(

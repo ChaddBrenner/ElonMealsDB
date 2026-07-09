@@ -1,10 +1,10 @@
-# Production Deployment
+# Deployment And Security
 
-ElonMealsDB is intended to run as a Docker Compose stack behind an HTTPS reverse proxy that you control. The included Compose file publishes only the frontend container to the host, and it binds to `127.0.0.1:8080` by default. The backend, MySQL database, scraper, and scheduler stay on the private Compose network.
+ElonMealsDB is meant to run as a Docker Compose stack behind an HTTPS reverse proxy. The Compose file publishes only the frontend container to the host, loopback-bound at `127.0.0.1:8080` by default. The backend, MySQL database, scraper, and scheduler stay on the private Compose network.
 
-This app imports public dining menu data for a student-facing planning experience. Before running a public deployment, confirm your usage follows the source site's current terms, keep import frequency modest, and make the app's independent/non-affiliated status clear to users.
+This app imports public dining menu data for a student-facing planning experience. Before running a public deployment, confirm your usage follows the source site's current terms, keep import frequency modest, and keep the app's independent/non-affiliated status clear to users.
 
-## Recommended Topology
+## Topology
 
 ```mermaid
 flowchart LR
@@ -12,25 +12,18 @@ flowchart LR
   Proxy --> Frontend["frontend:8080"]
   Frontend --> Backend["backend:9000 internal"]
   Backend --> MySQL["mysql internal"]
-  Backend -. "query vectors" .-> Embedder["embedder internal"]
   Scheduler["scraper-scheduler service"] --> MySQL
 ```
 
-Use one of:
-
-- Caddy, nginx, Traefik, or Cloudflare Tunnel in front of `127.0.0.1:8080`.
-- A private host firewall that allows only `80` and `443` from the internet.
-- Docker volumes or host backups for `mysql-data`.
-
-My hosted copy runs as Docker Compose behind Caddy and Cloudflare Tunnel. Cloudflare Tunnel handles the public HTTPS entrypoint, Caddy reverse proxies to the loopback-bound frontend, and the backend/database/import services stay private on the Docker network. That is the production shape this repo is meant to support.
+My hosted copy runs behind Caddy and Cloudflare Tunnel. Cloudflare Tunnel handles the public HTTPS entrypoint, Caddy reverse proxies to the loopback-bound frontend, and the backend/database/import services stay private on the Docker network.
 
 Do not expose:
 
 - MySQL port `3306`.
 - Backend port `9000`.
-- Scraper, scheduler, or embedder containers.
+- Scraper or scheduler containers.
 
-## First Deployment
+## First Run
 
 ```bash
 git clone https://github.com/ChaddBrenner/ElonMealsDB.git
@@ -50,17 +43,15 @@ FRONTEND_PORT=8080
 SCRAPER_RUN_TIMES=05:15,15:15
 SCRAPER_DAYS_AHEAD=1
 SCRAPER_RUN_ON_START=true
-FASTEMBED_MODEL=BAAI/bge-small-en-v1.5
 ```
 
-Start the public app:
+Start the app:
 
 ```bash
 docker compose up -d --build --wait --wait-timeout 180
 ```
 
 The scheduled importer starts with the default stack. It runs privately on the internal Compose network and is not reachable from the public frontend.
-The internal FastEmbed service also starts with the default stack. It has no published ports; the backend uses it for semantic query vectors and falls back to SQL-only search if it is unavailable.
 
 Check the deployment:
 
@@ -71,9 +62,9 @@ curl -fsS http://localhost:8080/api/ready
 curl -fsS http://localhost:8080/api/service-dates
 ```
 
-## Reverse Proxy Example
+## Reverse Proxy
 
-Caddy example:
+Example Caddyfile:
 
 ```caddyfile
 meals.your-domain.example {
@@ -82,30 +73,9 @@ meals.your-domain.example {
 }
 ```
 
-nginx example:
+Set `CORS_ORIGINS` to the exact public HTTPS origin. Keep `FRONTEND_BIND=127.0.0.1` when the reverse proxy runs on the same Docker host. Use a broader bind only when the host firewall allows only the intended proxy or private network to reach the port.
 
-```nginx
-server {
-  listen 443 ssl http2;
-  server_name meals.your-domain.example;
-
-  ssl_certificate /etc/letsencrypt/live/meals.your-domain.example/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/meals.your-domain.example/privkey.pem;
-
-  location / {
-    proxy_pass http://127.0.0.1:8080;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto https;
-  }
-}
-```
-
-The app expects the frontend origin to be the public origin. Set `CORS_ORIGINS` to that exact HTTPS origin.
-
-Keep `FRONTEND_BIND=127.0.0.1` when the reverse proxy runs on the same Docker host. Use a different bind address only when your network topology requires it and the host firewall allows only the intended proxy or private network to reach the port.
-
-## Operating The Scheduler
+## Scheduler
 
 The scheduler runs inside the Compose network and uses `MYSQL_SCRAPER_USER`.
 
@@ -121,12 +91,6 @@ Run an immediate one-shot import:
 docker compose --profile scraper run --rm scraper
 ```
 
-Refresh semantic vectors for an already imported date:
-
-```bash
-docker compose --profile scraper run --rm scraper python -m elon_scraper.cli refresh-embeddings --date 2026-07-01
-```
-
 Change import timing:
 
 ```bash
@@ -135,20 +99,19 @@ SCRAPER_DAYS_AHEAD=1
 SCRAPER_RUN_ON_START=true
 ```
 
-The schedule is interpreted in `America/New_York`.
+The schedule is interpreted in `America/New_York`. Failed scheduled imports are recorded in `scraper_runs`, and the scheduler keeps running for the next configured import.
 
 ## Updates
 
 ```bash
 git pull --ff-only
 docker compose --profile scraper build
-docker compose up -d --wait --wait-timeout 180
+docker compose up -d --wait --wait-timeout 180 --remove-orphans
 ```
 
 For existing MySQL volumes, apply new schema migrations before relying on new database-backed features:
 
 ```bash
-docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"' < db/migrations/004_food_search_embeddings.sql
 docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"' < db/migrations/005_nullable_food_unknowns.sql
 ```
 
@@ -157,6 +120,23 @@ If database usernames or passwords change after the MySQL volume already exists,
 ```bash
 docker compose exec -T mysql sh -c '/docker-entrypoint-initdb.d/003_least_privilege_users.sh'
 ```
+
+## Security Model
+
+The security goal is narrow and realistic: public users can read menu data, while personal planning state stays in the browser. There are no accounts, uploads, payment forms, admin panels, or public scraper buttons.
+
+The main controls are:
+
+- Public API routes are read-only.
+- Zod validates request data at runtime, including dates, IDs, booleans, protein/calorie bounds, search text, and allergen lists.
+- API SQL uses `mysql2/promise` placeholders so request values stay separate from SQL text.
+- Allergen filters map request values to a fixed server-side column allowlist.
+- Helmet adds common browser-facing security headers.
+- CORS limits which browser origins are allowed to read API responses.
+- Rate limiting slows noisy public traffic.
+- The backend connects as `MYSQL_API_USER`, which can read but cannot insert, update, or delete.
+- Scraper imports use `MYSQL_SCRAPER_USER`, a separate account with the write grants needed for imports.
+- MySQL stays internal-only, and application containers run as non-root users with dropped Linux capabilities where practical.
 
 ## Backups
 
@@ -174,7 +154,7 @@ docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroo
 
 Also back up the Docker named volume if you use host-level backup tooling.
 
-## Public Readiness Checklist
+## Readiness Checklist
 
 Before making the repo public or linking the deployed app:
 
@@ -191,3 +171,20 @@ Manual checks:
 - Confirm the backend DB user cannot write.
 - Confirm the scheduler logs show successful imports or clear recorded failures.
 - Confirm the app is reachable only through HTTPS in production.
+
+Useful abuse checks:
+
+```bash
+curl -i -sS http://localhost:8080/api/restaurants/1%20OR%201=1/menu
+curl -i -sS 'http://localhost:8080/api/foods?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E'
+printf '{"bad"' | curl -i -sS -X POST http://localhost:8080/api/foods -H 'Content-Type: application/json' --data-binary @-
+curl -i -sS -X POST http://localhost:8080/api/planner/meals -H 'Content-Type: application/json' -d '{"foodId":1,"quantity":1}'
+```
+
+The first two requests should fail validation, malformed JSON should return a structured `400`, and the removed planner write route should return `404`.
+
+The backend database user should fail this write attempt with `ER_TABLEACCESS_DENIED_ERROR`:
+
+```bash
+docker compose exec -T backend node --input-type=module -e "import { pool } from './src/db.js'; try { await pool.query('DELETE FROM scraper_runs WHERE id = -1'); process.exit(1); } catch (error) { console.log(error.code); process.exit(0); } finally { await pool.end(); }"
+```
