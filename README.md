@@ -173,4 +173,4 @@ Read [docs/deployment.md](docs/deployment.md) before self-hosting. In short:
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+GNU Affero General Public License v3.0 only (`AGPL-3.0-only`). See [LICENSE](LICENSE).

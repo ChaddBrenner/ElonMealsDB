@@ -2,7 +2,7 @@
   "name": "@elon-meals-db/frontend",
   "version": "1.0.0",
   "private": true,
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",

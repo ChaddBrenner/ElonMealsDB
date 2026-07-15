@@ -2,7 +2,7 @@
   "name": "@elon-meals-db/backend",
   "version": "1.0.0",
   "private": true,
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "main": "src/server.js",
   "scripts": {

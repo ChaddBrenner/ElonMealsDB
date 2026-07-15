@@ -125,8 +125,8 @@ for (const [path, pkg] of packages) {
   if (pkg.version !== root.version) {
     throw new Error(`${path} version ${pkg.version} does not match root ${root.version}`);
   }
-  if (pkg.license !== 'MIT') {
-    throw new Error(`${path} must declare MIT license metadata`);
+  if (pkg.license !== 'AGPL-3.0-only') {
+    throw new Error(`${path} must declare AGPL-3.0-only license metadata`);
   }
 }
 

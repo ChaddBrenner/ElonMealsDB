@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Dockerized Elon Dining menu intelligence app with a secure Express/MySQL API and React dashboard.",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "author": "Chadd Brenner",
   "repository": {
     "type": "git",
