@@ -41,6 +41,17 @@ def import_menu_payload(payload: dict[str, Any], config: DbConfig | None = None)
         raise ImporterError("Collected payload is missing service_date")
     if not isinstance(restaurants, list) or not restaurants:
         raise ImporterError("Collected payload has no restaurants; refusing to wipe existing data")
+    collected_foods = sum(
+        len(as_list(station.get("foods")))
+        for restaurant in restaurants
+        if isinstance(restaurant, dict)
+        for meal in as_list(restaurant.get("meals"))
+        if isinstance(meal, dict)
+        for station in as_list(meal.get("stations"))
+        if isinstance(station, dict)
+    )
+    if collected_foods == 0:
+        raise ImporterError("Collected payload has no foods; refusing to replace existing data")
 
     db_config = config or DbConfig.from_env()
     started_at = utc_naive_now()

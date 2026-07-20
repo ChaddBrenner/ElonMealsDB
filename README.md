@@ -100,10 +100,10 @@ The recurring scheduler starts with the normal Compose stack. This is the Docker
 docker compose up -d --build --remove-orphans
 ```
 
-By default it imports once at container startup, then imports today and tomorrow at `05:15` and `15:15` America/New_York time. Adjust `.env` with:
+By default it imports once at container startup, then imports today and tomorrow at `05:15`, `12:15`, and `15:15` America/New_York time. The midday run catches menus that Elon Dining publishes after the early-morning import. Empty menu responses are recorded as failures instead of replacing previously imported food data. Adjust `.env` with:
 
 ```bash
-SCRAPER_RUN_TIMES=05:15,15:15
+SCRAPER_RUN_TIMES=05:15,12:15,15:15
 SCRAPER_DAYS_AHEAD=1
 SCRAPER_RUN_ON_START=true
 ```

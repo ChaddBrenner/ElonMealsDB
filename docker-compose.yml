@@ -132,7 +132,7 @@ services:
       - elon_scraper.cli
       - schedule-import
       - --times
-      - ${SCRAPER_RUN_TIMES:-05:15,15:15}
+      - ${SCRAPER_RUN_TIMES:-05:15,12:15,15:15}
       - --days-ahead
       - ${SCRAPER_DAYS_AHEAD:-1}
     restart: unless-stopped

@@ -41,7 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
     import_db.add_argument("--timeout", type=float, default=20.0, help="HTTP timeout in seconds.")
 
     schedule = subparsers.add_parser("schedule-import", help="Run database imports on a recurring daily schedule.")
-    schedule.add_argument("--times", default="05:15,15:15", help="Comma-separated Eastern times in HH:MM format.")
+    schedule.add_argument("--times", default="05:15,12:15,15:15", help="Comma-separated Eastern times in HH:MM format.")
     schedule.add_argument("--days-back", type=int, default=0, help="Number of days before today to import each run.")
     schedule.add_argument("--days-ahead", type=int, default=1, help="Number of days after today to import each run.")
     schedule.add_argument("--timeout", type=float, default=20.0, help="HTTP timeout in seconds.")

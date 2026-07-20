@@ -102,8 +102,8 @@ def test_service_dates_include_requested_window():
 
 
 def test_parse_run_times_and_next_run():
-    run_times = parse_run_times("05:15, 15:15")
-    assert [item.strftime("%H:%M") for item in run_times] == ["05:15", "15:15"]
+    run_times = parse_run_times("05:15, 12:15, 15:15")
+    assert [item.strftime("%H:%M") for item in run_times] == ["05:15", "12:15", "15:15"]
 
     now = datetime(2026, 7, 1, 6, 0, tzinfo=ZoneInfo("America/New_York"))
-    assert seconds_until_next_run(run_times, now=now) == 9 * 60 * 60 + 15 * 60
+    assert seconds_until_next_run(run_times, now=now) == 6 * 60 * 60 + 15 * 60

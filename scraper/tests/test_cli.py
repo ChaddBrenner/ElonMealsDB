@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from elon_scraper import cli
-from elon_scraper.importer import ImporterError
+from elon_scraper.importer import ImporterError, import_menu_payload
 from elon_scraper.parser import ScraperError
 
 
@@ -91,6 +91,28 @@ def test_unexpected_import_errors_are_recorded_and_wrapped(monkeypatch):
         "database socket closed",
         "https://www.elondining.com/menu-hours/?date=2026-07-01",
     )]
+
+
+def test_empty_menu_does_not_replace_existing_data():
+    payload = {
+        "service_date": "2026-07-18",
+        "foods_count": 22,
+        "restaurants": [
+            {
+                "name": "Lakeside Dining Hall",
+                "meals": [{"name": "Summer Break", "stations": []}],
+            }
+        ],
+    }
+
+    with pytest.raises(ImporterError, match="no foods; refusing to replace existing data"):
+        import_menu_payload(payload)
+
+
+def test_scheduler_default_includes_midday_import():
+    args = cli.build_parser().parse_args(["schedule-import"])
+
+    assert args.times == "05:15,12:15,15:15"
 
 
 def test_env_bool_reads_scheduler_startup_flag(monkeypatch):
