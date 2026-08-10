@@ -109,10 +109,32 @@ def test_empty_menu_does_not_replace_existing_data():
         import_menu_payload(payload)
 
 
-def test_scheduler_default_includes_midday_import():
+def test_partially_populated_menu_does_not_replace_existing_data():
+    payload = {
+        "service_date": "2026-08-10",
+        "restaurants": [
+            {
+                "name": "Lakeside Dining Hall",
+                "meals": [
+                    {
+                        "name": "Summer Break",
+                        "stations": [{"name": "Allgood", "foods": [{"external_id": "food-1"}]}],
+                    },
+                    {"name": "Football Breakfast", "stations": []},
+                    {"name": "Football Dinner", "stations": []},
+                ],
+            }
+        ],
+    }
+
+    with pytest.raises(ImporterError, match="Football Breakfast.*Football Dinner"):
+        import_menu_payload(payload)
+
+
+def test_scheduler_default_includes_morning_and_midday_imports():
     args = cli.build_parser().parse_args(["schedule-import"])
 
-    assert args.times == "05:15,12:15,15:15"
+    assert args.times == "06:30,12:15,15:15"
 
 
 def test_env_bool_reads_scheduler_startup_flag(monkeypatch):

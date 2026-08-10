@@ -40,7 +40,7 @@ MYSQL_SCRAPER_PASSWORD=<strong unique scraper writer password>
 CORS_ORIGINS=https://your-domain.example
 FRONTEND_BIND=127.0.0.1
 FRONTEND_PORT=8080
-SCRAPER_RUN_TIMES=05:15,12:15,15:15
+SCRAPER_RUN_TIMES=06:30,12:15,15:15
 SCRAPER_DAYS_AHEAD=1
 SCRAPER_RUN_ON_START=true
 ```
@@ -94,12 +94,12 @@ docker compose --profile scraper run --rm scraper
 Change import timing:
 
 ```bash
-SCRAPER_RUN_TIMES=05:15,12:15,15:15
+SCRAPER_RUN_TIMES=06:30,12:15,15:15
 SCRAPER_DAYS_AHEAD=1
 SCRAPER_RUN_ON_START=true
 ```
 
-The schedule is interpreted in `America/New_York`. The midday run helps catch menus published after the early-morning import. A response with no foods is recorded as a failed attempt and does not replace previously imported menu data. The scheduler keeps running for the next configured import.
+The schedule is interpreted in `America/New_York`. The morning run is late enough to catch breakfast menus that are not present at dawn, while the later runs catch additional source updates. A response with no foods, or with any advertised meal still missing foods, is recorded as a failed attempt and does not replace previously imported menu data. The scheduler keeps running for the next configured import.
 
 ## Updates
 
