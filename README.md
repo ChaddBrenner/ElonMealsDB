@@ -1,10 +1,16 @@
 # ElonMealsDB
 
+[![CI](https://github.com/ChaddBrenner/ElonMealsDB/actions/workflows/ci.yml/badge.svg)](https://github.com/ChaddBrenner/ElonMealsDB/actions/workflows/ci.yml)
+[![Live app](https://img.shields.io/badge/live-ElonMealsDB-2f6f65)](https://elonmealsdb.chadd.blog)
+[![Project story](https://img.shields.io/badge/portfolio-project_story-315d83)](https://www.chadd.blog/posts/elonmealsdb/)
+
 ElonMealsDB is a full-stack dining planner I built around a MySQL database and scraper I originally built in undergrad. It scrapes Elon Dining menu data, imports it into a relational model, and turns it into a React dashboard for searching foods, comparing stations, checking nutrition, and planning a meal.
 
 Personal planning data stays in the user's browser: favorites, selected foods, nutrition goals, and safety preferences are stored locally instead of requiring accounts or server-side user records. The backend is read-only for public web traffic and focuses on menu data, search, coverage metrics, and scraper-backed imports run by the operator.
 
 This is an independent portfolio project. It is not affiliated with, endorsed by, or sponsored by Elon University or Elon Dining. Menu and nutrition data can change; users should verify current dining information with the official dining provider, especially for allergen or medical decisions.
+
+![ElonMealsDB dashboard](docs/screenshots/dashboard-desktop.png)
 
 ## Quick Start
 
@@ -19,8 +25,6 @@ Open `http://localhost:8080`.
 The frontend is bound to `127.0.0.1:8080` by default so it is ready to sit behind a local HTTPS reverse proxy, for example Caddy.
 
 On first run, the dashboard chooses today's imported menu when available and otherwise falls back to the newest bundled sample date. Run the scraper import below to refresh MySQL with live Elon Dining data.
-
-![ElonMealsDB dashboard](docs/screenshots/dashboard-desktop.png)
 
 Mobile view:
 
