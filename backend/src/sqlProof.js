@@ -37,11 +37,13 @@ ORDER BY food_search_score DESC, f.short_name ASC`
   {
     title: 'Coverage metrics',
     route: 'GET /api/metrics/coverage',
-    summary: 'Counts distinct foods, stations, and dietary coverage for a service date.',
+    summary: 'Separates distinct source recipes, content variants, and station-menu placements for a service date.',
     sql: `SELECT COUNT(DISTINCT r.id) AS restaurants,
        COUNT(DISTINCT m.id) AS meals,
        COUNT(DISTINCT s.id) AS stations,
-       COUNT(DISTINCT f.id) AS foods
+       COUNT(DISTINCT f.external_id) AS foods,
+       COUNT(DISTINCT f.id) AS food_variants,
+       COUNT(sf.food_id) AS menu_item_placements
 FROM restaurants r
 LEFT JOIN meals m ON m.restaurant_id = r.id
 LEFT JOIN stations s ON s.meal_id = m.id

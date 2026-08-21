@@ -25,9 +25,9 @@ The first job is turning the dining website into data I can query. The Python sc
 
 The scraper converts that page structure into restaurants, meals, stations, and foods. It also pulls calories, protein, carbohydrates, fat, ingredients, serving sizes, dietary labels, and allergen flags when they are available.
 
-Scraping current data also means bad responses are part of the job. Some dates have fewer restaurants open, some nutrition fields are missing, and the source page can change or fail. The more dangerous case is a response that contains restaurants and meals but no foods. If I accepted that as a successful import, it could replace a valid menu with an empty one.
+Scraping current data also means bad responses are part of the job. Some dates have fewer restaurants open, some nutrition fields are missing, and the source page can change or fail. The more dangerous case is a structurally incomplete response that looks superficially successful. If I accepted that as a complete import, it could replace a valid menu with missing restaurants, meals, or foods.
 
-The importer now checks for that before it writes anything. If an import has no restaurants or no foods, it stops and records the failure. A private scheduler tries again later. The `scraper_runs` table keeps the target date, source, timestamps, item counts, status, and error message, so I can tell whether the data is current without relying only on container logs.
+The importer now validates the requested date, source structure, status-specific expectations, and independently recomputed counts before it writes anything. A structured meal marked available must contain food, while legitimate external links, PDFs, hours-only resources, and unpublished menus can remain foodless with an explicit status. A private scheduler tries failed imports again later. The `scraper_runs` table keeps the target date, source, timestamps, recipe/variant/placement counts, status, and error message, so I can tell whether the data is current without relying only on container logs.
 
 ## Putting the Menu Into MySQL
 
@@ -41,9 +41,9 @@ erDiagram
   foods ||--o{ station_foods : appears_in
 ```
 
-A restaurant can serve several meals in a day. Each meal has stations, and each station lists foods. The same food can appear at more than one station or meal, so `station_foods` acts as the junction table instead of duplicating the nutrition record each time.
+A restaurant can serve several meals in a day. Each meal has stations, and each station lists foods. The same exact food variant can appear at more than one station or meal, so `station_foods` acts as the junction table instead of duplicating that content-addressed nutrition record each time. When Elon reuses a recipe ID with different nutrition or allergens, the content hash creates a separate variant rather than overwriting the earlier record.
 
-The `foods` table uses the source recipe ID as a unique key. When the scraper sees that food again, it can update the nutrition facts and create a new station relationship without creating another copy of the food.
+The `foods` table uses the source recipe ID together with a deterministic content hash as its unique key. When the scraper sees the same exact variant again, it reuses that record and creates the needed station relationship. If nutrition, ingredients, dietary data, or allergens differ for the same recipe ID, the importer stores a separate variant instead of overwriting prior source data.
 
 With the data split up this way, I can answer the questions I actually care about:
 

@@ -14,7 +14,7 @@ Campus dining data is useful but awkward to explore when menus, nutrition detail
 
 ## What I Built
 
-- A normalized MySQL schema for restaurants, meals, stations, foods, station-food relationships, and scraper run metadata.
+- A normalized MySQL schema for restaurants, service windows, stations, recipe/content variants, ordered nutrition facts, extensible dietary attributes, station-food relationships, and scraper run metadata.
 - A secure read-only Express API with validated inputs, parameterized queries, CORS allowlisting, rate limiting, Helmet, structured errors, and no stack traces in responses.
 - A Python scraper/importer that parses current Elon Dining embedded menu/nutrition data and upserts it into MySQL.
 - A Docker Compose deployment with frontend, backend, MySQL, private one-shot scraper, and recurring scheduler service.
@@ -30,7 +30,7 @@ flowchart LR
   Frontend --> Backend["Express API"]
   Backend --> MySQL["MySQL"]
   Scraper["scraper job"] -. "private import" .-> MySQL
-  Scheduler["scheduler service"] -. "twice daily import" .-> MySQL
+  Scheduler["scheduler service"] -. "scheduled daily imports" .-> MySQL
 ```
 
 Personal meal-planning state stays in browser storage. The public backend serves only menu and nutrition data, which keeps the server-side attack surface small and makes the API safe to expose behind a reverse proxy.
@@ -42,7 +42,7 @@ Personal meal-planning state stays in browser storage. The public backend serves
 - Modeled menu data as relational tables instead of storing page-shaped JSON.
 - Joined restaurants, meals, stations, station-food rows, and foods for menu rendering.
 - Added aggregate endpoints for coverage, dietary counts, station comparison, average calories, and top-protein foods.
-- Distinguished distinct foods from station/meal food appearances in the UI and audit trail.
+- Distinguished source recipe IDs, nutrition/content variants, and station-menu placements in the API and import audit trail.
 - Kept scraper run metadata separate from menu facts so data freshness is auditable.
 - Included runnable SQL examples in `docs/sql-walkthrough.md` and in `/api/sql-proof`.
 
@@ -71,7 +71,7 @@ Personal meal-planning state stays in browser storage. The public backend serves
 - Split the React frontend into feature modules for timeline, planner, menu controls, food views, nutrition insights, panels, shared utilities, and scoped stylesheet sections.
 - Added responsive desktop/mobile layouts with accessible controls and real local state.
 - Added planner workflows without server-side accounts by using browser-local storage.
-- Surfaced station filtering, nutrition coverage, station best-fit comparison, and protein-efficiency ranking directly in the dashboard.
+- Surfaced station filtering, selected-meal constraint heatmaps and macro fingerprints, nutrition coverage, and protein-efficiency ranking directly in the dashboard.
 - Added screenshots and e2e coverage without turning the product surface into a checklist.
 
 ## Demo Path
@@ -82,7 +82,7 @@ This is the path I would use in an interview or blog post:
 2. Pick a service date, search for a food, and open the nutrition drawer.
 3. Favorite the food, add it to the meal plan, and show macro totals updating locally.
 4. Click station chips and show the table filtering by station.
-5. Show Nutrition Insights: dietary coverage, station best-fit rows, and protein efficiency.
+5. Show Nutrition Insights: selected-meal protein/macro plots, station constraint and macro comparisons, dietary coverage, and protein efficiency.
 6. Run `/api/sql-proof` and one direct MySQL query from [sql-walkthrough.md](sql-walkthrough.md).
 7. Show the scraper scheduler logs and `scraper_runs` audit trail.
 8. Show the read-only DB user write attempt failing with `ER_TABLEACCESS_DENIED_ERROR`.
