@@ -152,6 +152,7 @@ main {
   min-width: 0;
   margin: 0 auto;
   padding: 0 clamp(14px, 1.8vw, 28px) 42px;
+  overflow-anchor: none;
 }
 
 section[id] {
@@ -579,6 +580,14 @@ kbd {
 
 .timeline-window.dinner {
   background: linear-gradient(90deg, var(--macro-protein), var(--macro-protein-2));
+}
+
+.timeline-window.open {
+  background: linear-gradient(90deg, var(--macro-fat), var(--macro-fat-2));
+}
+
+.timeline-window.service {
+  background: linear-gradient(90deg, var(--accent), var(--macro-calories-2));
 }
 
 .timeline-window span {

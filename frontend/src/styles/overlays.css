@@ -52,6 +52,65 @@
   color: var(--accent-strong);
 }
 
+.resource-menu-state {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  justify-items: center;
+  gap: 16px;
+  padding: 36px 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.resource-menu-state h3 {
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.resource-menu-state p {
+  max-width: 600px;
+  margin-top: 6px;
+}
+
+.resource-hours {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 7px;
+}
+
+.resource-hours > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.resource-hours > div.active {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  background: var(--accent-soft);
+}
+
+.resource-hours dt {
+  font-weight: 800;
+}
+
+.resource-hours dd {
+  color: var(--muted);
+}
+
+.resource-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+}
+
 .drawer {
   position: fixed;
   top: 0;
@@ -78,6 +137,17 @@
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 16px;
+}
+
+.drawer > .drawer-header {
+  position: sticky;
+  top: -22px;
+  z-index: 4;
+  margin: -22px -22px 16px;
+  padding: 22px 22px 14px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(14px);
 }
 
 .drawer-header h2 {
@@ -140,7 +210,7 @@
 }
 
 .detail-block,
-.facts-list {
+.nutrition-facts {
   border-top: 1px solid var(--border);
   padding: 16px 0;
 }
@@ -150,19 +220,128 @@
   margin-top: 5px;
 }
 
-.facts-list {
-  display: grid;
-  gap: 10px;
+.nutrition-facts {
+  padding-bottom: 0;
 }
 
-.facts-list div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+.nutrition-facts h3 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  line-height: 1.25;
 }
 
-.facts-list span {
+.nutrition-facts-table-wrap {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.nutrition-facts-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+}
+
+.nutrition-fact-name-column {
+  width: 49%;
+}
+
+.nutrition-fact-amount-column {
+  width: 23%;
+}
+
+.nutrition-fact-daily-value-column {
+  width: 28%;
+}
+
+.nutrition-facts-table th,
+.nutrition-facts-table td {
+  padding: 8px 9px;
+  vertical-align: middle;
+}
+
+.nutrition-facts-table thead {
+  background: var(--table-head);
+}
+
+.nutrition-facts-table thead th {
   color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  line-height: 1.2;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.nutrition-facts-table thead th:not(:first-child),
+.nutrition-facts-table td {
+  text-align: right;
+}
+
+.nutrition-facts-table tbody tr {
+  border-top: 1px solid var(--border);
+}
+
+.nutrition-facts-table tbody th {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.nutrition-facts-table tbody tr.secondary th {
+  position: relative;
+  padding-left: 22px;
+  color: var(--muted);
+  font-weight: 550;
+}
+
+.nutrition-facts-table tbody tr.secondary th::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  width: 5px;
+  height: 1px;
+  background: var(--border-strong);
+}
+
+.nutrition-fact-amount,
+.nutrition-fact-daily-value {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.nutrition-fact-daily-value {
+  color: var(--muted);
+}
+
+.nutrition-fact-unpublished {
+  color: var(--faint);
+  font-weight: 600;
+}
+
+.source-data-note,
+.source-disclaimer {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.source-data-note {
+  border-color: color-mix(in srgb, var(--macro-calories) 35%, var(--border));
 }
 
 .drawer-actions {

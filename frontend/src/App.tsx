@@ -4,11 +4,11 @@ import { getFoods, getMenu, getNutritionInsights, getRestaurants, getServiceDate
 import { createDefaultProfile, loadLocalProfile, saveLocalProfile, type LocalProfile, type SafetyPreferences } from './localProfile';
 import type { Food, MenuResponse, NutritionInsights, RestaurantSummary, ServiceDateSummary, StationMetric } from './types';
 import { VISIBLE_COLUMNS_STORAGE_ID, THEME_STORAGE_ID, safeSearch, type MenuViewMode, type RevealTarget, type SortConfig, type SortKey, type TableColumn, type ThemeMode, type VisibleColumns } from './app/constants';
-import { buildFoodPlanContext, buildMealPlanCsv, buildMealTabLabels, calculateTotals, defaultMealTabLabel, downloadTextFile, easternDateInput, filterFoodsForSafety, foodIdentityKey, getMenuSubtitle, getQuickSearchShortcut, handleTabKeyDown, loadTheme, loadVisibleColumns, revealTargetKey, sortFoods, upsertPlannedFood, useDebouncedValue } from './app/utils';
+import { buildFoodPlanContext, buildMealPlanCsv, buildMealTabLabels, buildMenuInsightFoods, calculateTotals, defaultMealTabLabel, downloadTextFile, easternDateInput, filterFoodsForSafety, foodIdentityKey, formatDatabaseUpdatedAt, getMenuSubtitle, getQuickSearchShortcut, handleTabKeyDown, latestDatabaseUpdateAt, loadTheme, loadVisibleColumns, revealTargetKey, sortFoods, upsertPlannedFood, useDebouncedValue } from './app/utils';
 import { BrandLogo, LoadingState, PanelHeader } from './components/common';
 import { RestaurantTimelineTabs } from './components/timeline';
 import { NutritionInsightsPanel } from './components/insights';
-import { NoMenuState } from './components/noMenu';
+import { NoMenuState, ResourceMenuState } from './components/noMenu';
 import { PlanSummaryBar, MealPlanPanel, GoalSettingsDialog } from './components/planner';
 import { FilterBar, StationFilter } from './components/menuControls';
 import { FoodOverview, FoodTable } from './components/foodViews';
@@ -53,6 +53,8 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const addFeedbackTimerRef = useRef<number | null>(null);
   const planPulseTimerRef = useRef<number | null>(null);
+  const summaryCompactRef = useRef(false);
+  const summaryScrollFrameRef = useRef<number | null>(null);
   const debouncedQuickSearchQuery = useDebouncedValue(quickSearchQuery.trim(), 180);
   const quickSearchShortcut = useMemo(() => getQuickSearchShortcut(), []);
 
@@ -97,7 +99,15 @@ export function App() {
     ? sourceFoods.filter((food) => food.stationId === selectedStationId)
     : sourceFoods, [sourceFoods, selectedStationId]);
   const sortedTableFoods = useMemo(() => sortFoods(tableFoods, sortConfig), [tableFoods, sortConfig]);
+  const mealInsightFoods = useMemo(
+    () => buildMenuInsightFoods(menu, activeMeal?.id ?? null),
+    [activeMeal?.id, menu]
+  );
+  const activeMealChartLabel = activeMeal
+    ? mealTabLabels.get(activeMeal.id)?.primary || activeMeal.name || 'Selected meal'
+    : 'Selected meal';
   const latestImportedDate = availableDates[0]?.serviceDate || '';
+  const databaseLastUpdatedAt = useMemo(() => latestDatabaseUpdateAt(availableDates), [availableDates]);
 
   useEffect(() => {
     saveLocalProfile(profile);
@@ -125,14 +135,30 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    function handleScroll() {
-      const nextCompact = window.scrollY > 88;
-      setSummaryCompact((current) => current === nextCompact ? current : nextCompact);
+    function updateSummaryState() {
+      summaryScrollFrameRef.current = null;
+      const nextCompact = summaryCompactRef.current
+        ? window.scrollY > 40
+        : window.scrollY > 88;
+
+      if (nextCompact === summaryCompactRef.current) return;
+      summaryCompactRef.current = nextCompact;
+      setSummaryCompact(nextCompact);
     }
 
-    handleScroll();
+    function handleScroll() {
+      if (summaryScrollFrameRef.current !== null) return;
+      summaryScrollFrameRef.current = window.requestAnimationFrame(updateSummaryState);
+    }
+
+    updateSummaryState();
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (summaryScrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(summaryScrollFrameRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -544,7 +570,7 @@ export function App() {
                     return (
                       <button
                         key={meal.id}
-                        className={isSelected ? 'selected' : ''}
+                        className={isSelected ? 'selected' : undefined}
                         type="button"
                         role="tab"
                         aria-selected={isSelected}
@@ -559,16 +585,19 @@ export function App() {
                     );
                   })}
                 </div>
-                <StationFilter
-                  stations={activeMeal?.stations || []}
-                  selectedStationId={selectedStationId}
-                  specialStationIds={specialStationIds}
-                  showSafeCounts={safetyFilterActive}
-                  safeCounts={stationSafeCounts}
-                  visibleFoodCount={sourceFoods.length}
-                  onSelect={setSelectedStationId}
-                />
-                <div className="food-workspace">
+                {loading || !menu ? <LoadingState /> : !activeMeal?.stations.length ? (
+                  <ResourceMenuState menu={menu} activeMeal={activeMeal} />
+                ) : <>
+                  <StationFilter
+                    stations={activeMeal.stations}
+                    selectedStationId={selectedStationId}
+                    specialStationIds={specialStationIds}
+                    showSafeCounts={safetyFilterActive}
+                    safeCounts={stationSafeCounts}
+                    visibleFoodCount={sourceFoods.length}
+                    onSelect={setSelectedStationId}
+                  />
+                  <div className="food-workspace">
                   <FilterBar
                     viewMode={menuViewMode}
                     vegan={vegan}
@@ -583,8 +612,7 @@ export function App() {
                     onAllergenFree={(value) => updateSafetyPreferences({ allergenFree: value })}
                     onVisibleColumn={toggleVisibleColumn}
                   />
-                  {loading || !menu ? <LoadingState /> : (
-                    menuViewMode === 'overview' ? (
+                  {menuViewMode === 'overview' ? (
                       <FoodOverview
                         stations={activeMeal?.stations || []}
                         selectedStationId={selectedStationId}
@@ -609,13 +637,14 @@ export function App() {
                         busy={busy}
                         feedbackKey={addFeedbackKey}
                         onSelect={setSelectedFood}
+                        onStationSelect={setSelectedStationId}
                         onFavorite={toggleFavorite}
                         onAdd={addFoodToPlan}
                         onSort={cycleSort}
                       />
-                    )
-                  )}
-                </div>
+                    )}
+                  </div>
+                </>}
               </>
             ) : (
               <>
@@ -650,6 +679,8 @@ export function App() {
         <NutritionInsightsPanel
           insights={nutritionInsights}
           activeMealId={activeMealId}
+          chartFoods={mealInsightFoods}
+          chartScopeLabel={activeMealChartLabel}
           onSelect={setSelectedFood}
         />
 
@@ -665,6 +696,16 @@ export function App() {
             onAdd={addFoodToPlan}
           />
         </section>
+
+        <footer className="site-footer">
+          <span>
+            Database last updated{' '}
+            <time dateTime={databaseLastUpdatedAt || undefined}>{formatDatabaseUpdatedAt(databaseLastUpdatedAt)}</time>
+          </span>
+          <span>
+            Created By <a href="https://chadd.blog/">Chadd Brenner</a>
+          </span>
+        </footer>
       </main>
 
       <GlobalSearchDialog

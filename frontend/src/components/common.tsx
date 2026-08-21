@@ -42,10 +42,6 @@ export function MetricBlock({ label, tone, value }: { label: string; tone: Macro
   return <div className={`metric-block ${tone}`}><strong>{value}</strong><span>{label}</span></div>;
 }
 
-export function Fact({ label, value }: { label: string; value: string }) {
-  return <div><span>{label}</span><strong>{value}</strong></div>;
-}
-
 export function LoadingState() {
   return <div className="empty"><Loader2 size={18} className="spin" /> Loading menu data...</div>;
 }

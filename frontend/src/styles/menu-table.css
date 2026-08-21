@@ -202,6 +202,30 @@ th[aria-sort='descending'] {
   gap: 6px;
 }
 
+.station-filter-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.station-filter-button:not(:disabled) {
+  cursor: pointer;
+}
+
+.station-filter-button:not(:disabled):hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 58%, transparent);
+  text-underline-offset: 3px;
+}
+
+.station-filter-button:disabled {
+  opacity: 1;
+}
+
 .macro-cell {
   font-weight: 800;
 }
@@ -223,16 +247,25 @@ th[aria-sort='descending'] {
 }
 
 .data-table tbody tr {
+  background: var(--surface);
   transition: background-color 140ms ease;
 }
 
+.data-table tbody tr > td {
+  background: inherit;
+}
+
 .data-table tbody tr:hover {
-  background: color-mix(in srgb, var(--accent-soft) 48%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 58%, var(--surface));
 }
 
 .data-table tbody tr.highlighted-row {
-  background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 78%, var(--surface));
   box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.food-data-row {
+  cursor: pointer;
 }
 
 .link-button {
@@ -257,28 +290,19 @@ th[aria-sort='descending'] {
 
 .data-table th.row-actions-header,
 .data-table td.row-actions {
-  position: sticky;
-  right: 0;
-  background: var(--surface);
-  box-shadow: -8px 0 12px color-mix(in srgb, var(--surface) 82%, transparent);
-  width: 92px;
-  min-width: 92px;
+  width: 54px;
+  min-width: 54px;
+  padding-right: 10px;
+  padding-left: 6px;
   vertical-align: middle;
 }
 
 .data-table td.row-actions {
-  z-index: 2;
+  background: inherit;
 }
 
 .data-table th.row-actions-header {
-  z-index: 5;
   background: var(--table-head);
-  box-shadow: -8px 0 12px color-mix(in srgb, var(--table-head) 82%, transparent);
-}
-
-.data-table tbody tr:hover td.row-actions,
-.data-table tbody tr.highlighted-row td.row-actions {
-  background: color-mix(in srgb, var(--accent-soft) 72%, var(--surface));
 }
 
 .primary-row-button.icon-only {

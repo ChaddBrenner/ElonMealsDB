@@ -99,7 +99,7 @@ SCRAPER_DAYS_AHEAD=1
 SCRAPER_RUN_ON_START=true
 ```
 
-The schedule is interpreted in `America/New_York`. The morning run is late enough to catch breakfast menus that are not present at dawn, while the later runs catch additional source updates. A response with no foods, or with any advertised meal still missing foods, is recorded as a failed attempt and does not replace previously imported menu data. The scheduler keeps running for the next configured import.
+The schedule is interpreted in `America/New_York`. The morning run is late enough to catch early menus that are not present at dawn, while the later runs catch additional source updates. The verified collector retains source-authored hours for legitimate same-origin, external-link, and PDF resources, but fetches structured menu data only from same-origin Elon location pages. It rejects wrong-date responses, location identity mismatches, malformed meal-tab mappings, missing or invalid embedded nutrition JSON, and hierarchy count drift. Older unverified payloads retain the conservative empty-meal rejection behavior. The scheduler records failures and keeps running for the next configured import.
 
 ## Updates
 
@@ -113,6 +113,7 @@ For existing MySQL volumes, apply new schema migrations before relying on new da
 
 ```bash
 docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"' < db/migrations/005_nullable_food_unknowns.sql
+docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"' < db/migrations/006_source_fidelity_and_food_variants.sql
 ```
 
 If database usernames or passwords change after the MySQL volume already exists, re-apply grants without wiping data:

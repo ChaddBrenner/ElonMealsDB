@@ -3,8 +3,8 @@ import type { KeyboardEvent } from 'react';
 import { Search, Star, X } from 'lucide-react';
 import type { Food } from '../types';
 import type { LocalProfile } from '../localProfile';
-import { foodIdentityKey, foodRenderKey, formatFoodContext, formatSearchAvailability, formatSearchLocation, resolveFoodSnapshot, round } from '../app/utils';
-import { AddFeedbackIcon, EmptyState, Fact, LoadingState, MetricBlock, PanelHeader } from './common';
+import { foodIdentityKey, foodRenderKey, formatFoodContext, formatNutritionNumber, formatSearchAvailability, formatSearchLocation, resolveFoodSnapshot, round } from '../app/utils';
+import { AddFeedbackIcon, EmptyState, LoadingState, MetricBlock, PanelHeader } from './common';
 import { Dietary } from './foodViews';
 import { trapFocus } from './planner';
 
@@ -40,26 +40,62 @@ export function NutritionDrawer(props: {
           </div>
           <Dietary food={food} />
           <div className="nutrition-grid">
-            <MetricBlock label="Calories" tone="calories" value={round(food.calories)} />
-            <MetricBlock label="Protein" tone="protein" value={`${round(food.protein)} g`} />
-            <MetricBlock label="Carbs" tone="carbs" value={`${round(food.totalCarbohydrates)} g`} />
-            <MetricBlock label="Fat" tone="fat" value={`${round(food.totalFat)} g`} />
+            <MetricBlock label="Calories" tone="calories" value={nutritionDisplay(food.calories)} />
+            <MetricBlock label="Protein" tone="protein" value={nutritionDisplay(food.protein, 'g')} />
+            <MetricBlock label="Carbs" tone="carbs" value={nutritionDisplay(food.totalCarbohydrates, 'g')} />
+            <MetricBlock label="Fat" tone="fat" value={nutritionDisplay(food.totalFat, 'g')} />
           </div>
           <div className="detail-block">
             <strong>Serving Size</strong>
-            <p>{food.servingSizeAmount || '-'} {food.servingSizeUnit}</p>
+            <p>{food.servingSizeAmount == null ? 'Not published by Elon Dining' : `${round(food.servingSizeAmount)} ${food.servingSizeUnit}`.trim()}</p>
+          </div>
+          <div className="detail-block">
+            <strong>Description</strong>
+            <p>{food.description || 'Not published by Elon Dining.'}</p>
           </div>
           <div className="detail-block">
             <strong>Ingredients</strong>
-            <p>{food.ingredients || 'Ingredient details are not available for this item.'}</p>
+            <p>{food.ingredients || 'Not published by Elon Dining.'}</p>
           </div>
-          <div className="facts-list">
-            <Fact label="Saturated Fat" value={`${round(food.saturatedFat)} g`} />
-            <Fact label="Cholesterol" value={`${round(food.cholesterol)} mg`} />
-            <Fact label="Sodium" value={`${round(food.sodium)} mg`} />
-            <Fact label="Dietary Fiber" value={`${round(food.dietaryFiber)} g`} />
-            <Fact label="Sugars" value={`${round(food.sugars)} g`} />
-          </div>
+          <section className="nutrition-facts" aria-labelledby={`nutrition-facts-${food.id}`}>
+            <h3 id={`nutrition-facts-${food.id}`}>Nutrition facts</h3>
+            <div className="nutrition-facts-table-wrap">
+              <table className="nutrition-facts-table">
+                <caption className="visually-hidden">Nutrition facts for {food.shortName}</caption>
+                <colgroup>
+                  <col className="nutrition-fact-name-column" />
+                  <col className="nutrition-fact-amount-column" />
+                  <col className="nutrition-fact-daily-value-column" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col">Nutrient</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Daily value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {((food.nutritionFacts || []).length ? food.nutritionFacts : fallbackNutritionFacts(food)).map((fact, index) => (
+                    <tr className={fact.isSecondary ? 'secondary' : undefined} key={`${fact.label}:${index}`}>
+                      <th scope="row">{fact.label}</th>
+                      <td className="nutrition-fact-amount">
+                        {fact.value === null
+                          ? <span className="nutrition-fact-unpublished" aria-label={`${fact.label} amount not published`} title="Not published">—</span>
+                          : nutritionDisplay(fact.value, fact.unit)}
+                      </td>
+                      <td className="nutrition-fact-daily-value">
+                        {fact.percentDailyValue === null
+                          ? <span className="nutrition-fact-unpublished" aria-label={`${fact.label} daily value not published`} title="Not published">—</span>
+                          : `${round(fact.percentDailyValue)}%`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+          {food.hideAllergens && <p className="source-data-note">Elon Dining has hidden allergen data for this item; unknown values are not treated as allergen-free.</p>}
+          {food.disclaimer && <p className="source-disclaimer">{food.disclaimer}</p>}
           <div className="drawer-actions">
             <button className="secondary-button" type="button" disabled={props.busy} onClick={() => props.onFavorite(food)}>
               <Star size={16} fill={props.isFavorite ? 'currentColor' : 'none'} /> {props.isFavorite ? 'Favorited' : 'Favorite'}
@@ -72,6 +108,27 @@ export function NutritionDrawer(props: {
       )}
     </aside>
   );
+}
+
+function nutritionDisplay(value: number | null | undefined, unit = '') {
+  if (value === null || value === undefined) return 'Not published';
+  return `${round(value)}${unit ? ` ${unit}` : ''}`;
+}
+
+function fallbackNutritionFacts(food: Food) {
+  return [
+    { label: 'Saturated Fat', value: food.saturatedFat, unit: 'g', percentDailyValue: null, isSecondary: true },
+    { label: 'Trans Fat', value: food.transFat, unit: 'g', percentDailyValue: null, isSecondary: true },
+    { label: 'Cholesterol', value: food.cholesterol, unit: 'mg', percentDailyValue: null, isSecondary: false },
+    { label: 'Sodium', value: food.sodium, unit: 'mg', percentDailyValue: null, isSecondary: false },
+    { label: 'Dietary Fiber', value: food.dietaryFiber, unit: 'g', percentDailyValue: null, isSecondary: true },
+    { label: 'Total Sugars', value: food.sugars, unit: 'g', percentDailyValue: null, isSecondary: true },
+    { label: 'Added Sugars', value: food.addedSugars, unit: 'g', percentDailyValue: null, isSecondary: true },
+    { label: 'Potassium', value: food.potassium, unit: 'mg', percentDailyValue: null, isSecondary: false },
+    { label: 'Calcium', value: food.calcium, unit: 'mg', percentDailyValue: null, isSecondary: false },
+    { label: 'Iron', value: food.iron, unit: 'mg', percentDailyValue: null, isSecondary: false },
+    { label: 'Vitamin D', value: food.vitaminD, unit: 'mcg', percentDailyValue: null, isSecondary: false },
+  ];
 }
 
 export function GlobalSearchDialog(props: {
@@ -187,7 +244,7 @@ export function GlobalSearchDialog(props: {
                   </div>
                   <small className="search-result-availability">{formatSearchAvailability(food)}</small>
                   <Dietary food={food} />
-                  <span className="search-macros">{round(food.calories)} cal · {round(food.protein)} g protein</span>
+                  <span className="search-macros">{formatNutritionNumber(food.calories, 'cal')} · {formatNutritionNumber(food.protein, 'g')} protein</span>
                 </button>
                 <button className={`primary-row-button icon-only add-action-button ${isAdded ? 'is-added' : ''}`} type="button" disabled={props.busy} onClick={() => props.onAdd(food)} aria-label={`Add ${food.shortName} to plan`} title="Add to plan">
                   <AddFeedbackIcon active={isAdded} size={15} />
@@ -252,7 +309,7 @@ export function FavoriteListItem(props: {
       </button>
       <div>
         <button className="link-button strong" type="button" onClick={() => props.onSelect(props.food)}>{props.food.shortName}</button>
-        <span>{formatFoodContext(props.food)} · {round(props.food.calories)} cal · {round(props.food.protein)} g protein</span>
+        <span>{formatFoodContext(props.food)} · {formatNutritionNumber(props.food.calories, 'cal')} · {formatNutritionNumber(props.food.protein, 'g')} protein</span>
       </div>
       <button className={`primary-row-button icon-only add-action-button ${isAdded ? 'is-added' : ''}`} type="button" disabled={props.busy} onClick={() => props.onAdd(props.food)} aria-label={`Add ${props.food.shortName} to plan`} title="Add to plan">
         <AddFeedbackIcon active={isAdded} size={14} />

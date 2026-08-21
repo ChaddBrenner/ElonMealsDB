@@ -1,8 +1,8 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, Star } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Star } from 'lucide-react';
 import type { Food, Meal } from '../types';
 import type { SortConfig, SortKey, VisibleColumns } from '../app/constants';
 import { sortableColumns } from '../app/constants';
-import { filterFoodsForSafety, foodIdentityKey, foodRenderKey, formatStationName, hasAllergenFlag, round } from '../app/utils';
+import { filterFoodsForSafety, foodIdentityKey, foodRenderKey, formatNutritionNumber, formatStationName, hasAllergenFlag } from '../app/utils';
 import { AddFeedbackIcon, Badge, EmptyState } from './common';
 
 export function FoodOverview(props: {
@@ -86,6 +86,7 @@ export function FoodTable(props: {
   busy: boolean;
   feedbackKey: string;
   onSelect: (food: Food) => void;
+  onStationSelect: (stationId: number) => void;
   onFavorite: (food: Food) => void;
   onAdd: (food: Food) => void;
   onSort: (column: SortKey) => void;
@@ -103,28 +104,38 @@ export function FoodTable(props: {
               className={`mobile-food-row ${props.highlightedFoodKey === identityKey ? 'highlighted-row' : ''}`}
               data-food-key={identityKey}
               key={`mobile:${foodRenderKey(food, index)}`}
+              onClick={() => props.onSelect(food)}
             >
-              <button className="icon-button favorite-inline" type="button" disabled={props.busy} onClick={() => props.onFavorite(food)} aria-label={`${props.favoriteIds.has(food.id) ? 'Remove' : 'Add'} ${food.shortName} favorite`}>
+              <button className="icon-button favorite-inline" type="button" disabled={props.busy} onClick={(event) => { event.stopPropagation(); props.onFavorite(food); }} aria-label={`${props.favoriteIds.has(food.id) ? 'Remove' : 'Add'} ${food.shortName} favorite`}>
                 <Star size={14} fill={props.favoriteIds.has(food.id) ? 'currentColor' : 'none'} />
               </button>
-              <button className="link-button strong mobile-food-title" type="button" onClick={() => props.onSelect(food)}>{food.shortName}</button>
-              <button className={`primary-row-button icon-only add-action-button ${isAdded ? 'is-added' : ''}`} type="button" disabled={props.busy} onClick={() => props.onAdd(food)} aria-label={`Add ${food.shortName} to plan`} title="Add to plan">
+              <button className="link-button strong mobile-food-title" type="button" onClick={(event) => { event.stopPropagation(); props.onSelect(food); }}>{food.shortName}</button>
+              <button className={`primary-row-button icon-only add-action-button ${isAdded ? 'is-added' : ''}`} type="button" disabled={props.busy} onClick={(event) => { event.stopPropagation(); props.onAdd(food); }} aria-label={`Add ${food.shortName} to plan`} title="Add to plan">
                 <AddFeedbackIcon active={isAdded} size={14} />
               </button>
               <div className="mobile-food-meta">
-                <span className="mobile-station-name">
+                <button
+                  className="mobile-station-name station-filter-button"
+                  type="button"
+                  disabled={!food.stationId}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (food.stationId) props.onStationSelect(food.stationId);
+                  }}
+                  aria-label={`Filter by ${formatStationName(food.stationName || food.mealName || '-')}`}
+                >
                   {formatStationName(food.stationName || food.mealName || '-')}
                   {food.stationId && props.specialStationIds.has(food.stationId) && (
                     <span className="station-special-badge compact" title="This station is different today">Different today</span>
                   )}
-                </span>
+                </button>
                 <Dietary food={food} />
               </div>
               <div className="mobile-food-macros" aria-label={`${food.shortName} nutrition summary`}>
-                <span className="mobile-macro calories"><small>Cal</small>{round(food.calories)}</span>
-                <span className="mobile-macro protein"><small>Pro</small>{round(food.protein)} g</span>
-                <span className="mobile-macro carbs"><small>Carb</small>{round(food.totalCarbohydrates)} g</span>
-                <span className="mobile-macro fat"><small>Fat</small>{round(food.totalFat)} g</span>
+                <span className="mobile-macro calories"><small>Cal</small>{formatNutritionNumber(food.calories)}</span>
+                <span className="mobile-macro protein"><small>Pro</small>{formatNutritionNumber(food.protein, 'g')}</span>
+                <span className="mobile-macro carbs"><small>Carb</small>{formatNutritionNumber(food.totalCarbohydrates, 'g')}</span>
+                <span className="mobile-macro fat"><small>Fat</small>{formatNutritionNumber(food.totalFat, 'g')}</span>
               </div>
             </div>
           );
@@ -157,39 +168,46 @@ export function FoodTable(props: {
             return (
               <tr
                 key={foodRenderKey(food, index)}
-                className={props.highlightedFoodKey === identityKey ? 'highlighted-row' : undefined}
+                className={`food-data-row ${props.highlightedFoodKey === identityKey ? 'highlighted-row' : ''}`}
                 data-food-key={identityKey}
+                onClick={() => props.onSelect(food)}
               >
                 <td data-label="Food">
                   <div className="food-name-cell">
-                    <button className="icon-button favorite-inline" type="button" disabled={props.busy} onClick={() => props.onFavorite(food)} aria-label={`${props.favoriteIds.has(food.id) ? 'Remove' : 'Add'} ${food.shortName} favorite`}>
+                    <button className="icon-button favorite-inline" type="button" disabled={props.busy} onClick={(event) => { event.stopPropagation(); props.onFavorite(food); }} aria-label={`${props.favoriteIds.has(food.id) ? 'Remove' : 'Add'} ${food.shortName} favorite`}>
                       <Star size={15} fill={props.favoriteIds.has(food.id) ? 'currentColor' : 'none'} />
                     </button>
-                    <button className="link-button strong" type="button" onClick={() => props.onSelect(food)}>{food.shortName}</button>
+                    <button className="link-button strong" type="button" onClick={(event) => { event.stopPropagation(); props.onSelect(food); }}>{food.shortName}</button>
                   </div>
                 </td>
                 {props.visibleColumns.station && (
                   <td data-label="Station">
-                    <span className="station-cell">
+                    <button
+                      className="station-cell station-filter-button"
+                      type="button"
+                      disabled={!food.stationId}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (food.stationId) props.onStationSelect(food.stationId);
+                      }}
+                      aria-label={`Filter by ${formatStationName(food.stationName || food.mealName || '-')}`}
+                    >
                       {formatStationName(food.stationName || food.mealName || '-')}
                       {food.stationId && props.specialStationIds.has(food.stationId) && (
                         <span className="station-special-badge compact" title="This station is different today">Different today</span>
                       )}
-                    </span>
+                    </button>
                   </td>
                 )}
                 {props.visibleColumns.dietary && <td data-label="Dietary"><Dietary food={food} /></td>}
-                {props.visibleColumns.calories && <td className="macro-cell calories" data-label="Calories">{round(food.calories)}</td>}
-                {props.visibleColumns.protein && <td className="macro-cell protein" data-label="Protein">{round(food.protein)} g</td>}
-                {props.visibleColumns.carbs && <td className="macro-cell carbs" data-label="Carbs">{round(food.totalCarbohydrates)} g</td>}
-                {props.visibleColumns.fat && <td className="macro-cell fat" data-label="Fat">{round(food.totalFat)} g</td>}
+                {props.visibleColumns.calories && <td className="macro-cell calories" data-label="Calories">{formatNutritionNumber(food.calories)}</td>}
+                {props.visibleColumns.protein && <td className="macro-cell protein" data-label="Protein">{formatNutritionNumber(food.protein, 'g')}</td>}
+                {props.visibleColumns.carbs && <td className="macro-cell carbs" data-label="Carbs">{formatNutritionNumber(food.totalCarbohydrates, 'g')}</td>}
+                {props.visibleColumns.fat && <td className="macro-cell fat" data-label="Fat">{formatNutritionNumber(food.totalFat, 'g')}</td>}
                 <td className="row-actions" data-label="Actions">
                   <div className="row-actions-inner">
-                    <button className={`primary-row-button icon-only add-action-button ${isAdded ? 'is-added' : ''}`} type="button" disabled={props.busy} onClick={() => props.onAdd(food)} aria-label={`Add ${food.shortName} to plan`} title="Add to plan">
+                    <button className={`primary-row-button icon-only add-action-button ${isAdded ? 'is-added' : ''}`} type="button" disabled={props.busy} onClick={(event) => { event.stopPropagation(); props.onAdd(food); }} aria-label={`Add ${food.shortName} to plan`} title="Add to plan">
                       <AddFeedbackIcon active={isAdded} size={15} />
-                    </button>
-                    <button className="icon-button" type="button" onClick={() => props.onSelect(food)} aria-label="Open nutrition details">
-                      <ChevronRight size={16} />
                     </button>
                   </div>
                 </td>
@@ -228,13 +246,18 @@ export function SortableHeader(props: {
 
 export function Dietary({ food }: { food: Food }) {
   const hasAllergen = hasAllergenFlag(food);
+  const hasUnknownAllergens = Object.values(food.allergens).some((value) => value === null);
+  const standardAttributes = new Set(['vegan', 'vegetarian', 'made_without_gluten']);
+  const additionalAttributes = (food.dietaryAttributes || []).filter((attribute) => !standardAttributes.has(attribute.key));
   return (
     <div className="dietary">
       {food.vegan && <Badge tone="green">Vegan</Badge>}
       {!food.vegan && food.vegetarian && <Badge tone="green">Veg</Badge>}
       {food.glutenFree && <Badge tone="gold">GF</Badge>}
       {hasAllergen && <Badge tone="red">Allergen</Badge>}
-      {!food.vegan && !food.vegetarian && !food.glutenFree && !hasAllergen && <span>-</span>}
+      {!hasAllergen && hasUnknownAllergens && <Badge tone="neutral">Allergens not published</Badge>}
+      {additionalAttributes.map((attribute) => <Badge tone="neutral" key={attribute.key}>{attribute.name}</Badge>)}
+      {!food.vegan && !food.vegetarian && !food.glutenFree && !hasAllergen && !hasUnknownAllergens && !additionalAttributes.length && <span>-</span>}
     </div>
   );
 }

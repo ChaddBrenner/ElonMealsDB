@@ -286,6 +286,7 @@
 
 .scatter-point:hover,
 .scatter-point:focus-visible {
+  z-index: 20;
   transform: translate(-50%, -50%) scale(1.45);
   box-shadow: 0 0 0 4px var(--focus-ring);
 }
@@ -407,7 +408,7 @@
   z-index: 5;
 }
 
-.triangle-point.label-left > span {
+.scatter-point.label-left > span {
   right: 14px;
   left: auto;
 }

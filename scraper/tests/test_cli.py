@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from elon_scraper import cli
-from elon_scraper.importer import ImporterError, import_menu_payload
+from elon_scraper.importer import ImporterError, import_menu_payload, validate_menu_payload
 from elon_scraper.parser import ScraperError
 
 
@@ -100,7 +100,12 @@ def test_empty_menu_does_not_replace_existing_data():
         "restaurants": [
             {
                 "name": "Lakeside Dining Hall",
-                "meals": [{"name": "Summer Break", "stations": []}],
+                "meals": [{
+                    "name": "Summer Break",
+                    "time_open": "2026-07-18T11:00:00-04:00",
+                    "time_closed": "2026-07-18T14:00:00-04:00",
+                    "stations": [],
+                }],
             }
         ],
     }
@@ -118,10 +123,22 @@ def test_partially_populated_menu_does_not_replace_existing_data():
                 "meals": [
                     {
                         "name": "Summer Break",
+                        "time_open": "2026-08-10T11:00:00-04:00",
+                        "time_closed": "2026-08-10T14:00:00-04:00",
                         "stations": [{"name": "Allgood", "foods": [{"external_id": "food-1"}]}],
                     },
-                    {"name": "Football Breakfast", "stations": []},
-                    {"name": "Football Dinner", "stations": []},
+                    {
+                        "name": "Football Breakfast",
+                        "time_open": "2026-08-10T06:00:00-04:00",
+                        "time_closed": "2026-08-10T09:00:00-04:00",
+                        "stations": [],
+                    },
+                    {
+                        "name": "Football Dinner",
+                        "time_open": "2026-08-10T17:00:00-04:00",
+                        "time_closed": "2026-08-10T20:00:00-04:00",
+                        "stations": [],
+                    },
                 ],
             }
         ],
@@ -129,6 +146,87 @@ def test_partially_populated_menu_does_not_replace_existing_data():
 
     with pytest.raises(ImporterError, match="Football Breakfast.*Football Dinner"):
         import_menu_payload(payload)
+
+
+def test_verified_payload_allows_structurally_valid_hours_only_meals():
+    content_hash = "a" * 64
+    payload = {
+        "source_contract_version": 4,
+        "collection_status": "complete",
+        "service_date": "2026-08-21",
+        "restaurants_count": 2,
+        "meals_count": 2,
+        "stations_count": 1,
+        "foods_count": 1,
+        "distinct_recipes_count": 1,
+        "food_variants_count": 1,
+        "menu_item_placements_count": 1,
+        "restaurants": [
+            {
+                "name": "Acorn Coffee Shop",
+                "url": "https://www.elondining.com/locations/acorn-coffee-shop/?date=2026-08-21",
+                "source_kind": "elon_location",
+                "menu_status": "available",
+                "meals": [{
+                    "name": "Open",
+                    "time_open": "2026-08-21T08:00:00-04:00",
+                    "time_closed": "2026-08-21T17:00:00-04:00",
+                    "menu_status": "available",
+                    "stations": [{"name": "Coffee", "foods": [{"external_id": "recipe-1", "content_hash": content_hash}]}],
+                }],
+            },
+            {
+                "name": "Fountain Market",
+                "url": "https://www.elondining.com/locations/fountain-market/?date=2026-08-21",
+                "source_kind": "elon_location",
+                "menu_status": "hours_only",
+                "meals": [{
+                    "name": "Open",
+                    "time_open": "2026-08-21T11:00:00-04:00",
+                    "time_closed": "2026-08-21T20:00:00-04:00",
+                    "menu_status": "hours_only",
+                    "stations": [],
+                }],
+            },
+        ],
+    }
+
+    validation = validate_menu_payload(payload)
+
+    assert validation["restaurants_count"] == 2
+    assert validation["foods_count"] == 1
+    assert validation["hours_only_restaurants"] == 1
+
+
+def test_verified_payload_rejects_count_drift():
+    payload = {
+        "source_contract_version": 4,
+        "collection_status": "complete",
+        "service_date": "2026-08-21",
+        "restaurants_count": 2,
+        "meals_count": 1,
+        "stations_count": 0,
+        "foods_count": 0,
+        "distinct_recipes_count": 0,
+        "food_variants_count": 0,
+        "menu_item_placements_count": 0,
+        "restaurants": [{
+            "name": "Legal Grounds",
+            "url": "https://www.elondining.com/locations/legal-grounds/?date=2026-08-21",
+            "source_kind": "elon_location",
+            "menu_status": "hours_only",
+            "meals": [{
+                "name": "Hours",
+                "time_open": "2026-08-21T07:30:00-04:00",
+                "time_closed": "2026-08-21T14:00:00-04:00",
+                "menu_status": "hours_only",
+                "stations": [],
+            }],
+        }],
+    }
+
+    with pytest.raises(ImporterError, match="count mismatch"):
+        validate_menu_payload(payload)
 
 
 def test_scheduler_default_includes_morning_and_midday_imports():

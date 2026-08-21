@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { MealWindowInsight, RestaurantSummary } from '../types';
-import { buildTimelineWindows, easternDateInput, easternMinute, formatTimelineMinute, formatTimeRange, getRestaurantTimelineStatus, getTimelineSegmentLabel, handleTabKeyDown, timelineMinute } from '../app/utils';
+import { buildTimelineWindows, easternDateInput, easternMinute, formatTimelineMinute, formatTimeRange, getRestaurantTimelineStatus, getServiceTone, getTimelineSegmentLabel, handleTabKeyDown, timelineMinute } from '../app/utils';
 
 export function RestaurantTimelineTabs(props: {
   restaurants: RestaurantSummary[];
@@ -79,13 +79,14 @@ export function RestaurantTimelineTabs(props: {
                 const left = ((leftMinute - startMinute) / span) * 100;
                 const rawWidth = ((rightMinute - leftMinute) / span) * 100;
                 const width = Math.max(3, rawWidth);
-                const segmentLabel = getTimelineSegmentLabel(window.mealPeriod, rawWidth);
+                const segmentLabel = getTimelineSegmentLabel(window.mealName, rawWidth);
+                const tone = getServiceTone(window.mealName);
                 return (
                   <span
-                    className={`timeline-window ${window.mealPeriod.toLowerCase()} ${segmentLabel ? '' : 'compact'}`}
+                    className={`timeline-window ${tone} ${segmentLabel ? '' : 'compact'}`}
                     key={`${window.restaurantId}:${window.mealId}`}
                     style={{ left: `${Math.max(0, Math.min(100, left))}%`, width: `${Math.min(100, width)}%` }}
-                    title={`${window.mealPeriod}: ${formatTimeRange(window.timeOpen, window.timeClosed)}`}
+                    title={`${window.mealName}: ${formatTimeRange(window.timeOpen, window.timeClosed)}`}
                   >
                     <span>{segmentLabel}</span>
                   </span>

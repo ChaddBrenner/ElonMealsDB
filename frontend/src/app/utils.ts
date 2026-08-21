@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import type { Food, InsightFood, Meal, MealWindowInsight, RestaurantSummary, StationMetric } from '../types';
+import type { Food, InsightFood, Meal, MealWindowInsight, MenuResponse, RestaurantSummary, ServiceDateSummary, StationMetric } from '../types';
 import type { LocalProfile, PlannedMeal } from '../localProfile';
 import {
   allergenFieldMap,
@@ -25,8 +25,13 @@ export function filterFoodsForSafety(foods: Food[], vegan: boolean, vegetarian: 
     (!vegan || Boolean(food.vegan))
     && (!vegetarian || Boolean(food.vegetarian))
     && (!glutenFree || Boolean(food.glutenFree))
-    && allergenFree.every((allergen) => !hasFoodAllergen(food, allergen))
+    && allergenFree.every((allergen) => isFoodConfirmedAllergenFree(food, allergen))
   ));
+}
+
+export function isFoodConfirmedAllergenFree(food: Food, allergen: string) {
+  const field = allergenFieldMap[allergen];
+  return field ? food.allergens?.[field] === false : false;
 }
 
 export function hasFoodAllergen(food: Food, allergen: string) {
@@ -68,6 +73,10 @@ export function buildFoodPlanContext(
         meals_count: 0,
         stations_count: 0,
         foods_count: 0,
+        food_variants_count: 0,
+        menu_item_placements_count: 0,
+        source_kind: 'elon_location',
+        menu_status: 'available',
         first_open: mealWindow?.open || null,
         last_closed: mealWindow?.closed || null
       }
@@ -82,6 +91,9 @@ export function buildFoodPlanContext(
         name: food.mealName,
         time_open: mealWindow?.open || '',
         time_closed: mealWindow?.closed || '',
+        menu_status: 'available',
+        menu_label: null,
+        menu_time_label: null,
         stations: []
       }
     : fallbackMeal;
@@ -358,6 +370,17 @@ export function formatTimelineRange(startMinute: number, endMinute: number) {
 export function getTimelineSegmentLabel(mealPeriod: string, widthPercent: number) {
   if (widthPercent < 8) return '';
   return mealPeriod;
+}
+
+export type ServiceTone = 'breakfast' | 'lunch' | 'dinner' | 'open' | 'service';
+
+export function getServiceTone(serviceLabel: string): ServiceTone {
+  const normalizedLabel = serviceLabel.trim().toLowerCase();
+  if (normalizedLabel === 'open') return 'open';
+  if (normalizedLabel === 'breakfast' || normalizedLabel === 'lunch' || normalizedLabel === 'dinner') {
+    return normalizedLabel;
+  }
+  return 'service';
 }
 
 export function getRestaurantTimelineStatus(windows: TimelineWindow[], nowMinute: number | null) {
@@ -662,6 +685,11 @@ export function round(value: number | null | undefined) {
   return Math.round(Number(value || 0) * 10) / 10;
 }
 
+export function formatNutritionNumber(value: number | null | undefined, unit = '') {
+  if (value === null || value === undefined) return '—';
+  return `${round(value)}${unit ? ` ${unit}` : ''}`;
+}
+
 export function percentOf(value: number, total: number) {
   if (!total) return 0;
   return Math.max(0, Math.min(100, Math.round((value / total) * 100)));
@@ -708,4 +736,76 @@ export function easternDateInput(date = new Date()) {
   }).formatToParts(date);
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${values.year}-${values.month}-${values.day}`;
+}
+
+export function buildMenuInsightFoods(menu: MenuResponse | null, mealId?: number | null) {
+  if (!menu) return [];
+
+  const foodsById = new Map<number, InsightFood>();
+  for (const meal of menu.meals) {
+    if (mealId !== undefined && mealId !== null && meal.id !== mealId) continue;
+    for (const station of meal.stations) {
+      for (const food of station.foods) {
+        const existing = foodsById.get(food.id);
+        if (existing) {
+          foodsById.set(food.id, { ...existing, appearanceCount: existing.appearanceCount + 1 });
+          continue;
+        }
+
+        const contextualFood: Food = {
+          ...food,
+          restaurantId: menu.restaurant.id,
+          restaurantName: menu.restaurant.name,
+          mealId: meal.id,
+          mealName: meal.name,
+          mealTimeOpen: meal.time_open,
+          mealTimeClosed: meal.time_closed,
+          stationId: station.id,
+          stationName: station.name
+        };
+        const calories = nutritionValue(contextualFood.calories);
+        const protein = nutritionValue(contextualFood.protein);
+        const sodium = nutritionValue(contextualFood.sodium);
+        const proteinCalories = protein * 4;
+        const carbCalories = nutritionValue(contextualFood.totalCarbohydrates) * 4;
+        const fatCalories = nutritionValue(contextualFood.totalFat) * 9;
+        const macroTotalCalories = proteinCalories + carbCalories + fatCalories;
+
+        foodsById.set(food.id, {
+          ...contextualFood,
+          appearanceCount: 1,
+          dietGroup: contextualFood.vegan ? 'Vegan' : contextualFood.vegetarian ? 'Vegetarian' : 'Omnivore',
+          proteinPer100Calories: calories > 0 ? round((protein / calories) * 100) : 0,
+          sodiumPer100Calories: calories > 0 ? round((sodium / calories) * 100) : 0,
+          macroTotalCalories: round(macroTotalCalories),
+          proteinShare: macroTotalCalories > 0 ? proteinCalories / macroTotalCalories : 0,
+          carbShare: macroTotalCalories > 0 ? carbCalories / macroTotalCalories : 0,
+          fatShare: macroTotalCalories > 0 ? fatCalories / macroTotalCalories : 0
+        });
+      }
+    }
+  }
+
+  return [...foodsById.values()].sort((left, right) => left.shortName.localeCompare(right.shortName));
+}
+
+export function latestDatabaseUpdateAt(dates: ServiceDateSummary[]) {
+  return dates.reduce<string | null>((latest, item) => {
+    if (!item.lastImportedAt || Number.isNaN(Date.parse(item.lastImportedAt))) return latest;
+    if (!latest || Date.parse(item.lastImportedAt) > Date.parse(latest)) return item.lastImportedAt;
+    return latest;
+  }, null);
+}
+
+export function formatDatabaseUpdatedAt(value: string | null) {
+  if (!value || Number.isNaN(Date.parse(value))) return 'Update time unavailable';
+
+  return `${new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(new Date(value))} ET`;
 }
