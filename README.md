@@ -54,7 +54,7 @@ flowchart LR
   Scheduler["default scheduler service"] -. "daily imports" .-> MySQL
 ```
 
-For a deeper read, use [docs/sql-walkthrough.md](docs/sql-walkthrough.md) for the relational model, [docs/scraper-source-contract.md](docs/scraper-source-contract.md) for the verified source and validation contract, and [docs/portfolio-case-study.md](docs/portfolio-case-study.md) for the portfolio writeup. Production and security notes live in [docs/deployment.md](docs/deployment.md).
+For a deeper read, use [docs/project-data-and-ui-reference.md](docs/project-data-and-ui-reference.md) for the end-to-end project, stored-data, and interface catalog; [docs/sql-walkthrough.md](docs/sql-walkthrough.md) for the relational model; [docs/scraper-source-contract.md](docs/scraper-source-contract.md) for the verified source and validation contract; and [docs/portfolio-case-study.md](docs/portfolio-case-study.md) for the portfolio writeup. Production and security notes live in [docs/deployment.md](docs/deployment.md).
 
 ## SQL
 
