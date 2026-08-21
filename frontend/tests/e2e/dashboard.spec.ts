@@ -29,6 +29,31 @@ const tofuBowl = food({
   calories: 310,
   totalCarbohydrates: 42,
   protein: 18,
+  nutritionFacts: [{
+    label: 'Calories',
+    unit: '',
+    value: 310,
+    percentDailyValue: 16,
+    isSecondary: false
+  }, {
+    label: 'Total Fat',
+    unit: 'g',
+    value: 8,
+    percentDailyValue: 10,
+    isSecondary: false
+  }, {
+    label: 'Saturated Fat',
+    unit: 'g',
+    value: 1,
+    percentDailyValue: 5,
+    isSecondary: true
+  }, {
+    label: 'Total Sugars',
+    unit: 'g',
+    value: 5,
+    percentDailyValue: null,
+    isSecondary: true
+  }],
   vegan: true,
   vegetarian: true,
   glutenFree: true,
@@ -76,6 +101,24 @@ const yogurtParfait = food({
   stationName: 'global greens'
 });
 
+const dinnerPasta = food({
+  id: 5,
+  externalId: 'recipe-dinner-pasta',
+  shortName: 'Garden Dinner Pasta',
+  fullName: 'Garden Dinner Pasta',
+  ingredients: 'Pasta, tomato, spinach, herbs',
+  calories: 410,
+  totalCarbohydrates: 62,
+  protein: 16,
+  vegetarian: true,
+  mealId: dinnerMealId,
+  mealName: 'Summer Break',
+  mealTimeOpen: `${serviceDate}T17:30:00.000Z`,
+  mealTimeClosed: `${serviceDate}T18:30:00.000Z`,
+  stationId: 303,
+  stationName: 'Evening Grill'
+});
+
 const avocadoToast = food({
   id: 4,
   externalId: 'recipe-avocado-toast',
@@ -94,7 +137,7 @@ const avocadoToast = food({
   mealTimeClosed: `${serviceDate}T10:30:00.000Z`,
   restaurantId: secondRestaurantId,
   restaurantName: 'Acorn Coffee Shop',
-  mealName: 'Breakfast'
+  mealName: 'Open'
 });
 
 test('dashboard supports search, details, favorites, and local meal planning', async ({ page }) => {
@@ -109,7 +152,11 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page).toHaveTitle('ElonMealsDB');
   await expect(page.getByText('ElonMealsDB')).toBeVisible();
   await expect(page.getByLabel('Restaurants').getByRole('tab', { name: /Lakeside Dining Hall/ })).toHaveClass(/selected/);
-  await expect(page.getByLabel('Restaurants').getByRole('tab', { name: /Acorn Coffee Shop/ })).toBeVisible();
+  const acornTimeline = page.getByLabel('Restaurants').getByRole('tab', { name: /Acorn Coffee Shop/ });
+  await expect(acornTimeline).toBeVisible();
+  await expect(acornTimeline.locator('.timeline-window')).toContainText('Open');
+  await expect(acornTimeline.locator('.timeline-window')).not.toContainText('Breakfast');
+  await expect(acornTimeline.locator('.timeline-window')).toHaveClass(/open/);
   await expect(page.getByLabel('Selected foods')).toContainText('0 selected');
   await expect(page.getByRole('heading', { name: "Today's Plan" })).toHaveCount(0);
   await expect(page.locator('.brand-logo')).toBeVisible();
@@ -120,9 +167,19 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(page.getByRole('heading', { name: 'Profile And Goals' })).toHaveCount(0);
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/favicon.svg');
   await expect(page.getByRole('heading', { name: 'Nutrition Insights' })).toBeVisible();
+  await expect(page.getByText(/Database last updated/)).toContainText('Jul 6, 2026');
+  await expect(page.getByText(/Database last updated/)).toContainText('9:15 AM ET');
+  await expect(page.getByRole('link', { name: 'Chadd Brenner' })).toHaveAttribute('href', 'https://chadd.blog/');
   await expect(page.getByText('Foods indexed')).toHaveCount(0);
   await expect(page.getByLabel('Protein value scatter').getByText('Protein Value Scatter')).toBeVisible();
   await expect(page.getByLabel('Macro triangle').getByText('Macro Triangle')).toBeVisible();
+  await expect(page.getByLabel('Protein value scatter')).toContainText('3 foods');
+  await expect(page.getByLabel('Macro triangle')).toContainText('3 foods');
+  await expect(page.getByLabel('Protein value scatter')).toContainText('11:00 AM - 2:00 PM');
+  const rightEdgeScatterPoint = page.getByLabel('Protein value scatter').locator('.scatter-point.label-left').first();
+  await expect(rightEdgeScatterPoint).toBeVisible();
+  await rightEdgeScatterPoint.focus();
+  await expect(rightEdgeScatterPoint.locator('span')).toBeVisible();
   await expect(page.getByLabel('Station constraint heatmap').getByText('Station Constraint Heatmap')).toBeVisible();
   await expect(page.getByLabel('Station macro fingerprints').getByText('Station Macro Fingerprints')).toBeVisible();
   await expect(page.getByLabel('Top Protein Efficiency').getByText('Campus Chicken Plate')).toBeVisible();
@@ -154,26 +211,44 @@ test('dashboard supports search, details, favorites, and local meal planning', a
     summaryPosition: 'sticky',
     summaryBeforeTimeline: true
   });
-  await page.evaluate(() => window.scrollTo(0, 260));
+
+  const chartMealTabs = page.getByLabel('Meals').getByRole('tab');
+  await chartMealTabs.nth(1).click();
+  await expect(page.getByLabel('Protein value scatter')).toContainText('1 food');
+  await expect(page.getByLabel('Macro triangle')).toContainText('1 food');
+  await expect(page.getByLabel('Protein value scatter')).toContainText('5:30 - 6:30 PM');
+  await expect(page.getByLabel('Protein value scatter').getByRole('button', { name: /Garden Dinner Pasta/ })).toBeVisible();
+  await expect(page.getByLabel('Protein value scatter').getByRole('button', { name: /Ginger Tofu Bowl/ })).toHaveCount(0);
+  await chartMealTabs.nth(0).click();
+  await expect(page.getByLabel('Protein value scatter')).toContainText('3 foods');
+
+  const summaryHeightBeforeScroll = await page.getByLabel('Nutrition totals').evaluate((element) => element.getBoundingClientRect().height);
+  await page.evaluate(() => {
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo(0, 260);
+  });
   await expect(page.getByLabel('Nutrition totals')).toHaveClass(/is-compact/);
-  const compactSummaryState = await page.getByLabel('Nutrition totals').evaluate((element) => {
-    const goal = element.querySelector('.goal');
-    const labelRow = goal?.querySelector('div:first-child');
-    return {
-      background: getComputedStyle(element).backgroundColor,
-      labelRowDisplay: labelRow ? getComputedStyle(labelRow).display : '',
-      labelRowAlignItems: labelRow ? getComputedStyle(labelRow).alignItems : '',
-      labelRowJustifyContent: labelRow ? getComputedStyle(labelRow).justifyContent : ''
-    };
-  });
-  expect(compactSummaryState).toMatchObject({
-    labelRowDisplay: 'flex',
-    labelRowAlignItems: 'baseline',
-    labelRowJustifyContent: 'space-between'
-  });
-  expect(compactSummaryState.background).not.toBe('rgba(255, 255, 255, 0.94)');
+  await page.waitForTimeout(220);
+  const summaryAfterScroll = await page.getByLabel('Nutrition totals').evaluate((element) => ({
+    height: element.getBoundingClientRect().height,
+    transitionProperty: getComputedStyle(element).transitionProperty,
+    scrollY: window.scrollY
+  }));
+  expect(summaryAfterScroll.height).toBeLessThan(summaryHeightBeforeScroll - 4);
+  expect(summaryAfterScroll.transitionProperty).toContain('padding');
+  expect(summaryAfterScroll.transitionProperty).not.toContain('margin');
+  expect(Math.abs(summaryAfterScroll.scrollY - 260)).toBeLessThan(1);
+  await page.waitForTimeout(250);
+  expect(Math.abs(await page.evaluate(() => window.scrollY) - summaryAfterScroll.scrollY)).toBeLessThan(1);
+  await page.evaluate(() => window.scrollTo(0, 100));
+  await expect(page.getByLabel('Nutrition totals')).toHaveClass(/is-compact/);
+  expect(Math.abs(await page.evaluate(() => window.scrollY) - 100)).toBeLessThan(1);
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.getByLabel('Nutrition totals')).not.toHaveClass(/is-compact/);
+  await page.waitForTimeout(220);
+  const summaryHeightAfterReturn = await page.getByLabel('Nutrition totals').evaluate((element) => element.getBoundingClientRect().height);
+  expect(Math.abs(summaryHeightAfterReturn - summaryHeightBeforeScroll)).toBeLessThan(1);
+  await page.evaluate(() => document.documentElement.style.removeProperty('scroll-behavior'));
   const triangleColors = await page.getByLabel('Macro triangle').evaluate((element) => {
     const frame = element.querySelector('.macro-triangle-frame');
     const shell = element.querySelector('.triangle-shell');
@@ -201,9 +276,16 @@ test('dashboard supports search, details, favorites, and local meal planning', a
 
   await page.getByLabel('Restaurants').getByRole('tab', { name: /Acorn Coffee Shop/ }).click();
   await expect(page.getByLabel('Restaurants').getByRole('tab', { name: /Acorn Coffee Shop/ })).toHaveClass(/selected/);
+  await expect(page.getByLabel('Meals').getByRole('tab', { name: /Open/ })).toHaveClass(/selected/);
+  await expect(page.getByLabel('Meals').getByRole('tab', { name: /Open/ })).not.toHaveClass(/tone-open/);
   await expect(page.locator('.food-table').getByRole('button', { name: 'Avocado Toast', exact: true })).toBeVisible();
+  await expect(page.getByLabel('Protein value scatter').locator('.scatter-point')).toHaveCount(1);
+  await expect(page.getByLabel('Protein value scatter').getByLabel(/Avocado Toast/)).toBeVisible();
+  await expect(page.getByLabel('Macro triangle').locator('.triangle-point')).toHaveCount(1);
   await page.getByLabel('Restaurants').getByRole('tab', { name: /Lakeside Dining Hall/ }).click();
   await expect(page.getByLabel('Restaurants').getByRole('tab', { name: /Lakeside Dining Hall/ })).toHaveClass(/selected/);
+  await expect(page.getByLabel('Protein value scatter').locator('.scatter-point')).toHaveCount(3);
+  await expect(page.getByLabel('Macro triangle').locator('.triangle-point')).toHaveCount(3);
 
   const mealTabs = page.getByLabel('Meals');
   await mealTabs.getByRole('tab', { name: /11:00 AM - 2:00 PM/ }).focus();
@@ -238,6 +320,27 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   await expect(foodTable.getByRole('button', { name: 'Ginger Tofu Bowl', exact: true })).toHaveCount(0);
   await stationFilters.getByRole('button', { name: /All stations/ }).click();
 
+  const gingerRow = foodTable.locator('tbody tr').filter({ hasText: 'Ginger Tofu Bowl' });
+  await gingerRow.locator('[data-label="Calories"]').click();
+  const rowOpenedDrawer = page.locator('.drawer.open');
+  await expect(rowOpenedDrawer.getByRole('heading', { name: 'Ginger Tofu Bowl' })).toBeVisible();
+  await rowOpenedDrawer.getByRole('button', { name: 'Close nutrition drawer' }).click();
+  await gingerRow.getByRole('button', { name: 'Filter by Global Greens' }).click();
+  await expect(stationFilters.getByRole('button', { name: /Global Greens/ })).toHaveClass(/selected/);
+  await expect(page.locator('.drawer.open')).toHaveCount(0);
+  await stationFilters.getByRole('button', { name: /All stations/ }).click();
+
+  await gingerRow.hover();
+  const hoveredRowColors = await gingerRow.evaluate((row) => {
+    const foodCell = row.querySelector('[data-label="Food"]');
+    const actionCell = row.querySelector('[data-label="Actions"]');
+    return {
+      food: foodCell ? getComputedStyle(foodCell).backgroundColor : '',
+      actions: actionCell ? getComputedStyle(actionCell).backgroundColor : ''
+    };
+  });
+  expect(hoveredRowColors.actions).toBe(hoveredRowColors.food);
+
   await expect(foodTable.getByText(/^Add$/)).toHaveCount(0);
   const rowActionAlignment = await foodTable.locator('tbody tr').first().evaluate((row) => {
     const foodCell = row.querySelector('[data-label="Food"]');
@@ -248,26 +351,36 @@ test('dashboard supports search, details, favorites, and local meal planning', a
     return Math.abs((foodBox.top + foodBox.height / 2) - (buttonBox.top + buttonBox.height / 2));
   });
   expect(rowActionAlignment ?? Number.POSITIVE_INFINITY).toBeLessThan(2);
-  const stickyActionHeader = await foodTable.evaluate((tableWrap) => {
+  const actionColumnLayout = await foodTable.evaluate((tableWrap) => {
     tableWrap.scrollTop = 120;
     const header = tableWrap.querySelector('th.row-actions-header');
     const bodyAction = tableWrap.querySelector('td.row-actions');
-    if (!header || !bodyAction) return null;
+    const lastMacro = bodyAction?.previousElementSibling;
+    const row = bodyAction?.parentElement;
+    if (!header || !bodyAction || !lastMacro || !row) return null;
     const headerBox = header.getBoundingClientRect();
     const bodyBox = bodyAction.getBoundingClientRect();
-    const topElement = document.elementFromPoint(headerBox.left + headerBox.width / 2, headerBox.top + headerBox.height / 2);
-    const owner = topElement?.closest('th, td');
+    const macroBox = lastMacro.getBoundingClientRect();
+    const rowBox = row.getBoundingClientRect();
     return {
       headerWidth: headerBox.width,
       bodyWidth: bodyBox.width,
-      ownerTag: owner?.tagName,
-      ownerClass: owner?.className
+      position: getComputedStyle(bodyAction).position,
+      shadow: getComputedStyle(bodyAction).boxShadow,
+      macroRight: macroBox.right,
+      actionLeft: bodyBox.left,
+      actionRight: bodyBox.right,
+      rowRight: rowBox.right
     };
   });
-  expect(stickyActionHeader?.headerWidth ?? 0).toBeGreaterThanOrEqual(90);
-  expect(stickyActionHeader?.bodyWidth ?? 0).toBeGreaterThanOrEqual(90);
-  expect(stickyActionHeader?.ownerTag).toBe('TH');
-  expect(stickyActionHeader?.ownerClass).toContain('row-actions-header');
+  expect(actionColumnLayout?.headerWidth ?? 0).toBeGreaterThanOrEqual(50);
+  expect(actionColumnLayout?.headerWidth ?? Number.POSITIVE_INFINITY).toBeLessThan(70);
+  expect(actionColumnLayout?.bodyWidth ?? 0).toBeGreaterThanOrEqual(50);
+  expect(actionColumnLayout?.position).toBe('static');
+  expect(actionColumnLayout?.shadow).toBe('none');
+  expect(Math.abs((actionColumnLayout?.actionLeft || 0) - (actionColumnLayout?.macroRight || 0))).toBeLessThan(2);
+  expect(Math.abs((actionColumnLayout?.actionRight || 0) - (actionColumnLayout?.rowRight || 0))).toBeLessThan(2);
+  await expect(foodTable.getByLabel('Open nutrition details')).toHaveCount(0);
   await foodTable.getByRole('button', { name: /Sort by Calories/ }).click();
   await expect(foodTable.locator('tbody tr').first()).toContainText('Greek Yogurt Parfait');
   await expect(foodTable.getByRole('columnheader', { name: /Calories/ })).toHaveAttribute('aria-sort', 'ascending');
@@ -308,6 +421,20 @@ test('dashboard supports search, details, favorites, and local meal planning', a
   const drawer = page.locator('.drawer.open');
   await expect(drawer.getByRole('heading', { name: 'Ginger Tofu Bowl' })).toBeVisible();
   await expect(drawer.getByText('Tofu, jasmine rice, ginger, scallions')).toBeVisible();
+  const nutritionFacts = drawer.getByRole('table', { name: 'Nutrition facts for Ginger Tofu Bowl' });
+  await expect(nutritionFacts.getByRole('columnheader', { name: 'Nutrient' })).toBeVisible();
+  await expect(nutritionFacts.getByRole('columnheader', { name: 'Amount' })).toBeVisible();
+  await expect(nutritionFacts.getByRole('columnheader', { name: 'Daily value' })).toBeVisible();
+  await expect(nutritionFacts).not.toContainText('% DV');
+  await expect(nutritionFacts.getByRole('row', { name: /Saturated Fat 1 g 5%/ })).toHaveClass(/secondary/);
+  await expect(nutritionFacts.getByLabel('Total Sugars daily value not published')).toContainText('—');
+  await drawer.evaluate((element) => element.scrollTo(0, element.scrollHeight));
+  const pinnedDrawerHeader = await drawer.locator('.drawer-header').evaluate((header) => ({
+    headerTop: header.getBoundingClientRect().top,
+    drawerTop: header.parentElement?.getBoundingClientRect().top || 0
+  }));
+  expect(Math.abs(pinnedDrawerHeader.headerTop - pinnedDrawerHeader.drawerTop)).toBeLessThan(2);
+  await expect(drawer.getByRole('heading', { name: 'Ginger Tofu Bowl' })).toBeVisible();
 
   await drawer.getByRole('button', { name: 'Favorite' }).click();
   await expect(drawer.getByRole('button', { name: 'Favorited' })).toBeVisible();
@@ -494,7 +621,7 @@ test('global command search finds foods across restaurants and adds the selected
   expect(searchDialogBox?.width ?? 0).toBeGreaterThan(900);
 
   await searchDialog.getByLabel('Search everywhere').fill('Summer');
-  await expect(searchDialog.locator('.search-result')).toHaveCount(3);
+  await expect(searchDialog.locator('.search-result')).toHaveCount(4);
   await expect(searchDialog.getByText('Lakeside Dining Hall · Homestyle')).toBeVisible();
   await expect(searchDialog.getByText('Summer Break · 11:00 AM - 2:00 PM').first()).toBeVisible();
   await expect(searchDialog.locator('.search-result').first()).toHaveClass(/active/);
@@ -511,7 +638,7 @@ test('global command search finds foods across restaurants and adds the selected
   const reopenedSearch = page.getByRole('dialog', { name: 'Global food search' });
   await reopenedSearch.getByLabel('Search everywhere').fill('Cafe');
   await expect(reopenedSearch.getByText('Acorn Coffee Shop · Cafe Counter')).toBeVisible();
-  await expect(reopenedSearch.getByText('Breakfast · 7:30 - 10:30 AM')).toBeVisible();
+  await expect(reopenedSearch.getByText('Open · 7:30 - 10:30 AM')).toBeVisible();
   await reopenedSearch.getByLabel('Add Avocado Toast to plan').click();
 
   await expect(reopenedSearch).toBeVisible();
@@ -599,7 +726,7 @@ async function mockApi(page: Page) {
           time_open: `${serviceDate}T17:30:00.000Z`,
           time_closed: `${serviceDate}T18:30:00.000Z`,
           stations: [
-            { id: 303, mealId: dinnerMealId, name: 'Evening Grill', foods: [] }
+            { id: 303, mealId: dinnerMealId, name: 'Evening Grill', foods: [dinnerPasta] }
           ]
         }]
       });
@@ -618,7 +745,7 @@ async function mockApi(page: Page) {
         meals: [{
           id: cafeMealId,
           restaurant_id: secondRestaurantId,
-          name: 'Breakfast',
+          name: 'Open',
           time_open: `${serviceDate}T07:30:00.000Z`,
           time_closed: `${serviceDate}T10:30:00.000Z`,
           stations: [
@@ -718,7 +845,7 @@ async function mockApi(page: Page) {
           restaurantId: secondRestaurantId,
           restaurantName: 'Acorn Coffee Shop',
           mealId: cafeMealId,
-          mealName: 'Breakfast',
+          mealName: 'Open',
           mealTimeOpen: `${serviceDate}T07:30:00.000Z`,
           mealTimeClosed: `${serviceDate}T10:30:00.000Z`,
           stationId: 304,
@@ -773,15 +900,15 @@ async function mockApi(page: Page) {
           url: 'https://www.elondining.com/locations/acorn-coffee-shop/',
           venueName: 'Acorn Coffee Shop',
           mealId: cafeMealId,
-          mealName: 'Breakfast',
+          mealName: 'Open',
           mealPeriod: 'Breakfast',
           timeOpen: `${serviceDate}T07:30:00.000Z`,
           timeClosed: `${serviceDate}T10:30:00.000Z`,
           stationCount: 1
         }],
-        proteinScatter: [chickenPlate, tofuBowl, yogurtParfait, avocadoToast].map(insightFood),
+        proteinScatter: [avocadoToast].map(insightFood),
         proteinEfficiency: [chickenPlate, tofuBowl, yogurtParfait, avocadoToast].map(insightFood),
-        macroFoods: [chickenPlate, tofuBowl, yogurtParfait, avocadoToast].map(insightFood),
+        macroFoods: [avocadoToast].map(insightFood),
         sodiumOutliers: [chickenPlate, avocadoToast, tofuBowl].map(insightFood),
         constraintCoverage: [{
           key: 'vegetarian',
@@ -834,7 +961,7 @@ async function mockApi(page: Page) {
 
       const query = (url.searchParams.get('q') || '').toLowerCase();
       const allergenFree = (url.searchParams.get('allergenFree') || '').split(',').map((item) => item.trim()).filter(Boolean);
-      const foods = [tofuBowl, chickenPlate, yogurtParfait, avocadoToast]
+      const foods = [tofuBowl, chickenPlate, yogurtParfait, dinnerPasta, avocadoToast]
         .filter((item) => !query || `${item.shortName} ${item.fullName} ${item.ingredients} ${item.restaurantName} ${item.mealName} ${item.stationName}`.toLowerCase().includes(query))
         .filter((item) => url.searchParams.get('vegan') !== 'true' || item.vegan)
         .filter((item) => url.searchParams.get('vegetarian') !== 'true' || item.vegetarian)
@@ -880,6 +1007,13 @@ type FoodFixture = {
   dietaryFiber: number;
   sugars: number;
   protein: number;
+  nutritionFacts?: Array<{
+    label: string;
+    unit: string;
+    value: number | null;
+    percentDailyValue: number | null;
+    isSecondary: boolean;
+  }>;
   vegetarian: boolean;
   vegan: boolean;
   glutenFree: boolean;
@@ -1004,7 +1138,7 @@ function stationInsightRows() {
     restaurantId: secondRestaurantId,
     restaurantName: 'Acorn Coffee Shop',
     mealId: cafeMealId,
-    mealName: 'Breakfast',
+    mealName: 'Open',
     mealTimeOpen: `${serviceDate}T07:30:00.000Z`,
     mealTimeClosed: `${serviceDate}T10:30:00.000Z`,
     stationId: 304,

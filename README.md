@@ -58,14 +58,15 @@ flowchart LR
   Scheduler["default scheduler service"] -. "daily imports" .-> MySQL
 ```
 
-For a deeper read, use [docs/sql-walkthrough.md](docs/sql-walkthrough.md) for the relational model and [docs/portfolio-case-study.md](docs/portfolio-case-study.md) for the portfolio writeup. Production and security notes live in [docs/deployment.md](docs/deployment.md).
+For a deeper read, use [docs/sql-walkthrough.md](docs/sql-walkthrough.md) for the relational model, [docs/scraper-source-contract.md](docs/scraper-source-contract.md) for the verified source and validation contract, and [docs/portfolio-case-study.md](docs/portfolio-case-study.md) for the portfolio writeup. Production and security notes live in [docs/deployment.md](docs/deployment.md).
 
 ## SQL
 
 This needed a real database because the data is naturally one-to-many and many-to-many. The app uses SQL for the parts where a relational database actually makes sense:
 
 - Restaurant -> meal -> station -> food hierarchy joins.
-- Many-to-many station food appearances, so the same food can show up in different places without duplicating nutrition facts.
+- Occurrence-aware food variants: recipe IDs remain searchable source IDs, while a content hash prevents context-specific nutrition or allergens from overwriting another occurrence.
+- Separate counts for distinct recipe IDs, nutrition/content variants, and station-menu placements.
 - Dietary and allergen filtering with validated request parameters.
 - Station-level aggregates for average calories, protein, and safe-option counts.
 - Nutrition rankings such as protein per 100 calories and high-sodium outliers.
@@ -104,7 +105,7 @@ The recurring scheduler starts with the normal Compose stack. This is the Docker
 docker compose up -d --build --remove-orphans
 ```
 
-By default it imports once at container startup, then imports today and tomorrow at `06:30`, `12:15`, and `15:15` America/New_York time. These runs cover menus published shortly before breakfast, around lunch, and later in the day. Empty or partially populated menu responses are recorded as failures instead of replacing complete food data. Adjust `.env` with:
+By default it imports once at container startup, then imports today and tomorrow at `06:30`, `12:15`, and `15:15` America/New_York time. These runs cover menus published shortly before breakfast, around lunch, and later in the day. The collector verifies the requested date, resource classification, location identity, meal-tab mapping, embedded nutrition JSON, and hierarchy counts before replacement. Every valid Elon-published service window is retained with its exact source label and times. External links and PDFs are never scraped, but their hours and exact outbound URLs are imported as link-only resources. Valid Elon locations that publish hours without food menus are imported as hours-only locations; incomplete or structurally inconsistent responses are recorded as failures. Adjust `.env` with:
 
 ```bash
 SCRAPER_RUN_TIMES=06:30,12:15,15:15

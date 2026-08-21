@@ -58,11 +58,11 @@
   background-color: var(--surface-raised);
   box-shadow: 0 12px 28px rgba(20, 31, 43, 0.07);
   backdrop-filter: blur(14px);
-  transition: margin 180ms ease, padding 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  overflow-anchor: none;
+  transition: padding 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
 
 .plan-summary-bar.is-compact {
-  margin-top: 6px;
   padding: 6px 10px;
   border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
   background-color: color-mix(in srgb, var(--surface) 64%, var(--accent-soft));
@@ -277,6 +277,30 @@
 
 .food-workspace {
   min-width: 0;
+}
+
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 18px 4px 2px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.site-footer a {
+  color: var(--accent-strong);
+  font-weight: 800;
+  text-decoration-color: color-mix(in srgb, var(--accent) 44%, transparent);
+  text-underline-offset: 3px;
+}
+
+.site-footer a:hover {
+  text-decoration-color: currentColor;
 }
 
 .station-strip {

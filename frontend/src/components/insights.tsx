@@ -17,9 +17,11 @@ import {
 } from '../app/utils';
 import { Badge, EmptyState, PanelHeader } from './common';
 
-export function NutritionInsightsPanel({ insights, activeMealId, onSelect }: {
+export function NutritionInsightsPanel({ insights, activeMealId, chartFoods, chartScopeLabel, onSelect }: {
   insights: NutritionInsights | null;
   activeMealId: number | null;
+  chartFoods: InsightFood[];
+  chartScopeLabel: string;
   onSelect: (food: Food) => void;
 }) {
   const stationConstraints = insights?.stationConstraints.filter((station) => !activeMealId || station.mealId === activeMealId) || [];
@@ -33,8 +35,8 @@ export function NutritionInsightsPanel({ insights, activeMealId, onSelect }: {
         icon={<BarChart3 size={18} />}
       />
       <div className="insight-canvas">
-        <ProteinScatter foods={insights?.proteinScatter || []} onSelect={onSelect} />
-        <MacroTriangle foods={insights?.macroFoods || []} onSelect={onSelect} />
+        <ProteinScatter foods={chartFoods} scopeLabel={chartScopeLabel} onSelect={onSelect} />
+        <MacroTriangle foods={chartFoods} scopeLabel={chartScopeLabel} onSelect={onSelect} />
         <StationConstraintHeatmap stations={stationConstraints} />
         <StationMacroFingerprints stations={stationFingerprints} />
       </div>
@@ -47,10 +49,15 @@ export function NutritionInsightsPanel({ insights, activeMealId, onSelect }: {
   );
 }
 
-export function ProteinScatter({ foods, onSelect }: { foods: InsightFood[]; onSelect: (food: Food) => void }) {
-  const points = foods.filter((food) => nutritionValue(food.calories) > 0 && nutritionValue(food.protein) > 0).slice(0, 36);
+export function ProteinScatter({ foods, scopeLabel, onSelect }: { foods: InsightFood[]; scopeLabel: string; onSelect: (food: Food) => void }) {
+  const points = foods.filter((food) => nutritionValue(food.calories) > 0 && nutritionValue(food.protein) > 0);
   const maxCalories = Math.max(1, ...points.map((food) => nutritionValue(food.calories)));
   const maxProtein = Math.max(1, ...points.map((food) => nutritionValue(food.protein)));
+  const positionedPoints = spreadCoincidentPoints(points.map((food) => ({
+    food,
+    left: Math.min(94, Math.max(5, (nutritionValue(food.calories) / maxCalories) * 91)),
+    top: Math.min(90, Math.max(8, 94 - (nutritionValue(food.protein) / maxProtein) * 82))
+  })));
 
   if (!points.length) {
     return <InsightEmpty title="Protein Value Scatter" text="Protein value appears when nutrition data is available." />;
@@ -60,7 +67,7 @@ export function ProteinScatter({ foods, onSelect }: { foods: InsightFood[]; onSe
     <div className="insight-card protein-map" aria-label="Protein value scatter">
       <div className="insight-section-title">
         <strong>Protein Value Scatter</strong>
-        <span>Lean choices rise toward the upper left</span>
+        <span>{scopeLabel} · Calories vs. protein · {formatFoodCount(points.length)}</span>
       </div>
       <div className="chart-legend diet-legend" aria-hidden="true">
         <span className="diet-dot vegan" /> Vegan
@@ -70,33 +77,28 @@ export function ProteinScatter({ foods, onSelect }: { foods: InsightFood[]; onSe
       <div className="scatter-frame">
         <span className="scatter-axis x">Calories</span>
         <span className="scatter-axis y">Protein</span>
-        {points.map((food, index) => {
-          const calories = nutritionValue(food.calories);
-          const protein = nutritionValue(food.protein);
-          return (
-            <button
-              key={foodRenderKey(food, index)}
-              className={`scatter-point ${dietClass(food.dietGroup)}`}
-              type="button"
-              title={`${food.shortName}: ${round(calories)} cal, ${round(protein)} g protein`}
-              style={{
-                left: `${Math.min(94, Math.max(5, (calories / maxCalories) * 91))}%`,
-                top: `${Math.min(90, Math.max(8, 94 - (protein / maxProtein) * 82))}%`
-              }}
-              onClick={() => onSelect(food)}
-              aria-label={`${food.shortName}, ${round(calories)} calories, ${round(protein)} grams protein`}
-            >
-              <span>{food.shortName}</span>
-            </button>
-          );
-        })}
+        {positionedPoints.map((point, index) => (
+          <ChartPoint
+            key={foodRenderKey(point.food, index)}
+            food={point.food}
+            left={point.left}
+            top={point.top}
+            label={`${point.food.shortName}: ${round(point.food.calories)} cal, ${round(point.food.protein)} g protein`}
+            ariaLabel={`${point.food.shortName}, ${round(point.food.calories)} calories, ${round(point.food.protein)} grams protein`}
+            onSelect={onSelect}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
-export function MacroTriangle({ foods, onSelect }: { foods: InsightFood[]; onSelect: (food: Food) => void }) {
-  const points = foods.filter((food) => food.macroTotalCalories > 0).slice(0, 42);
+export function MacroTriangle({ foods, scopeLabel, onSelect }: { foods: InsightFood[]; scopeLabel: string; onSelect: (food: Food) => void }) {
+  const points = foods.filter((food) => food.macroTotalCalories > 0);
+  const positionedPoints = spreadCoincidentPoints(points.map((food) => {
+    const position = macroTrianglePosition(food);
+    return { food, left: position.x, top: position.y };
+  }));
 
   if (!points.length) {
     return <InsightEmpty title="Macro Triangle" text="Macro balance appears when nutrition data is available." />;
@@ -106,7 +108,7 @@ export function MacroTriangle({ foods, onSelect }: { foods: InsightFood[]; onSel
     <div className="insight-card macro-triangle-card" aria-label="Macro triangle">
       <div className="insight-section-title">
         <strong>Macro Triangle</strong>
-        <span>Where each item leans by calories</span>
+        <span>{scopeLabel} · Protein, carbs, and fat · {formatFoodCount(points.length)}</span>
       </div>
       <div className="macro-triangle-frame">
         <div className="macro-triangle-plot">
@@ -125,27 +127,76 @@ export function MacroTriangle({ foods, onSelect }: { foods: InsightFood[]; onSel
           <span className="triangle-label carbs" aria-hidden="true">Carbs</span>
           <span className="triangle-label fat" aria-hidden="true">Fat</span>
           <div className="macro-triangle-points">
-            {points.map((food, index) => {
-              const position = macroTrianglePosition(food);
-              const { proteinShare, carbShare, fatShare } = macroTriangleShares(food);
+            {positionedPoints.map((point, index) => {
+              const { proteinShare, carbShare, fatShare } = macroTriangleShares(point.food);
               return (
-                <button
-                  key={foodRenderKey(food, index)}
-                  className={`scatter-point triangle-point ${position.x > 68 ? 'label-left' : ''} ${dietClass(food.dietGroup)}`}
-                  type="button"
-                  style={{ left: `${position.x}%`, top: `${position.y}%` }}
-                  title={`${food.shortName}: ${percentText(proteinShare)} protein, ${percentText(carbShare)} carbs, ${percentText(fatShare)} fat`}
-                  onClick={() => onSelect(food)}
-                  aria-label={`${food.shortName}: ${percentText(proteinShare)} protein, ${percentText(carbShare)} carbs, ${percentText(fatShare)} fat`}
-                >
-                  <span>{food.shortName}</span>
-                </button>
+                <ChartPoint
+                  key={foodRenderKey(point.food, index)}
+                  food={point.food}
+                  left={point.left}
+                  top={point.top}
+                  className="triangle-point"
+                  label={`${point.food.shortName}: ${percentText(proteinShare)} protein, ${percentText(carbShare)} carbs, ${percentText(fatShare)} fat`}
+                  ariaLabel={`${point.food.shortName}: ${percentText(proteinShare)} protein, ${percentText(carbShare)} carbs, ${percentText(fatShare)} fat`}
+                  onSelect={onSelect}
+                />
               );
             })}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+type PositionedInsightFood = {
+  food: InsightFood;
+  left: number;
+  top: number;
+};
+
+function spreadCoincidentPoints(points: PositionedInsightFood[]) {
+  const bucketCounts = new Map<string, number>();
+  return points.map((point) => {
+    const bucketKey = `${Math.round(point.left / 1.5)}:${Math.round(point.top / 1.5)}`;
+    const collisionIndex = bucketCounts.get(bucketKey) || 0;
+    bucketCounts.set(bucketKey, collisionIndex + 1);
+    if (!collisionIndex) return point;
+
+    const angle = collisionIndex * 137.5 * (Math.PI / 180);
+    const radius = Math.min(2.4, 0.7 + Math.sqrt(collisionIndex) * 0.55);
+    return {
+      ...point,
+      left: Math.min(96, Math.max(4, point.left + Math.cos(angle) * radius)),
+      top: Math.min(94, Math.max(6, point.top + Math.sin(angle) * radius))
+    };
+  });
+}
+
+function formatFoodCount(count: number) {
+  return `${count} ${count === 1 ? 'food' : 'foods'}`;
+}
+
+function ChartPoint({ food, left, top, className = '', label, ariaLabel, onSelect }: {
+  food: InsightFood;
+  left: number;
+  top: number;
+  className?: string;
+  label: string;
+  ariaLabel: string;
+  onSelect: (food: Food) => void;
+}) {
+  return (
+    <button
+      className={`scatter-point ${className} ${left > 70 ? 'label-left' : ''} ${dietClass(food.dietGroup)}`}
+      type="button"
+      title={label}
+      style={{ left: `${left}%`, top: `${top}%` }}
+      onClick={() => onSelect(food)}
+      aria-label={ariaLabel}
+    >
+      <span aria-hidden="true">{food.shortName}</span>
+    </button>
   );
 }
 

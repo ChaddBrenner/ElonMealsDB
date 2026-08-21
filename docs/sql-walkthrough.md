@@ -4,7 +4,7 @@ This project is intentionally relational: the frontend planner is useful, but th
 
 ## Schema Shape
 
-The core model separates stable nutrition facts from where a food appears on a specific service date:
+The core model separates content-addressed nutrition variants from where each variant appears on a specific service date:
 
 ```mermaid
 erDiagram
@@ -12,13 +12,16 @@ erDiagram
   meals ||--o{ stations : has
   stations ||--o{ station_foods : lists
   foods ||--o{ station_foods : appears_in
+  foods ||--o{ food_nutrition_facts : preserves
+  foods ||--o{ food_dietary_attributes : classifies
   scraper_runs }o--|| restaurants : "records target date"
 ```
 
 Why this matters:
 
-- `foods.external_id` is unique, so imports can update nutrition facts without duplicating food records.
-- `station_foods` handles many-to-many appearances: one food can appear at multiple stations or meals.
+- `(foods.external_id, foods.content_hash)` is unique. The encoded recipe ID remains a source identifier while the hash prevents a context-specific nutrition or allergen variant from overwriting another one.
+- `food_nutrition_facts` preserves the complete ordered source facts, units, percentage daily values, and secondary-row flags; `food_dietary_attributes` preserves extensible source tags.
+- `station_foods` handles many-to-many appearances: one exact food variant can appear at multiple stations or meals.
 - `scraper_runs` records operational metadata separately from menu facts, which keeps API freshness auditable.
 - Date-scoped tables and indexes let the API answer "what is available today?" without dynamic SQL.
 
@@ -58,7 +61,7 @@ Review point: this is a five-table join with deterministic ordering and no reque
 
 ## Coverage Metrics
 
-This aggregate backs `/api/metrics/coverage` and the dashboard summary cards:
+This aggregate backs `/api/metrics/coverage`, a public diagnostic/portfolio endpoint:
 
 ```sql
 SELECT
@@ -66,7 +69,9 @@ SELECT
   COUNT(DISTINCT r.id) AS restaurants,
   COUNT(DISTINCT m.id) AS meals,
   COUNT(DISTINCT s.id) AS stations,
-  COUNT(DISTINCT f.id) AS foods,
+  COUNT(DISTINCT f.external_id) AS foods,
+  COUNT(DISTINCT f.id) AS food_variants,
+  COUNT(sf.food_id) AS menu_item_placements,
   COUNT(DISTINCT CASE WHEN f.vegan THEN f.id END) AS vegan_items,
   COUNT(DISTINCT CASE WHEN f.vegetarian THEN f.id END) AS vegetarian_items,
   COUNT(DISTINCT CASE WHEN f.gluten_free THEN f.id END) AS gluten_free_items
@@ -79,7 +84,7 @@ WHERE r.service_date = '2026-07-01'
 GROUP BY r.service_date;
 ```
 
-Review point: `COUNT(DISTINCT ...)` prevents over-counting foods that appear in more than one station.
+Review point: the three counts answer different questions. `foods` is the number of source recipe IDs, `food_variants` is the number of distinct nutrition/content records, and `menu_item_placements` is the number of station occurrences.
 
 ## Nutrition Ranking
 
@@ -106,7 +111,7 @@ Review point: this is the same data shape a user needs for meal planning, but ex
 
 ## Station Nutrition Comparison
 
-This aggregate backs `/api/metrics/stations` and the dashboard's Station Compare panel:
+This aggregate backs `/api/metrics/stations` and supplies station-level context to the planner and analytical API consumers:
 
 ```sql
 SELECT
@@ -142,6 +147,9 @@ SELECT
   restaurants_count,
   meals_count,
   foods_count,
+  distinct_recipes_count,
+  food_variants_count,
+  menu_item_placements_count,
   started_at,
   finished_at,
   error_message
@@ -151,7 +159,7 @@ ORDER BY started_at DESC
 LIMIT 5;
 ```
 
-Review point: data freshness is not implied by logs alone; the database can answer when a date was last imported and whether the most recent import failed. `foods_count` here is an import-volume count of food appearances across stations and meals; distinct menu foods are counted with `COUNT(DISTINCT f.id)` in the coverage query.
+Review point: data freshness is not implied by logs alone; the database can answer when a date was last imported and whether the most recent import failed. `foods_count` remains the legacy import-volume count of appearances. The three explicit columns distinguish source recipe IDs, content variants, and station-menu placements.
 
 ## Safety Choices
 

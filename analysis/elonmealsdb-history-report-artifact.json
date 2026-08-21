@@ -1,0 +1,1328 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "What ElonMealsDB history should become",
+    "description": "Evidence-backed production website recommendations from the summer ElonMealsDB history.",
+    "generatedAt": "2026-08-20T15:45:00Z",
+    "cards": [
+      {
+        "id": "usable_days_card",
+        "description": "Calendar dates with at least one stored food appearance from July 8 through August 20.",
+        "dataset": "report_metrics",
+        "sourceId": "daily_menu_coverage_sql",
+        "metrics": [
+          {
+            "label": "Usable menu days",
+            "field": "usable_menu_days",
+            "format": "number"
+          },
+          {
+            "label": "Calendar coverage",
+            "field": "usable_coverage",
+            "format": "percent"
+          }
+        ]
+      },
+      {
+        "id": "turnover_card",
+        "description": "Typical change between consecutive observed usable menus.",
+        "dataset": "report_metrics",
+        "sourceId": "menu_appearance_history_sql",
+        "metrics": [
+          {
+            "label": "Median menu turnover",
+            "field": "median_turnover",
+            "format": "percent"
+          },
+          {
+            "label": "Median overlap",
+            "field": "median_overlap",
+            "format": "percent"
+          }
+        ]
+      },
+      {
+        "id": "foods_card",
+        "description": "Distinct foods present in final stored live menu snapshots.",
+        "dataset": "report_metrics",
+        "sourceId": "menu_appearance_history_sql",
+        "metrics": [
+          {
+            "label": "Distinct foods",
+            "field": "distinct_foods",
+            "format": "number"
+          },
+          {
+            "label": "Seen once",
+            "field": "single_day_foods",
+            "format": "number"
+          },
+          {
+            "label": "Seen every menu day",
+            "field": "every_day_foods",
+            "format": "number"
+          }
+        ]
+      }
+    ],
+    "charts": [
+      {
+        "id": "food_recurrence_chart",
+        "title": "Food recurrence by number of service days",
+        "subtitle": "July 8–August 19; 177 of 458 distinct foods appeared on only one usable menu day.",
+        "type": "bar",
+        "dataset": "food_recurrence",
+        "sourceId": "menu_appearance_history_sql",
+        "valueFormat": "number",
+        "encodings": {
+          "x": {
+            "field": "recurrence_bucket",
+            "type": "nominal",
+            "label": "Observed service days"
+          },
+          "y": {
+            "field": "foods_count",
+            "type": "quantitative",
+            "label": "Distinct foods"
+          },
+          "tooltip": [
+            {
+              "field": "share_of_distinct_foods",
+              "type": "quantitative",
+              "label": "Share of foods",
+              "format": "percent"
+            },
+            {
+              "field": "valid_menu_days",
+              "type": "quantitative",
+              "label": "Usable menu days",
+              "format": "number"
+            }
+          ]
+        }
+      },
+      {
+        "id": "menu_turnover_chart",
+        "title": "Menu turnover versus previous observed menu",
+        "subtitle": "Turnover is one minus distinct-food Jaccard overlap; service-schedule changes create visible spikes.",
+        "type": "line",
+        "dataset": "menu_turnover_daily",
+        "sourceId": "menu_appearance_history_sql",
+        "valueFormat": "percent",
+        "encodings": {
+          "x": {
+            "field": "service_date",
+            "type": "temporal",
+            "label": "Service date"
+          },
+          "y": {
+            "field": "menu_turnover_vs_previous",
+            "type": "quantitative",
+            "label": "Menu turnover"
+          },
+          "tooltip": [
+            {
+              "field": "distinct_foods",
+              "type": "quantitative",
+              "label": "Distinct foods",
+              "format": "number"
+            },
+            {
+              "field": "added_vs_previous",
+              "type": "quantitative",
+              "label": "Added vs previous",
+              "format": "number"
+            },
+            {
+              "field": "removed_vs_previous",
+              "type": "quantitative",
+              "label": "Removed vs previous",
+              "format": "number"
+            },
+            {
+              "field": "first_seen_in_history",
+              "type": "quantitative",
+              "label": "First seen in history",
+              "format": "number"
+            }
+          ]
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "station_rotation_table",
+        "title": "Established station rotation patterns",
+        "subtitle": "Station-and-meal series observed on at least 10 usable service days.",
+        "dataset": "station_rotation",
+        "sourceId": "menu_appearance_history_sql",
+        "defaultSort": {
+          "field": "change_rate",
+          "direction": "desc"
+        },
+        "columns": [
+          {
+            "field": "meal_period",
+            "label": "Meal",
+            "type": "text"
+          },
+          {
+            "field": "station",
+            "label": "Station",
+            "type": "text"
+          },
+          {
+            "field": "service_days",
+            "label": "Service days",
+            "format": "number"
+          },
+          {
+            "field": "average_items",
+            "label": "Avg. items",
+            "format": "number"
+          },
+          {
+            "field": "distinct_menu_signatures",
+            "label": "Distinct menus",
+            "format": "number"
+          },
+          {
+            "field": "change_rate",
+            "label": "Change rate",
+            "format": "percent"
+          },
+          {
+            "field": "pattern",
+            "label": "Pattern",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "recommendation_table",
+        "title": "Production feature priorities",
+        "subtitle": "Recommendations are sequenced by current evidence and semester-readiness dependencies.",
+        "dataset": "feature_recommendations",
+        "sourceId": "recommendation_synthesis_sql",
+        "defaultSort": {
+          "field": "priority",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "priority",
+            "label": "Priority",
+            "format": "number"
+          },
+          {
+            "field": "feature",
+            "label": "Feature",
+            "type": "text"
+          },
+          {
+            "field": "surface",
+            "label": "Surface",
+            "type": "text"
+          },
+          {
+            "field": "readiness",
+            "label": "Readiness",
+            "type": "text"
+          },
+          {
+            "field": "evidence",
+            "label": "Evidence",
+            "type": "text"
+          },
+          {
+            "field": "launch_condition",
+            "label": "Launch condition",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "quality_table",
+        "title": "Data-readiness findings",
+        "subtitle": "Issues that affect what the production site can safely claim or display.",
+        "dataset": "data_quality_findings",
+        "sourceId": "quality_synthesis_sql",
+        "defaultSort": {
+          "field": "order",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "order",
+            "label": "Order",
+            "format": "number"
+          },
+          {
+            "field": "finding",
+            "label": "Finding",
+            "type": "text"
+          },
+          {
+            "field": "evidence",
+            "label": "Evidence",
+            "type": "text"
+          },
+          {
+            "field": "user_impact",
+            "label": "User impact",
+            "type": "text"
+          },
+          {
+            "field": "recommended_action",
+            "label": "Recommended action",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "daily_menu_coverage_sql",
+        "label": "Production daily menu coverage",
+        "query": {
+          "engine": "mysql",
+          "language": "sql",
+          "sql": "SELECT\n  DATE_FORMAT(r.service_date, '%Y-%m-%d') AS service_date,\n  DAYNAME(r.service_date) AS weekday,\n  COUNT(DISTINCT r.id) AS restaurants,\n  GROUP_CONCAT(DISTINCT r.name ORDER BY r.name SEPARATOR ' | ') AS restaurant_names,\n  COUNT(DISTINCT m.id) AS meals,\n  COUNT(DISTINCT s.id) AS stations,\n  COUNT(sf.food_id) AS appearances,\n  COUNT(DISTINCT sf.food_id) AS distinct_foods,\n  DATE_FORMAT(MIN(m.time_open), '%H:%i') AS first_open,\n  DATE_FORMAT(MAX(m.time_closed), '%H:%i') AS last_close\nFROM restaurants r\nLEFT JOIN meals m ON m.restaurant_id = r.id\nLEFT JOIN stations s ON s.meal_id = m.id\nLEFT JOIN station_foods sf ON sf.station_id = s.id\nGROUP BY r.service_date\nORDER BY r.service_date",
+          "description": "Aggregates stored restaurants, meals, stations, food appearances, and distinct foods by service date.",
+          "executed_at": "2026-08-20T15:45:00Z",
+          "tables_used": [
+            "elon_meals.restaurants",
+            "elon_meals.meals",
+            "elon_meals.stations",
+            "elon_meals.station_foods"
+          ],
+          "filters": [
+            "Live analysis window begins 2026-07-08",
+            "Analysis ends on 2026-08-20",
+            "July 1 deterministic seed is excluded from live findings",
+            "A usable menu day has at least one station_foods row"
+          ],
+          "metric_definitions": {
+            "usable_menu_days": "Count of calendar dates with at least one stored food appearance in the live window.",
+            "usable_coverage": "Usable menu days divided by 44 calendar dates from July 8 through August 20, inclusive."
+          }
+        }
+      },
+      {
+        "id": "menu_appearance_history_sql",
+        "label": "Production menu appearance history",
+        "query": {
+          "engine": "mysql",
+          "language": "sql",
+          "sql": "SELECT\n  DATE_FORMAT(r.service_date, '%Y-%m-%d') AS service_date,\n  r.name AS restaurant,\n  m.id AS meal_id,\n  m.name AS meal,\n  DATE_FORMAT(m.time_open, '%Y-%m-%d %H:%i:%s') AS time_open,\n  DATE_FORMAT(m.time_closed, '%Y-%m-%d %H:%i:%s') AS time_closed,\n  s.id AS station_id,\n  s.name AS station,\n  f.id AS food_id,\n  f.external_id,\n  f.short_name,\n  f.calories,\n  f.protein,\n  f.sodium,\n  f.total_fat,\n  f.total_carbohydrates,\n  f.vegetarian,\n  f.vegan,\n  f.gluten_free,\n  f.allergy_egg,\n  f.allergy_shellfish,\n  f.allergy_soy,\n  f.allergy_peanut,\n  f.allergy_wheat,\n  f.allergy_tree_nut,\n  f.allergy_milk,\n  f.allergy_sesame,\n  f.allergy_fish\nFROM restaurants r\nJOIN meals m ON m.restaurant_id = r.id\nJOIN stations s ON s.meal_id = m.id\nJOIN station_foods sf ON sf.station_id = s.id\nJOIN foods f ON f.id = sf.food_id\nWHERE r.service_date >= '2026-07-08'\nORDER BY r.service_date, r.name, m.time_open, s.name, f.short_name",
+          "description": "Loads the final stored food appearances for each live service date at restaurant, meal, station, and food grain.",
+          "executed_at": "2026-08-20T15:45:00Z",
+          "tables_used": [
+            "elon_meals.restaurants",
+            "elon_meals.meals",
+            "elon_meals.stations",
+            "elon_meals.station_foods",
+            "elon_meals.foods"
+          ],
+          "filters": [
+            "service_date >= 2026-07-08",
+            "Only final stored snapshots after any same-date replacement are available",
+            "Food recurrence is deduplicated to service_date plus food_id"
+          ],
+          "metric_definitions": {
+            "menu_turnover": "One minus Jaccard similarity between the distinct food-ID set on a usable menu day and the previous usable menu day.",
+            "service_days": "Count of distinct usable service dates on which a food or station-meal series appears.",
+            "station_change_rate": "Comparable station appearances with a different distinct-food signature than the previous appearance, divided by comparable appearances."
+          }
+        }
+      },
+      {
+        "id": "scraper_runs_sql",
+        "label": "Production scraper-run history",
+        "query": {
+          "engine": "mysql",
+          "language": "sql",
+          "sql": "SELECT\n  id,\n  DATE_FORMAT(target_date, '%Y-%m-%d') AS target_date,\n  DATE_FORMAT(started_at, '%Y-%m-%d %H:%i:%s') AS started_at,\n  DATE_FORMAT(finished_at, '%Y-%m-%d %H:%i:%s') AS finished_at,\n  status,\n  restaurants_count,\n  meals_count,\n  foods_count,\n  error_message\nFROM scraper_runs\nWHERE target_date >= '2026-07-08'\nORDER BY started_at",
+          "description": "Loads every recorded production scraper attempt in the live analysis window.",
+          "executed_at": "2026-08-20T15:45:00Z",
+          "tables_used": [
+            "elon_meals.scraper_runs"
+          ],
+          "filters": [
+            "target_date >= 2026-07-08",
+            "Headline attempt counts include target dates through 2026-08-20"
+          ],
+          "metric_definitions": {
+            "failed_attempts": "Rows whose scraper_runs.status is failed.",
+            "service_date_with_success": "A target date with at least one scraper_runs.status equal to success."
+          }
+        }
+      },
+      {
+        "id": "analysis_notebook",
+        "label": "Reproducible ElonMealsDB history analysis",
+        "path": "analysis/elonmealsdb-history-analysis.ipynb"
+      },
+      {
+        "id": "importer_logic",
+        "label": "Production importer validation logic",
+        "path": "scraper/elon_scraper/importer.py"
+      },
+      {
+        "id": "recommendation_synthesis_sql",
+        "label": "Evidence-backed feature recommendation matrix",
+        "query": {
+          "engine": "mysql",
+          "language": "sql",
+          "sql": "SELECT 1 AS priority, 'Menu Rotation' AS feature, 'Separate section' AS surface, 'Ready now' AS readiness, '56.6% median turnover; 19 every-day staples; 177 one-day items' AS evidence, 'Use observed menu days as the denominator' AS launch_condition\nUNION ALL\nSELECT 2 AS priority, 'Menu freshness state' AS feature, 'Header and empty state' AS surface, 'Ready now' AS readiness, '38 of 44 dates had usable menus; 77 failed attempts' AS evidence, 'Separate last success from latest attempt' AS launch_condition\nUNION ALL\nSELECT 3 AS priority, 'Where can I eat now?' AS feature, 'Separate section' AS surface, 'Prepare now; activate in term' AS readiness, 'Summer maximum is only one stored restaurant per day' AS evidence, 'Reliable partial imports plus multi-restaurant coverage' AS launch_condition\nUNION ALL\nSELECT 4 AS priority, 'Dietary coverage comparison' AS feature, 'Restaurant-by-meal table' AS surface, 'Hold for semantic fix' AS readiness, 'Flags show breadth, but false and unknown are not distinguishable' AS evidence, 'Model unknown explicitly and treat missing nutrition as null' AS launch_condition\nUNION ALL\nSELECT 5 AS priority, 'Weekday and peak-choice norms' AS feature, 'Historical visualization' AS surface, 'Later' AS readiness, 'The current sample is entirely summer and camp operations' AS evidence, 'At least four complete in-session weeks' AS launch_condition",
+          "description": "Materializes the prioritized product recommendations synthesized in the executed analysis notebook.",
+          "executed_at": "2026-08-20T15:45:00Z",
+          "tables_used": [],
+          "filters": [
+            "Recommendations are limited to production website features supported or gated by the reviewed summer history"
+          ],
+          "metric_definitions": {
+            "priority": "Decision order assigned from evidence strength, user value, and launch dependency; it is a product judgment rather than a raw source metric."
+          }
+        }
+      },
+      {
+        "id": "quality_synthesis_sql",
+        "label": "Data-readiness finding matrix",
+        "query": {
+          "engine": "mysql",
+          "language": "sql",
+          "sql": "SELECT 1 AS order, 'All-or-nothing date import' AS finding, 'Any advertised meal with no foods rejects the complete date' AS evidence, 'More venues create more chances that otherwise valid menus remain stale' AS user_impact, 'Stage and validate per restaurant or meal, then publish partial coverage explicitly' AS recommended_action\nUNION ALL\nSELECT 2 AS order, 'Incomplete calendar coverage' AS finding, '38 usable menu dates in a 44-day live window' AS evidence, 'Historical denominators and freshness can be misunderstood' AS user_impact, 'Use observed menu days and show freshness status' AS recommended_action\nUNION ALL\nSELECT 3 AS order, 'Empty historical meals' AS finding, '13 meals without stations; two dates with no food rows' AS evidence, 'An open-hours record can look like a usable menu' AS user_impact, 'Distinguish hours-only, menu-available, and stale states' AS recommended_action\nUNION ALL\nSELECT 4 AS order, 'Zero used for unknown nutrition' AS finding, '16 food IDs and 95 appearances; 32 of 38 usable dates affected' AS evidence, 'Nutrition rankings and totals can be understated' AS user_impact, 'Parse absent facts as null and exclude unknowns from ranked metrics' AS recommended_action\nUNION ALL\nSELECT 5 AS order, 'Allergen absence is not three-state' AS finding, 'The schema stores only true, false, or null; parser defaults absent flags to false' AS evidence, 'No listed allergen can be misread as verified allergen-free' AS user_impact, 'Preserve unknown and use conservative public wording' AS recommended_action\nUNION ALL\nSELECT 6 AS order, 'Historical nutrition is mutable' AS finding, 'Food facts are upserted globally by external ID' AS evidence, 'Past menus join to latest-known facts rather than facts observed that day' AS user_impact, 'Add observed-at snapshots before publishing nutrition trends' AS recommended_action",
+          "description": "Materializes the reviewed data-readiness findings and recommended remediations from production SQL and importer-code checks.",
+          "executed_at": "2026-08-20T15:45:00Z",
+          "tables_used": [
+            "elon_meals.restaurants",
+            "elon_meals.meals",
+            "elon_meals.stations",
+            "elon_meals.station_foods",
+            "elon_meals.foods",
+            "elon_meals.scraper_runs"
+          ],
+          "filters": [
+            "Live analysis window begins 2026-07-08",
+            "July 1 seed data is excluded from live findings"
+          ],
+          "metric_definitions": {
+            "order": "Risk-reduction sequence assigned in the analysis notebook; lower values should be addressed first."
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "report_title",
+        "type": "markdown",
+        "body": "# What ElonMealsDB history should become"
+      },
+      {
+        "id": "executive_summary",
+        "type": "markdown",
+        "body": "## Executive Summary\n\n- **Ship a dedicated Menu Rotation section first.** Across 38 usable summer menu days, the median menu changed by 56.6% versus the previous observed menu. A stable core of 19 every-day items sits beneath 177 foods that appeared only once.\n- **Use the current record as a summer baseline, not a semester benchmark.** Every live stored date contains only Lakeside Dining Hall, so the evidence cannot yet describe multi-restaurant concurrency or normal school-week rhythms.\n- **Make freshness visible before school-term scale arrives.** Only 38 of 44 dates had usable menus; 77 scraper attempts failed through August 20, although retries recovered many service dates.\n- **Hold safety-sensitive historical claims until the data semantics improve.** Sixteen live food IDs carry zero calories and the allergen flags do not distinguish unlisted from confirmed absent."
+      },
+      {
+        "id": "definitions",
+        "type": "markdown",
+        "body": "## How to read the evidence\n\nA **usable menu day** has at least one stored food appearance. **Menu turnover** is one minus the Jaccard overlap between the distinct food sets on consecutive observed usable menus. Recurrence percentages use observed menu days—not calendar days—as their denominator. July 1 seed data is excluded. Nutrition and dietary flags are latest-known global food attributes, not day-specific snapshots."
+      },
+      {
+        "id": "headline_metrics",
+        "type": "metric-strip",
+        "cardIds": [
+          "usable_days_card",
+          "turnover_card",
+          "foods_card"
+        ]
+      },
+      {
+        "id": "rotation_section",
+        "type": "markdown",
+        "body": "## The strongest near-term feature is Menu Rotation\n\nThe history is deep enough to distinguish dependable staples from limited and rotating foods. This is useful now, even before other restaurants return: show what is new, what returned after a gap, which items are dependable, and which stations change most often."
+      },
+      {
+        "id": "food_recurrence_visual",
+        "type": "chart",
+        "chartId": "food_recurrence_chart"
+      },
+      {
+        "id": "recurrence_interpretation",
+        "type": "markdown",
+        "sourceId": "menu_appearance_history_sql",
+        "body": "### The menu has a small core and a long rotating tail\n\nOf 458 distinct foods, 177 appeared on only one usable menu day, while 19 appeared on all 38. That mix supports two reader-facing modes: a compact **Reliable staples** table and a **What's different today?** stream for discoveries."
+      },
+      {
+        "id": "turnover_section",
+        "type": "markdown",
+        "body": "## Daily change is large enough to make history worth browsing\n\nThe median overlap with the previous observed menu was only 43.4%. Show the latest additions and removals as exact counts, and use a short 14- or 28-observed-day history for favorites rather than a dense campus-wide matrix."
+      },
+      {
+        "id": "menu_turnover_visual",
+        "type": "chart",
+        "chartId": "menu_turnover_chart"
+      },
+      {
+        "id": "turnover_interpretation",
+        "type": "markdown",
+        "body": "### Schedule changes amplify the biggest turnover spikes\n\nThe line is not a semester trend: summer camps and reduced-service periods change which meals and stations exist. Its product implication is narrower—the stored history contains enough day-to-day movement to justify browsing and favorite-availability features."
+      },
+      {
+        "id": "station_section",
+        "type": "markdown",
+        "sourceId": "menu_appearance_history_sql",
+        "body": "## Station identities are surprisingly consistent\n\nSeven established station-and-meal series changed on at least 80% of comparable appearances, while three changed on no more than 30%. Translate those rates into plain labels such as **Rotates often**, **Mixed rotation**, and **Usually stable**."
+      },
+      {
+        "id": "station_table_block",
+        "type": "table",
+        "tableId": "station_rotation_table"
+      },
+      {
+        "id": "semester_section",
+        "type": "markdown",
+        "body": "## The semester feature should answer where to eat now\n\nOnce multiple restaurants are reliably stored, add a stepped **restaurants open by time** chart and an **Open now** comparison table with closing time, meals, stations, total items, vegetarian/vegan/gluten-free counts, and freshness. The summer record cannot set the benchmark; activate weekday norms only after at least four complete in-session weeks."
+      },
+      {
+        "id": "recommendation_table_block",
+        "type": "table",
+        "tableId": "recommendation_table"
+      },
+      {
+        "id": "freshness_section",
+        "type": "markdown",
+        "body": "## More restaurants make freshness a product feature\n\nShow **Menu updated**, **Latest attempt**, and one clear state: **Current**, **Using last successful menu**, or **Menu unavailable**. The current importer rejects the complete date when any advertised meal has no foods; that protects against destructive wipes but becomes fragile as the venue count grows."
+      },
+      {
+        "id": "quality_table_block",
+        "type": "table",
+        "tableId": "quality_table"
+      },
+      {
+        "id": "next_steps",
+        "type": "markdown",
+        "body": "## Recommended next steps\n\n1. **Ship Menu Rotation and freshness together.** Add observed-day recurrence, first-seen/returning counts, station rotation labels, and a last-success state.\n2. **Make ingestion partial but explicit.** Stage a date, validate per restaurant or meal, publish valid slices, and attach coverage status instead of rejecting every venue.\n3. **Add academic-period and venue-type dimensions.** Tag summer, move-in, in-session, breaks, dining halls, and convenience retail so future comparisons use like-for-like cohorts.\n4. **Repair nutrition and allergen unknowns.** Store absent facts as null, preserve the source's explicit flags, and avoid `safe` language that the data cannot verify.\n5. **Re-run after four in-session weeks.** Then evaluate open-restaurant concurrency, weekday rhythms, cross-restaurant dietary breadth, and peak-choice periods."
+      },
+      {
+        "id": "further_questions",
+        "type": "markdown",
+        "body": "## Further Questions\n\n- What date should mark the first true in-session cohort? Store it rather than infer it later.\n- Should all-day convenience retail be compared directly with dining halls or shown as a separate venue type?\n- Does the upstream source explicitly distinguish allergen absence from missing information?\n- Should favorite history default to the last 14 observed menu days, 28 observed menu days, or same-weekday comparisons?"
+      },
+      {
+        "id": "caveats",
+        "type": "markdown",
+        "body": "## Caveats and Assumptions\n\n- The full live window occurred during summer break and camp operations.\n- July 1 is deterministic seed data and is excluded.\n- July 18 and July 19 have meal windows but no stations or foods.\n- Re-importing a date replaces its restaurant hierarchy, so intra-day versions are not retained.\n- Nutrition and dietary/allergen fields are globally upserted per food ID; historical menu rows join to latest-known attributes.\n- Recommendations are product judgments informed by observed data, not causal claims about student behavior."
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-20T15:45:00Z",
+    "status": "ready",
+    "datasets": {
+      "report_metrics": [
+        {
+          "usable_menu_days": 38,
+          "calendar_days": 44,
+          "usable_coverage": 0.8636363636363636,
+          "median_turnover": 0.5661764705882353,
+          "median_overlap": 0.4338235294117647,
+          "distinct_foods": 458,
+          "single_day_foods": 177,
+          "every_day_foods": 19
+        }
+      ],
+      "food_recurrence": [
+        {
+          "recurrence_bucket": "1 day",
+          "bucket_order": 1,
+          "minimum_service_days": 1,
+          "maximum_service_days": 1,
+          "foods_count": 177,
+          "share_of_distinct_foods": 0.3864628820960699,
+          "distinct_food_population": 458,
+          "valid_menu_days": 38
+        },
+        {
+          "recurrence_bucket": "2 days",
+          "bucket_order": 2,
+          "minimum_service_days": 2,
+          "maximum_service_days": 2,
+          "foods_count": 80,
+          "share_of_distinct_foods": 0.17467248908296942,
+          "distinct_food_population": 458,
+          "valid_menu_days": 38
+        },
+        {
+          "recurrence_bucket": "3–4 days",
+          "bucket_order": 3,
+          "minimum_service_days": 3,
+          "maximum_service_days": 4,
+          "foods_count": 81,
+          "share_of_distinct_foods": 0.17685589519650655,
+          "distinct_food_population": 458,
+          "valid_menu_days": 38
+        },
+        {
+          "recurrence_bucket": "5–9 days",
+          "bucket_order": 4,
+          "minimum_service_days": 5,
+          "maximum_service_days": 9,
+          "foods_count": 63,
+          "share_of_distinct_foods": 0.13755458515283842,
+          "distinct_food_population": 458,
+          "valid_menu_days": 38
+        },
+        {
+          "recurrence_bucket": "10–19 days",
+          "bucket_order": 5,
+          "minimum_service_days": 10,
+          "maximum_service_days": 19,
+          "foods_count": 18,
+          "share_of_distinct_foods": 0.039301310043668124,
+          "distinct_food_population": 458,
+          "valid_menu_days": 38
+        },
+        {
+          "recurrence_bucket": "20–38 days",
+          "bucket_order": 6,
+          "minimum_service_days": 20,
+          "maximum_service_days": 38,
+          "foods_count": 39,
+          "share_of_distinct_foods": 0.0851528384279476,
+          "distinct_food_population": 458,
+          "valid_menu_days": 38
+        }
+      ],
+      "menu_turnover_daily": [
+        {
+          "service_date": "2026-07-09",
+          "previous_valid_date": "2026-07-08",
+          "distinct_foods": 72,
+          "jaccard_vs_previous": 0.46938775510204084,
+          "menu_turnover_vs_previous": 0.5306122448979591,
+          "added_vs_previous": 26,
+          "removed_vs_previous": 26,
+          "first_seen_in_history": 26
+        },
+        {
+          "service_date": "2026-07-10",
+          "previous_valid_date": "2026-07-09",
+          "distinct_foods": 61,
+          "jaccard_vs_previous": 0.5113636363636364,
+          "menu_turnover_vs_previous": 0.48863636363636365,
+          "added_vs_previous": 16,
+          "removed_vs_previous": 27,
+          "first_seen_in_history": 12
+        },
+        {
+          "service_date": "2026-07-11",
+          "previous_valid_date": "2026-07-10",
+          "distinct_foods": 25,
+          "jaccard_vs_previous": 0.3230769230769231,
+          "menu_turnover_vs_previous": 0.676923076923077,
+          "added_vs_previous": 4,
+          "removed_vs_previous": 40,
+          "first_seen_in_history": 4
+        },
+        {
+          "service_date": "2026-07-12",
+          "previous_valid_date": "2026-07-11",
+          "distinct_foods": 25,
+          "jaccard_vs_previous": 0.7241379310344828,
+          "menu_turnover_vs_previous": 0.27586206896551724,
+          "added_vs_previous": 4,
+          "removed_vs_previous": 4,
+          "first_seen_in_history": 4
+        },
+        {
+          "service_date": "2026-07-13",
+          "previous_valid_date": "2026-07-12",
+          "distinct_foods": 73,
+          "jaccard_vs_previous": 0.30666666666666664,
+          "menu_turnover_vs_previous": 0.6933333333333334,
+          "added_vs_previous": 50,
+          "removed_vs_previous": 2,
+          "first_seen_in_history": 20
+        },
+        {
+          "service_date": "2026-07-14",
+          "previous_valid_date": "2026-07-13",
+          "distinct_foods": 75,
+          "jaccard_vs_previous": 0.4368932038834951,
+          "menu_turnover_vs_previous": 0.5631067961165048,
+          "added_vs_previous": 30,
+          "removed_vs_previous": 28,
+          "first_seen_in_history": 24
+        },
+        {
+          "service_date": "2026-07-15",
+          "previous_valid_date": "2026-07-14",
+          "distinct_foods": 78,
+          "jaccard_vs_previous": 0.4166666666666667,
+          "menu_turnover_vs_previous": 0.5833333333333333,
+          "added_vs_previous": 33,
+          "removed_vs_previous": 30,
+          "first_seen_in_history": 5
+        },
+        {
+          "service_date": "2026-07-16",
+          "previous_valid_date": "2026-07-15",
+          "distinct_foods": 77,
+          "jaccard_vs_previous": 0.4351851851851852,
+          "menu_turnover_vs_previous": 0.5648148148148149,
+          "added_vs_previous": 30,
+          "removed_vs_previous": 31,
+          "first_seen_in_history": 6
+        },
+        {
+          "service_date": "2026-07-17",
+          "previous_valid_date": "2026-07-16",
+          "distinct_foods": 66,
+          "jaccard_vs_previous": 0.4444444444444444,
+          "menu_turnover_vs_previous": 0.5555555555555556,
+          "added_vs_previous": 22,
+          "removed_vs_previous": 33,
+          "first_seen_in_history": 7
+        },
+        {
+          "service_date": "2026-07-20",
+          "previous_valid_date": "2026-07-17",
+          "distinct_foods": 66,
+          "jaccard_vs_previous": 0.5529411764705883,
+          "menu_turnover_vs_previous": 0.44705882352941173,
+          "added_vs_previous": 19,
+          "removed_vs_previous": 19,
+          "first_seen_in_history": 12
+        },
+        {
+          "service_date": "2026-07-21",
+          "previous_valid_date": "2026-07-20",
+          "distinct_foods": 58,
+          "jaccard_vs_previous": 0.4588235294117647,
+          "menu_turnover_vs_previous": 0.5411764705882354,
+          "added_vs_previous": 19,
+          "removed_vs_previous": 27,
+          "first_seen_in_history": 6
+        },
+        {
+          "service_date": "2026-07-22",
+          "previous_valid_date": "2026-07-21",
+          "distinct_foods": 58,
+          "jaccard_vs_previous": 0.589041095890411,
+          "menu_turnover_vs_previous": 0.410958904109589,
+          "added_vs_previous": 15,
+          "removed_vs_previous": 15,
+          "first_seen_in_history": 0
+        },
+        {
+          "service_date": "2026-07-23",
+          "previous_valid_date": "2026-07-22",
+          "distinct_foods": 68,
+          "jaccard_vs_previous": 0.5180722891566265,
+          "menu_turnover_vs_previous": 0.4819277108433735,
+          "added_vs_previous": 25,
+          "removed_vs_previous": 15,
+          "first_seen_in_history": 0
+        },
+        {
+          "service_date": "2026-07-24",
+          "previous_valid_date": "2026-07-23",
+          "distinct_foods": 66,
+          "jaccard_vs_previous": 0.5056179775280899,
+          "menu_turnover_vs_previous": 0.4943820224719101,
+          "added_vs_previous": 21,
+          "removed_vs_previous": 23,
+          "first_seen_in_history": 2
+        },
+        {
+          "service_date": "2026-07-25",
+          "previous_valid_date": "2026-07-24",
+          "distinct_foods": 69,
+          "jaccard_vs_previous": 0.35,
+          "menu_turnover_vs_previous": 0.65,
+          "added_vs_previous": 34,
+          "removed_vs_previous": 31,
+          "first_seen_in_history": 7
+        },
+        {
+          "service_date": "2026-07-27",
+          "previous_valid_date": "2026-07-25",
+          "distinct_foods": 38,
+          "jaccard_vs_previous": 0.2441860465116279,
+          "menu_turnover_vs_previous": 0.7558139534883721,
+          "added_vs_previous": 17,
+          "removed_vs_previous": 48,
+          "first_seen_in_history": 7
+        },
+        {
+          "service_date": "2026-07-28",
+          "previous_valid_date": "2026-07-27",
+          "distinct_foods": 37,
+          "jaccard_vs_previous": 0.5957446808510638,
+          "menu_turnover_vs_previous": 0.4042553191489362,
+          "added_vs_previous": 9,
+          "removed_vs_previous": 10,
+          "first_seen_in_history": 5
+        },
+        {
+          "service_date": "2026-07-29",
+          "previous_valid_date": "2026-07-28",
+          "distinct_foods": 50,
+          "jaccard_vs_previous": 0.4032258064516129,
+          "menu_turnover_vs_previous": 0.5967741935483871,
+          "added_vs_previous": 25,
+          "removed_vs_previous": 12,
+          "first_seen_in_history": 11
+        },
+        {
+          "service_date": "2026-07-30",
+          "previous_valid_date": "2026-07-29",
+          "distinct_foods": 54,
+          "jaccard_vs_previous": 0.31645569620253167,
+          "menu_turnover_vs_previous": 0.6835443037974683,
+          "added_vs_previous": 29,
+          "removed_vs_previous": 25,
+          "first_seen_in_history": 14
+        },
+        {
+          "service_date": "2026-07-31",
+          "previous_valid_date": "2026-07-30",
+          "distinct_foods": 45,
+          "jaccard_vs_previous": 0.45588235294117646,
+          "menu_turnover_vs_previous": 0.5441176470588236,
+          "added_vs_previous": 14,
+          "removed_vs_previous": 23,
+          "first_seen_in_history": 3
+        },
+        {
+          "service_date": "2026-08-01",
+          "previous_valid_date": "2026-07-31",
+          "distinct_foods": 28,
+          "jaccard_vs_previous": 0.37735849056603776,
+          "menu_turnover_vs_previous": 0.6226415094339622,
+          "added_vs_previous": 8,
+          "removed_vs_previous": 25,
+          "first_seen_in_history": 3
+        },
+        {
+          "service_date": "2026-08-02",
+          "previous_valid_date": "2026-08-01",
+          "distinct_foods": 29,
+          "jaccard_vs_previous": 0.5405405405405406,
+          "menu_turnover_vs_previous": 0.45945945945945943,
+          "added_vs_previous": 9,
+          "removed_vs_previous": 8,
+          "first_seen_in_history": 2
+        },
+        {
+          "service_date": "2026-08-03",
+          "previous_valid_date": "2026-08-02",
+          "distinct_foods": 46,
+          "jaccard_vs_previous": 0.36363636363636365,
+          "menu_turnover_vs_previous": 0.6363636363636364,
+          "added_vs_previous": 26,
+          "removed_vs_previous": 9,
+          "first_seen_in_history": 5
+        },
+        {
+          "service_date": "2026-08-04",
+          "previous_valid_date": "2026-08-03",
+          "distinct_foods": 87,
+          "jaccard_vs_previous": 0.1875,
+          "menu_turnover_vs_previous": 0.8125,
+          "added_vs_previous": 66,
+          "removed_vs_previous": 25,
+          "first_seen_in_history": 36
+        },
+        {
+          "service_date": "2026-08-05",
+          "previous_valid_date": "2026-08-04",
+          "distinct_foods": 90,
+          "jaccard_vs_previous": 0.43902439024390244,
+          "menu_turnover_vs_previous": 0.5609756097560976,
+          "added_vs_previous": 36,
+          "removed_vs_previous": 33,
+          "first_seen_in_history": 22
+        },
+        {
+          "service_date": "2026-08-06",
+          "previous_valid_date": "2026-08-05",
+          "distinct_foods": 85,
+          "jaccard_vs_previous": 0.4462809917355372,
+          "menu_turnover_vs_previous": 0.5537190082644627,
+          "added_vs_previous": 31,
+          "removed_vs_previous": 36,
+          "first_seen_in_history": 22
+        },
+        {
+          "service_date": "2026-08-07",
+          "previous_valid_date": "2026-08-06",
+          "distinct_foods": 95,
+          "jaccard_vs_previous": 0.41732283464566927,
+          "menu_turnover_vs_previous": 0.5826771653543308,
+          "added_vs_previous": 42,
+          "removed_vs_previous": 32,
+          "first_seen_in_history": 22
+        },
+        {
+          "service_date": "2026-08-08",
+          "previous_valid_date": "2026-08-07",
+          "distinct_foods": 38,
+          "jaccard_vs_previous": 0.1981981981981982,
+          "menu_turnover_vs_previous": 0.8018018018018018,
+          "added_vs_previous": 16,
+          "removed_vs_previous": 73,
+          "first_seen_in_history": 5
+        },
+        {
+          "service_date": "2026-08-09",
+          "previous_valid_date": "2026-08-08",
+          "distinct_foods": 42,
+          "jaccard_vs_previous": 0.3559322033898305,
+          "menu_turnover_vs_previous": 0.6440677966101696,
+          "added_vs_previous": 21,
+          "removed_vs_previous": 17,
+          "first_seen_in_history": 3
+        },
+        {
+          "service_date": "2026-08-10",
+          "previous_valid_date": "2026-08-09",
+          "distinct_foods": 100,
+          "jaccard_vs_previous": 0.21367521367521367,
+          "menu_turnover_vs_previous": 0.7863247863247863,
+          "added_vs_previous": 75,
+          "removed_vs_previous": 17,
+          "first_seen_in_history": 18
+        },
+        {
+          "service_date": "2026-08-11",
+          "previous_valid_date": "2026-08-10",
+          "distinct_foods": 88,
+          "jaccard_vs_previous": 0.40298507462686567,
+          "menu_turnover_vs_previous": 0.5970149253731343,
+          "added_vs_previous": 34,
+          "removed_vs_previous": 46,
+          "first_seen_in_history": 12
+        },
+        {
+          "service_date": "2026-08-12",
+          "previous_valid_date": "2026-08-11",
+          "distinct_foods": 103,
+          "jaccard_vs_previous": 0.4580152671755725,
+          "menu_turnover_vs_previous": 0.5419847328244275,
+          "added_vs_previous": 43,
+          "removed_vs_previous": 28,
+          "first_seen_in_history": 19
+        },
+        {
+          "service_date": "2026-08-13",
+          "previous_valid_date": "2026-08-12",
+          "distinct_foods": 103,
+          "jaccard_vs_previous": 1.0,
+          "menu_turnover_vs_previous": 0.0,
+          "added_vs_previous": 0,
+          "removed_vs_previous": 0,
+          "first_seen_in_history": 0
+        },
+        {
+          "service_date": "2026-08-14",
+          "previous_valid_date": "2026-08-13",
+          "distinct_foods": 92,
+          "jaccard_vs_previous": 0.4338235294117647,
+          "menu_turnover_vs_previous": 0.5661764705882353,
+          "added_vs_previous": 33,
+          "removed_vs_previous": 44,
+          "first_seen_in_history": 14
+        },
+        {
+          "service_date": "2026-08-17",
+          "previous_valid_date": "2026-08-14",
+          "distinct_foods": 62,
+          "jaccard_vs_previous": 0.3275862068965517,
+          "menu_turnover_vs_previous": 0.6724137931034483,
+          "added_vs_previous": 24,
+          "removed_vs_previous": 54,
+          "first_seen_in_history": 9
+        },
+        {
+          "service_date": "2026-08-18",
+          "previous_valid_date": "2026-08-17",
+          "distinct_foods": 56,
+          "jaccard_vs_previous": 0.2826086956521739,
+          "menu_turnover_vs_previous": 0.7173913043478262,
+          "added_vs_previous": 30,
+          "removed_vs_previous": 36,
+          "first_seen_in_history": 9
+        },
+        {
+          "service_date": "2026-08-19",
+          "previous_valid_date": "2026-08-18",
+          "distinct_foods": 60,
+          "jaccard_vs_previous": 0.22105263157894736,
+          "menu_turnover_vs_previous": 0.7789473684210526,
+          "added_vs_previous": 39,
+          "removed_vs_previous": 35,
+          "first_seen_in_history": 10
+        }
+      ],
+      "station_rotation": [
+        {
+          "meal_period": "Lunch",
+          "station": "allgood",
+          "service_days": 34,
+          "average_items": 6.3,
+          "distinct_menu_signatures": 25,
+          "comparable_days": 33,
+          "changed_days": 32,
+          "change_rate": 0.97,
+          "pattern": "Rotates often"
+        },
+        {
+          "meal_period": "Lunch",
+          "station": "the world",
+          "service_days": 31,
+          "average_items": 10.4,
+          "distinct_menu_signatures": 27,
+          "comparable_days": 30,
+          "changed_days": 29,
+          "change_rate": 0.967,
+          "pattern": "Rotates often"
+        },
+        {
+          "meal_period": "Dinner",
+          "station": "allgood",
+          "service_days": 25,
+          "average_items": 5.2,
+          "distinct_menu_signatures": 19,
+          "comparable_days": 24,
+          "changed_days": 23,
+          "change_rate": 0.958,
+          "pattern": "Rotates often"
+        },
+        {
+          "meal_period": "Dinner",
+          "station": "comfort kitchen",
+          "service_days": 20,
+          "average_items": 6.2,
+          "distinct_menu_signatures": 18,
+          "comparable_days": 19,
+          "changed_days": 18,
+          "change_rate": 0.947,
+          "pattern": "Rotates often"
+        },
+        {
+          "meal_period": "Lunch",
+          "station": "comfort kitchen",
+          "service_days": 28,
+          "average_items": 7.9,
+          "distinct_menu_signatures": 24,
+          "comparable_days": 27,
+          "changed_days": 25,
+          "change_rate": 0.926,
+          "pattern": "Rotates often"
+        },
+        {
+          "meal_period": "Dinner",
+          "station": "the world",
+          "service_days": 12,
+          "average_items": 6.2,
+          "distinct_menu_signatures": 11,
+          "comparable_days": 11,
+          "changed_days": 10,
+          "change_rate": 0.909,
+          "pattern": "Rotates often"
+        },
+        {
+          "meal_period": "Breakfast",
+          "station": "comfort kitchen",
+          "service_days": 11,
+          "average_items": 8.1,
+          "distinct_menu_signatures": 8,
+          "comparable_days": 10,
+          "changed_days": 9,
+          "change_rate": 0.9,
+          "pattern": "Rotates often"
+        },
+        {
+          "meal_period": "Lunch",
+          "station": "street",
+          "service_days": 12,
+          "average_items": 12.0,
+          "distinct_menu_signatures": 5,
+          "comparable_days": 11,
+          "changed_days": 8,
+          "change_rate": 0.727,
+          "pattern": "Mixed rotation"
+        },
+        {
+          "meal_period": "Breakfast",
+          "station": "griddle",
+          "service_days": 22,
+          "average_items": 9.5,
+          "distinct_menu_signatures": 8,
+          "comparable_days": 21,
+          "changed_days": 14,
+          "change_rate": 0.667,
+          "pattern": "Mixed rotation"
+        },
+        {
+          "meal_period": "Lunch",
+          "station": "greens & grains",
+          "service_days": 36,
+          "average_items": 19.5,
+          "distinct_menu_signatures": 6,
+          "comparable_days": 35,
+          "changed_days": 9,
+          "change_rate": 0.257,
+          "pattern": "Usually stable"
+        },
+        {
+          "meal_period": "Dinner",
+          "station": "greens & grains",
+          "service_days": 25,
+          "average_items": 19.4,
+          "distinct_menu_signatures": 4,
+          "comparable_days": 24,
+          "changed_days": 3,
+          "change_rate": 0.125,
+          "pattern": "Usually stable"
+        },
+        {
+          "meal_period": "Breakfast",
+          "station": "fruit and yogurt bar",
+          "service_days": 23,
+          "average_items": 13.0,
+          "distinct_menu_signatures": 1,
+          "comparable_days": 22,
+          "changed_days": 0,
+          "change_rate": 0.0,
+          "pattern": "Usually stable"
+        }
+      ],
+      "feature_recommendations": [
+        {
+          "priority": 1,
+          "feature": "Menu Rotation",
+          "surface": "Separate section",
+          "readiness": "Ready now",
+          "evidence": "56.6% median turnover; 19 every-day staples; 177 one-day items",
+          "launch_condition": "Use observed menu days as the denominator"
+        },
+        {
+          "priority": 2,
+          "feature": "Menu freshness state",
+          "surface": "Header and empty state",
+          "readiness": "Ready now",
+          "evidence": "38 of 44 dates had usable menus; 77 failed attempts",
+          "launch_condition": "Separate last success from latest attempt"
+        },
+        {
+          "priority": 3,
+          "feature": "Where can I eat now?",
+          "surface": "Separate section",
+          "readiness": "Prepare now; activate in term",
+          "evidence": "Summer maximum is only one stored restaurant per day",
+          "launch_condition": "Reliable partial imports plus multi-restaurant coverage"
+        },
+        {
+          "priority": 4,
+          "feature": "Dietary coverage comparison",
+          "surface": "Restaurant-by-meal table",
+          "readiness": "Hold for semantic fix",
+          "evidence": "Flags show breadth, but false and unknown are not distinguishable",
+          "launch_condition": "Model unknown explicitly and treat missing nutrition as null"
+        },
+        {
+          "priority": 5,
+          "feature": "Weekday and peak-choice norms",
+          "surface": "Historical visualization",
+          "readiness": "Later",
+          "evidence": "The current sample is entirely summer and camp operations",
+          "launch_condition": "At least four complete in-session weeks"
+        }
+      ],
+      "data_quality_findings": [
+        {
+          "order": 1,
+          "finding": "All-or-nothing date import",
+          "evidence": "Any advertised meal with no foods rejects the complete date",
+          "user_impact": "More venues create more chances that otherwise valid menus remain stale",
+          "recommended_action": "Stage and validate per restaurant or meal, then publish partial coverage explicitly"
+        },
+        {
+          "order": 2,
+          "finding": "Incomplete calendar coverage",
+          "evidence": "38 usable menu dates in a 44-day live window",
+          "user_impact": "Historical denominators and freshness can be misunderstood",
+          "recommended_action": "Use observed menu days and show freshness status"
+        },
+        {
+          "order": 3,
+          "finding": "Empty historical meals",
+          "evidence": "13 meals without stations; two dates with no food rows",
+          "user_impact": "An open-hours record can look like a usable menu",
+          "recommended_action": "Distinguish hours-only, menu-available, and stale states"
+        },
+        {
+          "order": 4,
+          "finding": "Zero used for unknown nutrition",
+          "evidence": "16 food IDs and 95 appearances; 32 of 38 usable dates affected",
+          "user_impact": "Nutrition rankings and totals can be understated",
+          "recommended_action": "Parse absent facts as null and exclude unknowns from ranked metrics"
+        },
+        {
+          "order": 5,
+          "finding": "Allergen absence is not three-state",
+          "evidence": "The schema stores only true, false, or null; parser defaults absent flags to false",
+          "user_impact": "No listed allergen can be misread as verified allergen-free",
+          "recommended_action": "Preserve unknown and use conservative public wording"
+        },
+        {
+          "order": 6,
+          "finding": "Historical nutrition is mutable",
+          "evidence": "Food facts are upserted globally by external ID",
+          "user_impact": "Past menus join to latest-known facts rather than facts observed that day",
+          "recommended_action": "Add observed-at snapshots before publishing nutrition trends"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "daily_menu_coverage_sql",
+      "label": "Production daily menu coverage",
+      "query": {
+        "engine": "mysql",
+        "language": "sql",
+        "sql": "SELECT\n  DATE_FORMAT(r.service_date, '%Y-%m-%d') AS service_date,\n  DAYNAME(r.service_date) AS weekday,\n  COUNT(DISTINCT r.id) AS restaurants,\n  GROUP_CONCAT(DISTINCT r.name ORDER BY r.name SEPARATOR ' | ') AS restaurant_names,\n  COUNT(DISTINCT m.id) AS meals,\n  COUNT(DISTINCT s.id) AS stations,\n  COUNT(sf.food_id) AS appearances,\n  COUNT(DISTINCT sf.food_id) AS distinct_foods,\n  DATE_FORMAT(MIN(m.time_open), '%H:%i') AS first_open,\n  DATE_FORMAT(MAX(m.time_closed), '%H:%i') AS last_close\nFROM restaurants r\nLEFT JOIN meals m ON m.restaurant_id = r.id\nLEFT JOIN stations s ON s.meal_id = m.id\nLEFT JOIN station_foods sf ON sf.station_id = s.id\nGROUP BY r.service_date\nORDER BY r.service_date",
+        "description": "Aggregates stored restaurants, meals, stations, food appearances, and distinct foods by service date.",
+        "executed_at": "2026-08-20T15:45:00Z",
+        "tables_used": [
+          "elon_meals.restaurants",
+          "elon_meals.meals",
+          "elon_meals.stations",
+          "elon_meals.station_foods"
+        ],
+        "filters": [
+          "Live analysis window begins 2026-07-08",
+          "Analysis ends on 2026-08-20",
+          "July 1 deterministic seed is excluded from live findings",
+          "A usable menu day has at least one station_foods row"
+        ],
+        "metric_definitions": {
+          "usable_menu_days": "Count of calendar dates with at least one stored food appearance in the live window.",
+          "usable_coverage": "Usable menu days divided by 44 calendar dates from July 8 through August 20, inclusive."
+        }
+      }
+    },
+    {
+      "id": "menu_appearance_history_sql",
+      "label": "Production menu appearance history",
+      "query": {
+        "engine": "mysql",
+        "language": "sql",
+        "sql": "SELECT\n  DATE_FORMAT(r.service_date, '%Y-%m-%d') AS service_date,\n  r.name AS restaurant,\n  m.id AS meal_id,\n  m.name AS meal,\n  DATE_FORMAT(m.time_open, '%Y-%m-%d %H:%i:%s') AS time_open,\n  DATE_FORMAT(m.time_closed, '%Y-%m-%d %H:%i:%s') AS time_closed,\n  s.id AS station_id,\n  s.name AS station,\n  f.id AS food_id,\n  f.external_id,\n  f.short_name,\n  f.calories,\n  f.protein,\n  f.sodium,\n  f.total_fat,\n  f.total_carbohydrates,\n  f.vegetarian,\n  f.vegan,\n  f.gluten_free,\n  f.allergy_egg,\n  f.allergy_shellfish,\n  f.allergy_soy,\n  f.allergy_peanut,\n  f.allergy_wheat,\n  f.allergy_tree_nut,\n  f.allergy_milk,\n  f.allergy_sesame,\n  f.allergy_fish\nFROM restaurants r\nJOIN meals m ON m.restaurant_id = r.id\nJOIN stations s ON s.meal_id = m.id\nJOIN station_foods sf ON sf.station_id = s.id\nJOIN foods f ON f.id = sf.food_id\nWHERE r.service_date >= '2026-07-08'\nORDER BY r.service_date, r.name, m.time_open, s.name, f.short_name",
+        "description": "Loads the final stored food appearances for each live service date at restaurant, meal, station, and food grain.",
+        "executed_at": "2026-08-20T15:45:00Z",
+        "tables_used": [
+          "elon_meals.restaurants",
+          "elon_meals.meals",
+          "elon_meals.stations",
+          "elon_meals.station_foods",
+          "elon_meals.foods"
+        ],
+        "filters": [
+          "service_date >= 2026-07-08",
+          "Only final stored snapshots after any same-date replacement are available",
+          "Food recurrence is deduplicated to service_date plus food_id"
+        ],
+        "metric_definitions": {
+          "menu_turnover": "One minus Jaccard similarity between the distinct food-ID set on a usable menu day and the previous usable menu day.",
+          "service_days": "Count of distinct usable service dates on which a food or station-meal series appears.",
+          "station_change_rate": "Comparable station appearances with a different distinct-food signature than the previous appearance, divided by comparable appearances."
+        }
+      }
+    },
+    {
+      "id": "scraper_runs_sql",
+      "label": "Production scraper-run history",
+      "query": {
+        "engine": "mysql",
+        "language": "sql",
+        "sql": "SELECT\n  id,\n  DATE_FORMAT(target_date, '%Y-%m-%d') AS target_date,\n  DATE_FORMAT(started_at, '%Y-%m-%d %H:%i:%s') AS started_at,\n  DATE_FORMAT(finished_at, '%Y-%m-%d %H:%i:%s') AS finished_at,\n  status,\n  restaurants_count,\n  meals_count,\n  foods_count,\n  error_message\nFROM scraper_runs\nWHERE target_date >= '2026-07-08'\nORDER BY started_at",
+        "description": "Loads every recorded production scraper attempt in the live analysis window.",
+        "executed_at": "2026-08-20T15:45:00Z",
+        "tables_used": [
+          "elon_meals.scraper_runs"
+        ],
+        "filters": [
+          "target_date >= 2026-07-08",
+          "Headline attempt counts include target dates through 2026-08-20"
+        ],
+        "metric_definitions": {
+          "failed_attempts": "Rows whose scraper_runs.status is failed.",
+          "service_date_with_success": "A target date with at least one scraper_runs.status equal to success."
+        }
+      }
+    },
+    {
+      "id": "analysis_notebook",
+      "label": "Reproducible ElonMealsDB history analysis",
+      "path": "analysis/elonmealsdb-history-analysis.ipynb"
+    },
+    {
+      "id": "importer_logic",
+      "label": "Production importer validation logic",
+      "path": "scraper/elon_scraper/importer.py"
+    },
+    {
+      "id": "recommendation_synthesis_sql",
+      "label": "Evidence-backed feature recommendation matrix",
+      "query": {
+        "engine": "mysql",
+        "language": "sql",
+        "sql": "SELECT 1 AS priority, 'Menu Rotation' AS feature, 'Separate section' AS surface, 'Ready now' AS readiness, '56.6% median turnover; 19 every-day staples; 177 one-day items' AS evidence, 'Use observed menu days as the denominator' AS launch_condition\nUNION ALL\nSELECT 2 AS priority, 'Menu freshness state' AS feature, 'Header and empty state' AS surface, 'Ready now' AS readiness, '38 of 44 dates had usable menus; 77 failed attempts' AS evidence, 'Separate last success from latest attempt' AS launch_condition\nUNION ALL\nSELECT 3 AS priority, 'Where can I eat now?' AS feature, 'Separate section' AS surface, 'Prepare now; activate in term' AS readiness, 'Summer maximum is only one stored restaurant per day' AS evidence, 'Reliable partial imports plus multi-restaurant coverage' AS launch_condition\nUNION ALL\nSELECT 4 AS priority, 'Dietary coverage comparison' AS feature, 'Restaurant-by-meal table' AS surface, 'Hold for semantic fix' AS readiness, 'Flags show breadth, but false and unknown are not distinguishable' AS evidence, 'Model unknown explicitly and treat missing nutrition as null' AS launch_condition\nUNION ALL\nSELECT 5 AS priority, 'Weekday and peak-choice norms' AS feature, 'Historical visualization' AS surface, 'Later' AS readiness, 'The current sample is entirely summer and camp operations' AS evidence, 'At least four complete in-session weeks' AS launch_condition",
+        "description": "Materializes the prioritized product recommendations synthesized in the executed analysis notebook.",
+        "executed_at": "2026-08-20T15:45:00Z",
+        "tables_used": [],
+        "filters": [
+          "Recommendations are limited to production website features supported or gated by the reviewed summer history"
+        ],
+        "metric_definitions": {
+          "priority": "Decision order assigned from evidence strength, user value, and launch dependency; it is a product judgment rather than a raw source metric."
+        }
+      }
+    },
+    {
+      "id": "quality_synthesis_sql",
+      "label": "Data-readiness finding matrix",
+      "query": {
+        "engine": "mysql",
+        "language": "sql",
+        "sql": "SELECT 1 AS order, 'All-or-nothing date import' AS finding, 'Any advertised meal with no foods rejects the complete date' AS evidence, 'More venues create more chances that otherwise valid menus remain stale' AS user_impact, 'Stage and validate per restaurant or meal, then publish partial coverage explicitly' AS recommended_action\nUNION ALL\nSELECT 2 AS order, 'Incomplete calendar coverage' AS finding, '38 usable menu dates in a 44-day live window' AS evidence, 'Historical denominators and freshness can be misunderstood' AS user_impact, 'Use observed menu days and show freshness status' AS recommended_action\nUNION ALL\nSELECT 3 AS order, 'Empty historical meals' AS finding, '13 meals without stations; two dates with no food rows' AS evidence, 'An open-hours record can look like a usable menu' AS user_impact, 'Distinguish hours-only, menu-available, and stale states' AS recommended_action\nUNION ALL\nSELECT 4 AS order, 'Zero used for unknown nutrition' AS finding, '16 food IDs and 95 appearances; 32 of 38 usable dates affected' AS evidence, 'Nutrition rankings and totals can be understated' AS user_impact, 'Parse absent facts as null and exclude unknowns from ranked metrics' AS recommended_action\nUNION ALL\nSELECT 5 AS order, 'Allergen absence is not three-state' AS finding, 'The schema stores only true, false, or null; parser defaults absent flags to false' AS evidence, 'No listed allergen can be misread as verified allergen-free' AS user_impact, 'Preserve unknown and use conservative public wording' AS recommended_action\nUNION ALL\nSELECT 6 AS order, 'Historical nutrition is mutable' AS finding, 'Food facts are upserted globally by external ID' AS evidence, 'Past menus join to latest-known facts rather than facts observed that day' AS user_impact, 'Add observed-at snapshots before publishing nutrition trends' AS recommended_action",
+        "description": "Materializes the reviewed data-readiness findings and recommended remediations from production SQL and importer-code checks.",
+        "executed_at": "2026-08-20T15:45:00Z",
+        "tables_used": [
+          "elon_meals.restaurants",
+          "elon_meals.meals",
+          "elon_meals.stations",
+          "elon_meals.station_foods",
+          "elon_meals.foods",
+          "elon_meals.scraper_runs"
+        ],
+        "filters": [
+          "Live analysis window begins 2026-07-08",
+          "July 1 seed data is excluded from live findings"
+        ],
+        "metric_definitions": {
+          "order": "Risk-reduction sequence assigned in the analysis notebook; lower values should be addressed first."
+        }
+      }
+    }
+  ]
+}

@@ -110,9 +110,6 @@
     height: 16px;
   }
 
-  .food-table .row-actions-inner .icon-button:last-child {
-    display: none;
-  }
 }
 
 @media (max-width: 1320px) {
@@ -137,7 +134,7 @@
   }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1320px) {
   .planner-grid,
   .lower-grid,
   .insight-canvas,
@@ -727,10 +724,6 @@
     justify-content: center;
   }
 
-  .row-actions-inner .icon-button {
-    display: none;
-  }
-
   .data-table td.row-actions .primary-row-button {
     width: 32px;
     min-width: 32px;
@@ -771,6 +764,12 @@
 }
 
 @media (max-width: 520px) {
+  .site-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
   .settings-grid,
   .drawer-actions,
   .nutrition-grid {
