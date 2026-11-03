@@ -23,7 +23,7 @@
     "test:e2e": "npm --workspace @elon-meals-db/frontend run test:e2e",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "audit:deps": "npm audit --workspaces --omit=dev",
+    "audit:deps": "npm audit --workspaces --include=dev",
     "verify": "bash scripts/verify-public.sh",
     "verify:docker": "bash scripts/verify-public.sh --docker",
     "docker:build": "docker compose build",

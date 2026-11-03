@@ -93,7 +93,7 @@ step "Scraper tests"
 PYTHONPATH=scraper "$PYTHON" -m pytest scraper/tests
 
 step "Node dependency audit"
-npm audit --workspaces --omit=dev
+npm run audit:deps
 
 step "Python dependency audit"
 "$PIP_AUDIT" -r scraper/requirements.txt

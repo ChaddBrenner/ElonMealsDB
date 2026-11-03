@@ -24,7 +24,7 @@ jobs:
       - run: npm test
       - run: npm run test:e2e
       - run: npm run build
-      - run: npm audit --workspaces --omit=dev
+      - run: npm run audit:deps
 
   scraper:
     runs-on: ubuntu-24.04
