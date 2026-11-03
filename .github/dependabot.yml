@@ -5,6 +5,10 @@ updates:
     schedule:
       interval: weekly
     groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
       npm-patch-and-minor:
         update-types:
           - minor
@@ -13,7 +17,17 @@ updates:
     directory: /scraper
     schedule:
       interval: weekly
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
