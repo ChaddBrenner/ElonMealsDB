@@ -1,0 +1,38 @@
+name: Dependabot security auto-merge
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable-auto-merge:
+    if: >-
+      github.repository == 'ChaddBrenner/ElonMealsDB' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # Never check out or execute PR code in this privileged workflow.
+      # The action verifies Dependabot's signed commit metadata.
+      - name: Read verified Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # This group is reserved for security updates in dependabot.yml.
+      # GitHub branch protection requires node, scraper, and docker to pass.
+      - name: Enable auto-merge for security updates
+        if: steps.metadata.outputs.dependency-group == 'security-updates'
+        run: gh pr merge --auto --squash --match-head-commit "$PR_HEAD" "$PR_URL"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}

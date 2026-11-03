@@ -167,6 +167,14 @@ npm --workspace @elon-meals-db/frontend run dev
 
 ## Security
 
+Dependabot security updates use the `security-updates` group for npm, Python,
+and GitHub Actions. The security auto-merge workflow verifies Dependabot metadata
+and enables squash auto-merge only for that group. Ordinary version updates remain
+manual. Branch protection on `main` requires the GitHub Actions `node`, `scraper`,
+and `docker` checks to pass on an up-to-date branch before merging. Keep these
+required checks configured if CI job names change. Failed checks or merge conflicts
+leave the update open for investigation. No personal access token is required.
+
 Read [docs/deployment.md](docs/deployment.md) before self-hosting. In short:
 
 - Put the app behind HTTPS.
